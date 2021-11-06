@@ -137,7 +137,7 @@ While Pyroloans offer no economic risk, every new smart contract introduces prot
 5. Once off approval of no fee.
 6. Pyrotoken contracts will be deployed via CREATE2, using the address of the base token as the salt. This will allow future contracts built on Pyrotokens to determined the address of the Pyrotoken contract without consulting a mapping reducing the need for a gas expensive SSLOAD operation or an external contract call.
 7. Pulling pending fees on mint and redeem can be turned off through governance so that if coupled with a potential future Behodler 3, feature 6 can be taken advantage of, reducing the gas cost further.
-8. Fees will be powers of 2 to avoid strange rounding errors.
+8. Tailored to be amenable to registration on Etherscan
 
 # Migration from version 2
 
