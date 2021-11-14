@@ -19,31 +19,25 @@ import { Listener, Provider } from "@ethersproject/providers";
 import { FunctionFragment, EventFragment, Result } from "@ethersproject/abi";
 import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 
-interface SnufferCapInterface extends ethers.utils.Interface {
+interface LROldInterface extends ethers.utils.Interface {
   functions: {
-    "_liquidityReceiver()": FunctionFragment;
-    "snuff(address,address,uint8)": FunctionFragment;
+    "baseTokenMapping(address)": FunctionFragment;
   };
 
   encodeFunctionData(
-    functionFragment: "_liquidityReceiver",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "snuff",
-    values: [string, string, BigNumberish]
+    functionFragment: "baseTokenMapping",
+    values: [string]
   ): string;
 
   decodeFunctionResult(
-    functionFragment: "_liquidityReceiver",
+    functionFragment: "baseTokenMapping",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "snuff", data: BytesLike): Result;
 
   events: {};
 }
 
-export class SnufferCap extends BaseContract {
+export class LROld extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
@@ -84,61 +78,39 @@ export class SnufferCap extends BaseContract {
     toBlock?: string | number | undefined
   ): Promise<Array<TypedEvent<EventArgsArray & EventArgsObject>>>;
 
-  interface: SnufferCapInterface;
+  interface: LROldInterface;
 
   functions: {
-    _liquidityReceiver(overrides?: CallOverrides): Promise<[string]>;
-
-    snuff(
-      pyrotoken: string,
-      targetContract: string,
-      exempt: BigNumberish,
+    baseTokenMapping(
+      baseToken: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
   };
 
-  _liquidityReceiver(overrides?: CallOverrides): Promise<string>;
-
-  snuff(
-    pyrotoken: string,
-    targetContract: string,
-    exempt: BigNumberish,
+  baseTokenMapping(
+    baseToken: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    _liquidityReceiver(overrides?: CallOverrides): Promise<string>;
-
-    snuff(
-      pyrotoken: string,
-      targetContract: string,
-      exempt: BigNumberish,
+    baseTokenMapping(
+      baseToken: string,
       overrides?: CallOverrides
-    ): Promise<boolean>;
+    ): Promise<string>;
   };
 
   filters: {};
 
   estimateGas: {
-    _liquidityReceiver(overrides?: CallOverrides): Promise<BigNumber>;
-
-    snuff(
-      pyrotoken: string,
-      targetContract: string,
-      exempt: BigNumberish,
+    baseTokenMapping(
+      baseToken: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    _liquidityReceiver(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    snuff(
-      pyrotoken: string,
-      targetContract: string,
-      exempt: BigNumberish,
+    baseTokenMapping(
+      baseToken: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };

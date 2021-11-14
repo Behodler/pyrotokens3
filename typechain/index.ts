@@ -15,6 +15,12 @@ export type { LiquidityReceiver } from "./LiquidityReceiver";
 export type { LiquidiyReceiverLike } from "./LiquidiyReceiverLike";
 export type { Pyrotoken } from "./Pyrotoken";
 export type { PyroWethProxy } from "./PyroWethProxy";
+export type { Burnable } from "./Burnable";
+export type { BurnEYESnufferCap } from "./BurnEYESnufferCap";
+export type { LRNew } from "./LRNew";
+export type { LROld } from "./LROld";
+export type { Pyrotoken2 } from "./Pyrotoken2";
+export type { V2Migrator } from "./V2Migrator";
 
 export { ERC20__factory } from "./factories/ERC20__factory";
 export { ERC20Burnable__factory } from "./factories/ERC20Burnable__factory";
@@ -30,3 +36,9 @@ export { LiquidityReceiver__factory } from "./factories/LiquidityReceiver__facto
 export { LiquidiyReceiverLike__factory } from "./factories/LiquidiyReceiverLike__factory";
 export { Pyrotoken__factory } from "./factories/Pyrotoken__factory";
 export { PyroWethProxy__factory } from "./factories/PyroWethProxy__factory";
+export { Burnable__factory } from "./factories/Burnable__factory";
+export { BurnEYESnufferCap__factory } from "./factories/BurnEYESnufferCap__factory";
+export { LRNew__factory } from "./factories/LRNew__factory";
+export { LROld__factory } from "./factories/LROld__factory";
+export { Pyrotoken2__factory } from "./factories/Pyrotoken2__factory";
+export { V2Migrator__factory } from "./factories/V2Migrator__factory";

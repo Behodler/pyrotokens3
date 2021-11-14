@@ -23,20 +23,18 @@ import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 interface PyroWethProxyInterface extends ethers.utils.Interface {
   functions: {
     "balanceOf(address)": FunctionFragment;
-    "baseToken()": FunctionFragment;
     "calculateMintedPyroWeth(uint256)": FunctionFragment;
     "calculateRedeemedWeth(uint256)": FunctionFragment;
-    "mint(address,uint256)": FunctionFragment;
+    "mint(uint256)": FunctionFragment;
     "owner()": FunctionFragment;
-    "redeem(address,uint256)": FunctionFragment;
-    "redeemRate()": FunctionFragment;
+    "pyroWeth()": FunctionFragment;
+    "redeem(uint256)": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
     "weth10()": FunctionFragment;
   };
 
   encodeFunctionData(functionFragment: "balanceOf", values: [string]): string;
-  encodeFunctionData(functionFragment: "baseToken", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "calculateMintedPyroWeth",
     values: [BigNumberish]
@@ -45,18 +43,12 @@ interface PyroWethProxyInterface extends ethers.utils.Interface {
     functionFragment: "calculateRedeemedWeth",
     values: [BigNumberish]
   ): string;
-  encodeFunctionData(
-    functionFragment: "mint",
-    values: [string, BigNumberish]
-  ): string;
+  encodeFunctionData(functionFragment: "mint", values: [BigNumberish]): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(functionFragment: "pyroWeth", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "redeem",
-    values: [string, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "redeemRate",
-    values?: undefined
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -69,7 +61,6 @@ interface PyroWethProxyInterface extends ethers.utils.Interface {
   encodeFunctionData(functionFragment: "weth10", values?: undefined): string;
 
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "baseToken", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "calculateMintedPyroWeth",
     data: BytesLike
@@ -80,8 +71,8 @@ interface PyroWethProxyInterface extends ethers.utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "pyroWeth", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "redeem", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "redeemRate", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "renounceOwnership",
     data: BytesLike
@@ -149,8 +140,6 @@ export class PyroWethProxy extends BaseContract {
   functions: {
     balanceOf(holder: string, overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    baseToken(overrides?: CallOverrides): Promise<[string]>;
-
     calculateMintedPyroWeth(
       baseTokenAmount: BigNumberish,
       overrides?: CallOverrides
@@ -162,20 +151,18 @@ export class PyroWethProxy extends BaseContract {
     ): Promise<[BigNumber]>;
 
     mint(
-      to: string,
       baseTokenAmount: BigNumberish,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
+    pyroWeth(overrides?: CallOverrides): Promise<[string]>;
+
     redeem(
-      to: string,
       pyroTokenAmount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
-
-    redeemRate(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     renounceOwnership(
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -191,8 +178,6 @@ export class PyroWethProxy extends BaseContract {
 
   balanceOf(holder: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-  baseToken(overrides?: CallOverrides): Promise<string>;
-
   calculateMintedPyroWeth(
     baseTokenAmount: BigNumberish,
     overrides?: CallOverrides
@@ -204,20 +189,18 @@ export class PyroWethProxy extends BaseContract {
   ): Promise<BigNumber>;
 
   mint(
-    to: string,
     baseTokenAmount: BigNumberish,
     overrides?: PayableOverrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   owner(overrides?: CallOverrides): Promise<string>;
 
+  pyroWeth(overrides?: CallOverrides): Promise<string>;
+
   redeem(
-    to: string,
     pyroTokenAmount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
-
-  redeemRate(overrides?: CallOverrides): Promise<BigNumber>;
 
   renounceOwnership(
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -233,8 +216,6 @@ export class PyroWethProxy extends BaseContract {
   callStatic: {
     balanceOf(holder: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-    baseToken(overrides?: CallOverrides): Promise<string>;
-
     calculateMintedPyroWeth(
       baseTokenAmount: BigNumberish,
       overrides?: CallOverrides
@@ -246,20 +227,18 @@ export class PyroWethProxy extends BaseContract {
     ): Promise<BigNumber>;
 
     mint(
-      to: string,
       baseTokenAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
+    pyroWeth(overrides?: CallOverrides): Promise<string>;
+
     redeem(
-      to: string,
       pyroTokenAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
-
-    redeemRate(overrides?: CallOverrides): Promise<BigNumber>;
 
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
@@ -292,8 +271,6 @@ export class PyroWethProxy extends BaseContract {
   estimateGas: {
     balanceOf(holder: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-    baseToken(overrides?: CallOverrides): Promise<BigNumber>;
-
     calculateMintedPyroWeth(
       baseTokenAmount: BigNumberish,
       overrides?: CallOverrides
@@ -305,20 +282,18 @@ export class PyroWethProxy extends BaseContract {
     ): Promise<BigNumber>;
 
     mint(
-      to: string,
       baseTokenAmount: BigNumberish,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
+    pyroWeth(overrides?: CallOverrides): Promise<BigNumber>;
+
     redeem(
-      to: string,
       pyroTokenAmount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
-
-    redeemRate(overrides?: CallOverrides): Promise<BigNumber>;
 
     renounceOwnership(
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -338,8 +313,6 @@ export class PyroWethProxy extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    baseToken(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     calculateMintedPyroWeth(
       baseTokenAmount: BigNumberish,
       overrides?: CallOverrides
@@ -351,20 +324,18 @@ export class PyroWethProxy extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     mint(
-      to: string,
       baseTokenAmount: BigNumberish,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    pyroWeth(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     redeem(
-      to: string,
       pyroTokenAmount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
-
-    redeemRate(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     renounceOwnership(
       overrides?: Overrides & { from?: string | Promise<string> }

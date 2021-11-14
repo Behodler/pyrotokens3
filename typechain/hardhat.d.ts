@@ -76,6 +76,30 @@ declare module "hardhat/types/runtime" {
       name: "PyroWethProxy",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.PyroWethProxy__factory>;
+    getContractFactory(
+      name: "Burnable",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.Burnable__factory>;
+    getContractFactory(
+      name: "BurnEYESnufferCap",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.BurnEYESnufferCap__factory>;
+    getContractFactory(
+      name: "LRNew",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.LRNew__factory>;
+    getContractFactory(
+      name: "LROld",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.LROld__factory>;
+    getContractFactory(
+      name: "Pyrotoken2",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.Pyrotoken2__factory>;
+    getContractFactory(
+      name: "V2Migrator",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.V2Migrator__factory>;
 
     getContractAt(
       name: "ERC20",
@@ -157,6 +181,36 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.PyroWethProxy>;
+    getContractAt(
+      name: "Burnable",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.Burnable>;
+    getContractAt(
+      name: "BurnEYESnufferCap",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.BurnEYESnufferCap>;
+    getContractAt(
+      name: "LRNew",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.LRNew>;
+    getContractAt(
+      name: "LROld",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.LROld>;
+    getContractAt(
+      name: "Pyrotoken2",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.Pyrotoken2>;
+    getContractAt(
+      name: "V2Migrator",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.V2Migrator>;
 
     // default types
     getContractFactory(

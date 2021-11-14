@@ -4,7 +4,7 @@
 
 import { Contract, Signer, utils } from "ethers";
 import { Provider } from "@ethersproject/providers";
-import type { PyroTokenLike, PyroTokenLikeInterface } from "../PyroTokenLike";
+import type { Burnable, BurnableInterface } from "../Burnable";
 
 const _abi = [
   {
@@ -131,16 +131,16 @@ const _abi = [
     type: "function",
   },
   {
-    inputs: [],
-    name: "baseToken",
-    outputs: [
+    inputs: [
       {
-        internalType: "address",
-        name: "",
-        type: "address",
+        internalType: "uint256",
+        name: "value",
+        type: "uint256",
       },
     ],
-    stateMutability: "view",
+    name: "burn",
+    outputs: [],
+    stateMutability: "nonpayable",
     type: "function",
   },
   {
@@ -157,30 +157,6 @@ const _abi = [
     type: "function",
   },
   {
-    inputs: [
-      {
-        internalType: "address",
-        name: "to",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "baseTokenAmount",
-        type: "uint256",
-      },
-    ],
-    name: "mint",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "payable",
-    type: "function",
-  },
-  {
     inputs: [],
     name: "name",
     outputs: [
@@ -188,72 +164,6 @@ const _abi = [
         internalType: "string",
         name: "",
         type: "string",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "to",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "pyroTokenAmount",
-        type: "uint256",
-      },
-    ],
-    name: "redeem",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "owner",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "recipient",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256",
-      },
-    ],
-    name: "redeemFrom",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "redeemRate",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
       },
     ],
     stateMutability: "view",
@@ -340,15 +250,15 @@ const _abi = [
   },
 ];
 
-export class PyroTokenLike__factory {
+export class Burnable__factory {
   static readonly abi = _abi;
-  static createInterface(): PyroTokenLikeInterface {
-    return new utils.Interface(_abi) as PyroTokenLikeInterface;
+  static createInterface(): BurnableInterface {
+    return new utils.Interface(_abi) as BurnableInterface;
   }
   static connect(
     address: string,
     signerOrProvider: Signer | Provider
-  ): PyroTokenLike {
-    return new Contract(address, _abi, signerOrProvider) as PyroTokenLike;
+  ): Burnable {
+    return new Contract(address, _abi, signerOrProvider) as Burnable;
   }
 }

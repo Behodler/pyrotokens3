@@ -29,12 +29,15 @@ interface PyrotokenInterface extends ethers.utils.Interface {
     "config()": FunctionFragment;
     "decimals()": FunctionFragment;
     "decreaseAllowance(address,uint256)": FunctionFragment;
+    "destroyObligationFor(address,uint256,uint256)": FunctionFragment;
     "increaseAllowance(address,uint256)": FunctionFragment;
     "mint(address,uint256)": FunctionFragment;
     "name()": FunctionFragment;
     "redeem(address,uint256)": FunctionFragment;
+    "redeemFrom(address,address,uint256)": FunctionFragment;
     "redeemRate()": FunctionFragment;
     "setFeeExemptionStatusFor(address,uint8)": FunctionFragment;
+    "setObligationFor(address,uint256,uint256)": FunctionFragment;
     "symbol()": FunctionFragment;
     "totalSupply()": FunctionFragment;
     "transfer(address,uint256)": FunctionFragment;
@@ -63,6 +66,10 @@ interface PyrotokenInterface extends ethers.utils.Interface {
     values: [string, BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "destroyObligationFor",
+    values: [string, BigNumberish, BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "increaseAllowance",
     values: [string, BigNumberish]
   ): string;
@@ -76,12 +83,20 @@ interface PyrotokenInterface extends ethers.utils.Interface {
     values: [string, BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "redeemFrom",
+    values: [string, string, BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "redeemRate",
     values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "setFeeExemptionStatusFor",
     values: [string, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setObligationFor",
+    values: [string, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
   encodeFunctionData(
@@ -113,15 +128,24 @@ interface PyrotokenInterface extends ethers.utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "destroyObligationFor",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "increaseAllowance",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "redeem", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "redeemFrom", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "redeemRate", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "setFeeExemptionStatusFor",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setObligationFor",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
@@ -237,7 +261,11 @@ export class Pyrotoken extends BaseContract {
     config(
       overrides?: CallOverrides
     ): Promise<
-      [string, string] & { liquidityReceiver: string; baseToken: string }
+      [string, string, string] & {
+        liquidityReceiver: string;
+        baseToken: string;
+        loanOfficer: string;
+      }
     >;
 
     decimals(overrides?: CallOverrides): Promise<[number]>;
@@ -245,6 +273,13 @@ export class Pyrotoken extends BaseContract {
     decreaseAllowance(
       spender: string,
       subtractedValue: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    destroyObligationFor(
+      borrower: string,
+      baseTokenRepaid: BigNumberish,
+      pyroTokenRequested: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -268,11 +303,25 @@ export class Pyrotoken extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    redeemFrom(
+      owner: string,
+      recipient: string,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     redeemRate(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     setFeeExemptionStatusFor(
       exempt: string,
       status: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    setObligationFor(
+      borrower: string,
+      baseTokenBorrowed: BigNumberish,
+      pyrotokenStaked: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -327,7 +376,11 @@ export class Pyrotoken extends BaseContract {
   config(
     overrides?: CallOverrides
   ): Promise<
-    [string, string] & { liquidityReceiver: string; baseToken: string }
+    [string, string, string] & {
+      liquidityReceiver: string;
+      baseToken: string;
+      loanOfficer: string;
+    }
   >;
 
   decimals(overrides?: CallOverrides): Promise<number>;
@@ -335,6 +388,13 @@ export class Pyrotoken extends BaseContract {
   decreaseAllowance(
     spender: string,
     subtractedValue: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  destroyObligationFor(
+    borrower: string,
+    baseTokenRepaid: BigNumberish,
+    pyroTokenRequested: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -358,11 +418,25 @@ export class Pyrotoken extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  redeemFrom(
+    owner: string,
+    recipient: string,
+    amount: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   redeemRate(overrides?: CallOverrides): Promise<BigNumber>;
 
   setFeeExemptionStatusFor(
     exempt: string,
     status: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  setObligationFor(
+    borrower: string,
+    baseTokenBorrowed: BigNumberish,
+    pyrotokenStaked: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -414,7 +488,11 @@ export class Pyrotoken extends BaseContract {
     config(
       overrides?: CallOverrides
     ): Promise<
-      [string, string] & { liquidityReceiver: string; baseToken: string }
+      [string, string, string] & {
+        liquidityReceiver: string;
+        baseToken: string;
+        loanOfficer: string;
+      }
     >;
 
     decimals(overrides?: CallOverrides): Promise<number>;
@@ -422,6 +500,13 @@ export class Pyrotoken extends BaseContract {
     decreaseAllowance(
       spender: string,
       subtractedValue: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
+    destroyObligationFor(
+      borrower: string,
+      baseTokenRepaid: BigNumberish,
+      pyroTokenRequested: BigNumberish,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
@@ -445,6 +530,13 @@ export class Pyrotoken extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    redeemFrom(
+      owner: string,
+      recipient: string,
+      amount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     redeemRate(overrides?: CallOverrides): Promise<BigNumber>;
 
     setFeeExemptionStatusFor(
@@ -452,6 +544,13 @@ export class Pyrotoken extends BaseContract {
       status: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    setObligationFor(
+      borrower: string,
+      baseTokenBorrowed: BigNumberish,
+      pyrotokenStaked: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
 
     symbol(overrides?: CallOverrides): Promise<string>;
 
@@ -552,6 +651,13 @@ export class Pyrotoken extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    destroyObligationFor(
+      borrower: string,
+      baseTokenRepaid: BigNumberish,
+      pyroTokenRequested: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     increaseAllowance(
       spender: string,
       addedValue: BigNumberish,
@@ -572,11 +678,25 @@ export class Pyrotoken extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    redeemFrom(
+      owner: string,
+      recipient: string,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     redeemRate(overrides?: CallOverrides): Promise<BigNumber>;
 
     setFeeExemptionStatusFor(
       exempt: string,
       status: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    setObligationFor(
+      borrower: string,
+      baseTokenBorrowed: BigNumberish,
+      pyrotokenStaked: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -642,6 +762,13 @@ export class Pyrotoken extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    destroyObligationFor(
+      borrower: string,
+      baseTokenRepaid: BigNumberish,
+      pyroTokenRequested: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     increaseAllowance(
       spender: string,
       addedValue: BigNumberish,
@@ -662,11 +789,25 @@ export class Pyrotoken extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    redeemFrom(
+      owner: string,
+      recipient: string,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     redeemRate(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     setFeeExemptionStatusFor(
       exempt: string,
       status: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setObligationFor(
+      borrower: string,
+      baseTokenBorrowed: BigNumberish,
+      pyrotokenStaked: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

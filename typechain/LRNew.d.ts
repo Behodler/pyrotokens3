@@ -11,7 +11,6 @@ import {
   PopulatedTransaction,
   BaseContract,
   ContractTransaction,
-  Overrides,
   CallOverrides,
 } from "ethers";
 import { BytesLike } from "@ethersproject/bytes";
@@ -19,31 +18,25 @@ import { Listener, Provider } from "@ethersproject/providers";
 import { FunctionFragment, EventFragment, Result } from "@ethersproject/abi";
 import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 
-interface SnufferCapInterface extends ethers.utils.Interface {
+interface LRNewInterface extends ethers.utils.Interface {
   functions: {
-    "_liquidityReceiver()": FunctionFragment;
-    "snuff(address,address,uint8)": FunctionFragment;
+    "getPyrotoken(address,string,string)": FunctionFragment;
   };
 
   encodeFunctionData(
-    functionFragment: "_liquidityReceiver",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "snuff",
-    values: [string, string, BigNumberish]
+    functionFragment: "getPyrotoken",
+    values: [string, string, string]
   ): string;
 
   decodeFunctionResult(
-    functionFragment: "_liquidityReceiver",
+    functionFragment: "getPyrotoken",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "snuff", data: BytesLike): Result;
 
   events: {};
 }
 
-export class SnufferCap extends BaseContract {
+export class LRNew extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
@@ -84,62 +77,50 @@ export class SnufferCap extends BaseContract {
     toBlock?: string | number | undefined
   ): Promise<Array<TypedEvent<EventArgsArray & EventArgsObject>>>;
 
-  interface: SnufferCapInterface;
+  interface: LRNewInterface;
 
   functions: {
-    _liquidityReceiver(overrides?: CallOverrides): Promise<[string]>;
-
-    snuff(
-      pyrotoken: string,
-      targetContract: string,
-      exempt: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
+    getPyrotoken(
+      baseToken: string,
+      name: string,
+      symbol: string,
+      overrides?: CallOverrides
+    ): Promise<[string]>;
   };
 
-  _liquidityReceiver(overrides?: CallOverrides): Promise<string>;
-
-  snuff(
-    pyrotoken: string,
-    targetContract: string,
-    exempt: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
+  getPyrotoken(
+    baseToken: string,
+    name: string,
+    symbol: string,
+    overrides?: CallOverrides
+  ): Promise<string>;
 
   callStatic: {
-    _liquidityReceiver(overrides?: CallOverrides): Promise<string>;
-
-    snuff(
-      pyrotoken: string,
-      targetContract: string,
-      exempt: BigNumberish,
+    getPyrotoken(
+      baseToken: string,
+      name: string,
+      symbol: string,
       overrides?: CallOverrides
-    ): Promise<boolean>;
+    ): Promise<string>;
   };
 
   filters: {};
 
   estimateGas: {
-    _liquidityReceiver(overrides?: CallOverrides): Promise<BigNumber>;
-
-    snuff(
-      pyrotoken: string,
-      targetContract: string,
-      exempt: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
+    getPyrotoken(
+      baseToken: string,
+      name: string,
+      symbol: string,
+      overrides?: CallOverrides
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    _liquidityReceiver(
+    getPyrotoken(
+      baseToken: string,
+      name: string,
+      symbol: string,
       overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    snuff(
-      pyrotoken: string,
-      targetContract: string,
-      exempt: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };
 }

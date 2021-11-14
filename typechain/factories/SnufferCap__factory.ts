@@ -9,7 +9,7 @@ import type { SnufferCap, SnufferCapInterface } from "../SnufferCap";
 const _abi = [
   {
     inputs: [],
-    name: "liquidityReceiver",
+    name: "_liquidityReceiver",
     outputs: [
       {
         internalType: "contract LiquidityReceiverLike",
@@ -18,6 +18,35 @@ const _abi = [
       },
     ],
     stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "pyrotoken",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "targetContract",
+        type: "address",
+      },
+      {
+        internalType: "enum FeeExemption",
+        name: "exempt",
+        type: "uint8",
+      },
+    ],
+    name: "snuff",
+    outputs: [
+      {
+        internalType: "bool",
+        name: "",
+        type: "bool",
+      },
+    ],
+    stateMutability: "nonpayable",
     type: "function",
   },
 ];

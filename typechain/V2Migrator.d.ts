@@ -19,31 +19,28 @@ import { Listener, Provider } from "@ethersproject/providers";
 import { FunctionFragment, EventFragment, Result } from "@ethersproject/abi";
 import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 
-interface SnufferCapInterface extends ethers.utils.Interface {
+interface V2MigratorInterface extends ethers.utils.Interface {
   functions: {
-    "_liquidityReceiver()": FunctionFragment;
-    "snuff(address,address,uint8)": FunctionFragment;
+    "LR_new()": FunctionFragment;
+    "LR_old()": FunctionFragment;
+    "migrate(address,address,string,string,uint256,uint256)": FunctionFragment;
   };
 
+  encodeFunctionData(functionFragment: "LR_new", values?: undefined): string;
+  encodeFunctionData(functionFragment: "LR_old", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "_liquidityReceiver",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "snuff",
-    values: [string, string, BigNumberish]
+    functionFragment: "migrate",
+    values: [string, string, string, string, BigNumberish, BigNumberish]
   ): string;
 
-  decodeFunctionResult(
-    functionFragment: "_liquidityReceiver",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "snuff", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "LR_new", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "LR_old", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "migrate", data: BytesLike): Result;
 
   events: {};
 }
 
-export class SnufferCap extends BaseContract {
+export class V2Migrator extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
@@ -84,61 +81,84 @@ export class SnufferCap extends BaseContract {
     toBlock?: string | number | undefined
   ): Promise<Array<TypedEvent<EventArgsArray & EventArgsObject>>>;
 
-  interface: SnufferCapInterface;
+  interface: V2MigratorInterface;
 
   functions: {
-    _liquidityReceiver(overrides?: CallOverrides): Promise<[string]>;
+    LR_new(overrides?: CallOverrides): Promise<[string]>;
 
-    snuff(
-      pyrotoken: string,
-      targetContract: string,
-      exempt: BigNumberish,
+    LR_old(overrides?: CallOverrides): Promise<[string]>;
+
+    migrate(
+      ptoken2: string,
+      ptoken3: string,
+      nameNew: string,
+      symbolNew: string,
+      p2token_amount: BigNumberish,
+      p3token_expectedAmount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
   };
 
-  _liquidityReceiver(overrides?: CallOverrides): Promise<string>;
+  LR_new(overrides?: CallOverrides): Promise<string>;
 
-  snuff(
-    pyrotoken: string,
-    targetContract: string,
-    exempt: BigNumberish,
+  LR_old(overrides?: CallOverrides): Promise<string>;
+
+  migrate(
+    ptoken2: string,
+    ptoken3: string,
+    nameNew: string,
+    symbolNew: string,
+    p2token_amount: BigNumberish,
+    p3token_expectedAmount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    _liquidityReceiver(overrides?: CallOverrides): Promise<string>;
+    LR_new(overrides?: CallOverrides): Promise<string>;
 
-    snuff(
-      pyrotoken: string,
-      targetContract: string,
-      exempt: BigNumberish,
+    LR_old(overrides?: CallOverrides): Promise<string>;
+
+    migrate(
+      ptoken2: string,
+      ptoken3: string,
+      nameNew: string,
+      symbolNew: string,
+      p2token_amount: BigNumberish,
+      p3token_expectedAmount: BigNumberish,
       overrides?: CallOverrides
-    ): Promise<boolean>;
+    ): Promise<void>;
   };
 
   filters: {};
 
   estimateGas: {
-    _liquidityReceiver(overrides?: CallOverrides): Promise<BigNumber>;
+    LR_new(overrides?: CallOverrides): Promise<BigNumber>;
 
-    snuff(
-      pyrotoken: string,
-      targetContract: string,
-      exempt: BigNumberish,
+    LR_old(overrides?: CallOverrides): Promise<BigNumber>;
+
+    migrate(
+      ptoken2: string,
+      ptoken3: string,
+      nameNew: string,
+      symbolNew: string,
+      p2token_amount: BigNumberish,
+      p3token_expectedAmount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    _liquidityReceiver(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+    LR_new(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    snuff(
-      pyrotoken: string,
-      targetContract: string,
-      exempt: BigNumberish,
+    LR_old(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    migrate(
+      ptoken2: string,
+      ptoken3: string,
+      nameNew: string,
+      symbolNew: string,
+      p2token_amount: BigNumberish,
+      p3token_expectedAmount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };
