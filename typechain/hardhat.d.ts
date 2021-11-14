@@ -29,9 +29,29 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC20__factory>;
     getContractFactory(
-      name: "Greeter",
+      name: "IERC20",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.Greeter__factory>;
+    ): Promise<Contracts.IERC20__factory>;
+    getContractFactory(
+      name: "IWETH10",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IWETH10__factory>;
+    getContractFactory(
+      name: "LiquidityReceiverLike",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.LiquidityReceiverLike__factory>;
+    getContractFactory(
+      name: "Ownable",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.Ownable__factory>;
+    getContractFactory(
+      name: "PyroTokenLike",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.PyroTokenLike__factory>;
+    getContractFactory(
+      name: "SnufferCap",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.SnufferCap__factory>;
     getContractFactory(
       name: "LachesisLike",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -41,17 +61,9 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.LiquidityReceiver__factory>;
     getContractFactory(
-      name: "Ownable",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.Ownable__factory>;
-    getContractFactory(
       name: "ERC20",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ERC20__factory>;
-    getContractFactory(
-      name: "IERC20",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IERC20__factory>;
     getContractFactory(
       name: "LiquidiyReceiverLike",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -60,6 +72,10 @@ declare module "hardhat/types/runtime" {
       name: "Pyrotoken",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Pyrotoken__factory>;
+    getContractFactory(
+      name: "PyroWethProxy",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.PyroWethProxy__factory>;
 
     getContractAt(
       name: "ERC20",
@@ -82,10 +98,35 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IERC20>;
     getContractAt(
-      name: "Greeter",
+      name: "IERC20",
       address: string,
       signer?: ethers.Signer
-    ): Promise<Contracts.Greeter>;
+    ): Promise<Contracts.IERC20>;
+    getContractAt(
+      name: "IWETH10",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IWETH10>;
+    getContractAt(
+      name: "LiquidityReceiverLike",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.LiquidityReceiverLike>;
+    getContractAt(
+      name: "Ownable",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.Ownable>;
+    getContractAt(
+      name: "PyroTokenLike",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.PyroTokenLike>;
+    getContractAt(
+      name: "SnufferCap",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.SnufferCap>;
     getContractAt(
       name: "LachesisLike",
       address: string,
@@ -97,20 +138,10 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.LiquidityReceiver>;
     getContractAt(
-      name: "Ownable",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.Ownable>;
-    getContractAt(
       name: "ERC20",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.ERC20>;
-    getContractAt(
-      name: "IERC20",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IERC20>;
     getContractAt(
       name: "LiquidiyReceiverLike",
       address: string,
@@ -121,6 +152,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.Pyrotoken>;
+    getContractAt(
+      name: "PyroWethProxy",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.PyroWethProxy>;
 
     // default types
     getContractFactory(

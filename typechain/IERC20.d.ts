@@ -75,7 +75,7 @@ interface IERC20Interface extends ethers.utils.Interface {
 
   events: {
     "Approval(address,address,uint256)": EventFragment;
-    "Transfer(address,address,uint256,uint256)": EventFragment;
+    "Transfer(address,address,uint128,uint128)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "Approval"): EventFragment;
@@ -270,7 +270,7 @@ export class IERC20 extends BaseContract {
       { owner: string; spender: string; value: BigNumber }
     >;
 
-    "Transfer(address,address,uint256,uint256)"(
+    "Transfer(address,address,uint128,uint128)"(
       from?: string | null,
       to?: string | null,
       value?: null,

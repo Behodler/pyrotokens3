@@ -23,7 +23,6 @@ interface PyrotokenInterface extends ethers.utils.Interface {
   functions: {
     "allowance(address,address)": FunctionFragment;
     "approve(address,uint256)": FunctionFragment;
-    "approveNoBurnFor(address)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
     "burn(uint256)": FunctionFragment;
     "burnFrom(address,uint256)": FunctionFragment;
@@ -33,10 +32,9 @@ interface PyrotokenInterface extends ethers.utils.Interface {
     "increaseAllowance(address,uint256)": FunctionFragment;
     "mint(address,uint256)": FunctionFragment;
     "name()": FunctionFragment;
-    "noBurnAllowance(address,address)": FunctionFragment;
     "redeem(address,uint256)": FunctionFragment;
     "redeemRate()": FunctionFragment;
-    "setNoBurn(bool)": FunctionFragment;
+    "setFeeExemptionStatusFor(address,uint8)": FunctionFragment;
     "symbol()": FunctionFragment;
     "totalSupply()": FunctionFragment;
     "transfer(address,uint256)": FunctionFragment;
@@ -51,10 +49,6 @@ interface PyrotokenInterface extends ethers.utils.Interface {
   encodeFunctionData(
     functionFragment: "approve",
     values: [string, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "approveNoBurnFor",
-    values: [string]
   ): string;
   encodeFunctionData(functionFragment: "balanceOf", values: [string]): string;
   encodeFunctionData(functionFragment: "burn", values: [BigNumberish]): string;
@@ -78,10 +72,6 @@ interface PyrotokenInterface extends ethers.utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "noBurnAllowance",
-    values: [string, string]
-  ): string;
-  encodeFunctionData(
     functionFragment: "redeem",
     values: [string, BigNumberish]
   ): string;
@@ -89,7 +79,10 @@ interface PyrotokenInterface extends ethers.utils.Interface {
     functionFragment: "redeemRate",
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "setNoBurn", values: [boolean]): string;
+  encodeFunctionData(
+    functionFragment: "setFeeExemptionStatusFor",
+    values: [string, BigNumberish]
+  ): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "totalSupply",
@@ -110,10 +103,6 @@ interface PyrotokenInterface extends ethers.utils.Interface {
 
   decodeFunctionResult(functionFragment: "allowance", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "approveNoBurnFor",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "burn", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "burnFrom", data: BytesLike): Result;
@@ -129,13 +118,12 @@ interface PyrotokenInterface extends ethers.utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "noBurnAllowance",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "redeem", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "redeemRate", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "setNoBurn", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "setFeeExemptionStatusFor",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "totalSupply",
@@ -153,7 +141,7 @@ interface PyrotokenInterface extends ethers.utils.Interface {
 
   events: {
     "Approval(address,address,uint256)": EventFragment;
-    "Transfer(address,address,uint256,uint256)": EventFragment;
+    "Transfer(address,address,uint128,uint128)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "Approval"): EventFragment;
@@ -233,11 +221,6 @@ export class Pyrotoken extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    approveNoBurnFor(
-      exempt: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
     balanceOf(account: string, overrides?: CallOverrides): Promise<[BigNumber]>;
 
     burn(
@@ -254,11 +237,7 @@ export class Pyrotoken extends BaseContract {
     config(
       overrides?: CallOverrides
     ): Promise<
-      [string, string, boolean] & {
-        liquidityReceiver: string;
-        baseToken: string;
-        noBurnEnabled: boolean;
-      }
+      [string, string] & { liquidityReceiver: string; baseToken: string }
     >;
 
     decimals(overrides?: CallOverrides): Promise<[number]>;
@@ -283,12 +262,6 @@ export class Pyrotoken extends BaseContract {
 
     name(overrides?: CallOverrides): Promise<[string]>;
 
-    noBurnAllowance(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
     redeem(
       recipient: string,
       amount: BigNumberish,
@@ -297,8 +270,9 @@ export class Pyrotoken extends BaseContract {
 
     redeemRate(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    setNoBurn(
-      noBurnEnabled: boolean,
+    setFeeExemptionStatusFor(
+      exempt: string,
+      status: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -337,11 +311,6 @@ export class Pyrotoken extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  approveNoBurnFor(
-    exempt: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
   balanceOf(account: string, overrides?: CallOverrides): Promise<BigNumber>;
 
   burn(
@@ -358,11 +327,7 @@ export class Pyrotoken extends BaseContract {
   config(
     overrides?: CallOverrides
   ): Promise<
-    [string, string, boolean] & {
-      liquidityReceiver: string;
-      baseToken: string;
-      noBurnEnabled: boolean;
-    }
+    [string, string] & { liquidityReceiver: string; baseToken: string }
   >;
 
   decimals(overrides?: CallOverrides): Promise<number>;
@@ -387,12 +352,6 @@ export class Pyrotoken extends BaseContract {
 
   name(overrides?: CallOverrides): Promise<string>;
 
-  noBurnAllowance(
-    arg0: string,
-    arg1: string,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
   redeem(
     recipient: string,
     amount: BigNumberish,
@@ -401,8 +360,9 @@ export class Pyrotoken extends BaseContract {
 
   redeemRate(overrides?: CallOverrides): Promise<BigNumber>;
 
-  setNoBurn(
-    noBurnEnabled: boolean,
+  setFeeExemptionStatusFor(
+    exempt: string,
+    status: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -441,8 +401,6 @@ export class Pyrotoken extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    approveNoBurnFor(exempt: string, overrides?: CallOverrides): Promise<void>;
-
     balanceOf(account: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     burn(amount: BigNumberish, overrides?: CallOverrides): Promise<void>;
@@ -456,11 +414,7 @@ export class Pyrotoken extends BaseContract {
     config(
       overrides?: CallOverrides
     ): Promise<
-      [string, string, boolean] & {
-        liquidityReceiver: string;
-        baseToken: string;
-        noBurnEnabled: boolean;
-      }
+      [string, string] & { liquidityReceiver: string; baseToken: string }
     >;
 
     decimals(overrides?: CallOverrides): Promise<number>;
@@ -485,12 +439,6 @@ export class Pyrotoken extends BaseContract {
 
     name(overrides?: CallOverrides): Promise<string>;
 
-    noBurnAllowance(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
     redeem(
       recipient: string,
       amount: BigNumberish,
@@ -499,7 +447,11 @@ export class Pyrotoken extends BaseContract {
 
     redeemRate(overrides?: CallOverrides): Promise<BigNumber>;
 
-    setNoBurn(noBurnEnabled: boolean, overrides?: CallOverrides): Promise<void>;
+    setFeeExemptionStatusFor(
+      exempt: string,
+      status: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     symbol(overrides?: CallOverrides): Promise<string>;
 
@@ -543,7 +495,7 @@ export class Pyrotoken extends BaseContract {
       { owner: string; spender: string; value: BigNumber }
     >;
 
-    "Transfer(address,address,uint256,uint256)"(
+    "Transfer(address,address,uint128,uint128)"(
       from?: string | null,
       to?: string | null,
       value?: null,
@@ -574,11 +526,6 @@ export class Pyrotoken extends BaseContract {
     approve(
       spender: string,
       amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    approveNoBurnFor(
-      exempt: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -619,12 +566,6 @@ export class Pyrotoken extends BaseContract {
 
     name(overrides?: CallOverrides): Promise<BigNumber>;
 
-    noBurnAllowance(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     redeem(
       recipient: string,
       amount: BigNumberish,
@@ -633,8 +574,9 @@ export class Pyrotoken extends BaseContract {
 
     redeemRate(overrides?: CallOverrides): Promise<BigNumber>;
 
-    setNoBurn(
-      noBurnEnabled: boolean,
+    setFeeExemptionStatusFor(
+      exempt: string,
+      status: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -671,11 +613,6 @@ export class Pyrotoken extends BaseContract {
     approve(
       spender: string,
       amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    approveNoBurnFor(
-      exempt: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -719,12 +656,6 @@ export class Pyrotoken extends BaseContract {
 
     name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    noBurnAllowance(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     redeem(
       recipient: string,
       amount: BigNumberish,
@@ -733,8 +664,9 @@ export class Pyrotoken extends BaseContract {
 
     redeemRate(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    setNoBurn(
-      noBurnEnabled: boolean,
+    setFeeExemptionStatusFor(
+      exempt: string,
+      status: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

@@ -1,112 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
-
-/**
- * @dev Interface of the ERC20 standard as defined in the EIP.
- */
-interface IERC20 {
-    /**
-     * @dev Returns the name of the token.
-     */
-    function name() external view returns (string memory);
-
-    /**
-     * @dev Returns the symbol of the token.
-     */
-    function symbol() external view returns (string memory);
-
-    /**
-     * @dev Returns the decimals places of the token.
-     */
-    function decimals() external view returns (uint8);
-
-    /**
-     * @dev Returns the amount of tokens in existence.
-     */
-    function totalSupply() external view returns (uint256);
-
-    /**
-     * @dev Returns the amount of tokens owned by `account`.
-     */
-    function balanceOf(address account) external view returns (uint256);
-
-    /**
-     * @dev Moves `amount` tokens from the caller's account to `recipient`.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * Emits a {Transfer} event.
-     */
-    function transfer(address recipient, uint256 amount)
-        external
-        returns (bool);
-
-    /**
-     * @dev Returns the remaining number of tokens that `spender` will be
-     * allowed to spend on behalf of `owner` through {transferFrom}. This is
-     * zero by default.
-     *
-     * This value changes when {approve} or {transferFrom} are called.
-     */
-    function allowance(address owner, address spender)
-        external
-        view
-        returns (uint256);
-
-    /**
-     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * IMPORTANT: Beware that changing an allowance with this method brings the risk
-     * that someone may use both the old and the new allowance by unfortunate
-     * transaction ordering. One possible solution to mitigate this race
-     * condition is to first reduce the spender's allowance to 0 and set the
-     * desired value afterwards:
-     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     *
-     * Emits an {Approval} event.
-     */
-    function approve(address spender, uint256 amount) external returns (bool);
-
-    /**
-     * @dev Moves `amount` tokens from `sender` to `recipient` using the
-     * allowance mechanism. `amount` is then deducted from the caller's
-     * allowance.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * Emits a {Transfer} event.
-     */
-    function transferFrom(
-        address sender,
-        address recipient,
-        uint256 amount
-    ) external returns (bool);
-
-    /**
-     * @dev Emitted when `value` tokens are moved from one account (`from`) to
-     * another (`to`).
-     *
-     * Note that `value` may be zero.
-     */
-    event Transfer(
-        address indexed from,
-        address indexed to,
-        uint256 value,
-        uint256 burnt
-    );
-
-    /**
-     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
-     * a call to {approve}. `value` is the new allowance.
-     */
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
-}
+import "./facades/Enums.sol";
+import "./facades/IERC20.sol";
 
 abstract contract Context {
     function _msgSender() internal view virtual returns (address) {
@@ -297,8 +192,7 @@ abstract contract ERC20 is Context, IERC20 {
     function _transfer(
         address sender,
         address recipient,
-        uint256 amount,
-        bool noFee
+        uint256 amount
     ) internal virtual;
 
     /** @dev Creates `amount` tokens and assigns them to `account`, increasing
@@ -315,7 +209,7 @@ abstract contract ERC20 is Context, IERC20 {
 
         _totalSupply += amount;
         _balances[account] += amount;
-        emit Transfer(address(0), account, amount, 0);
+        emit Transfer(address(0), account, uint128(amount), 0);
     }
 
     /**
@@ -339,7 +233,7 @@ abstract contract ERC20 is Context, IERC20 {
         }
         _totalSupply -= amount;
 
-        emit Transfer(account, address(0), amount, 0);
+        emit Transfer(account, address(0), uint128(amount), 0);
     }
 
     /**
@@ -412,15 +306,63 @@ interface LiquidiyReceiverLike {
     function drain(address baseToken) external returns (uint256);
 }
 
-contract Pyrotoken is ERC20 {
+abstract contract ReentrancyGuard {
+    uint256 private constant _NOT_ENTERED = 1;
+    uint256 private constant _ENTERED = 2;
+
+    uint256 private _status;
+
+    constructor() {
+        _status = _NOT_ENTERED;
+    }
+
+    modifier nonReentrant() {
+        // On the first call to nonReentrant, _notEntered will be true
+        require(_status != _ENTERED, "ReentrancyGuard: reentrant call");
+
+        // Any calls to nonReentrant after this point will fail
+        _status = _ENTERED;
+
+        _;
+
+        // By storing the original value once again, a refund is triggered (see
+        // https://eips.ethereum.org/EIPS/eip-2200)
+        _status = _NOT_ENTERED;
+    }
+}
+
+contract Pyrotoken is ERC20, ReentrancyGuard {
     struct Configuration {
         address liquidityReceiver;
         IERC20 baseToken;
-        bool noBurnEnabled;
+        address loanOfficer;
+    }
+    struct DebtObligation {
+        uint256 base;
+        uint256 pyro;
+        uint256 redeemRate;
     }
     Configuration public config;
     uint256 private constant ONE = 1 ether;
-    mapping(address => mapping(address => bool)) public noBurnAllowance;
+
+    /*
+    Exemptions aren't a form of cronyism. Rather, it will be decided on fair, open cryptoeconomic rules to allow protocols that need to
+    frequently work with pyrotokens to be able to do so without incurring unbearable cost to themselves. Always bear in mind that the big
+    AMMs including Behodler will burn Pyrotokens with abandon and without exception.
+    We don't need every single protocol to bear the cost of Pyro growth and would 
+    prefer to hit the high volume bots where they benefit most.
+    Regarding fair cryptoeconomic incentives, a contract that requires burning a certain level of EYE would be a good example though we may get more sophisticated than that. 
+    As a pertinent example, since Behodler burns as a primitive, 
+    if we list a pyrotoken for trade as burnable, then the total fee will be the Behodler burn fee plus the incoming transfer burn as well as the outgoing transfer burn when it is bought.
+    This might be a little too much burning. In this case, we can turn of the transfer burns and still get the pyrotoken burning on sale.  
+    */
+    mapping(address => FeeExemption) feeExemptionStatus;
+
+    //By separating logic (loan officer) from state(debtObligations), we can upgrade the loan system without requiring existing borrowers migrate.
+    //Seamless upgrade. This allows for better loan logic to replace the initial version.
+    //By mapping debt on an individual pyrotoken basis, it means each pyrotoken can have it's own loan system. Potentially creating
+    //a flourising of competing ideas. Seasteading for debt.
+    mapping(address => DebtObligation) debtObligations;
 
     constructor(
         address baseToken,
@@ -433,7 +375,7 @@ contract Pyrotoken is ERC20 {
 
     modifier onlyReceiver() {
         require(
-            msg.sender == config.liquidityReceiver,
+            _msgSender() == config.liquidityReceiver,
             "Pyrotoken: Only Liquidity Receiver."
         );
         _;
@@ -442,6 +384,21 @@ contract Pyrotoken is ERC20 {
     modifier updateReserve() {
         LiquidiyReceiverLike(config.liquidityReceiver).drain(address(this));
         _;
+    }
+
+    modifier onlyLoanOfficer() {
+        require(
+            _msgSender() == config.loanOfficer,
+            "Pyrotoken: Only Loan Officer."
+        );
+        _;
+    }
+
+    function setFeeExemptionStatusFor(address exempt, FeeExemption status)
+        public
+        onlyReceiver
+    {
+        feeExemptionStatus[exempt] = status;
     }
 
     function transferToNewLiquidityReceiver(address liquidityReceiver)
@@ -455,53 +412,57 @@ contract Pyrotoken is ERC20 {
         config.liquidityReceiver = liquidityReceiver;
     }
 
-    function setNoBurn(bool noBurnEnabled) external onlyReceiver {
-        config.noBurnEnabled = noBurnEnabled;
-    }
-
-    function approveNoBurnFor(address exempt) external {
-        if (config.noBurnEnabled) {
-            noBurnAllowance[_msgSender()][exempt] = true;
-        }
-    }
-
     function mint(address recipient, uint256 amount)
         external
         updateReserve
         returns (uint256)
     {
         uint256 _redeemRate = redeemRate();
-
         require(
             config.baseToken.transferFrom(_msgSender(), address(this), amount)
         );
+
         //fee on transfer tokens
         uint256 baseBalance = config.baseToken.balanceOf(address(this));
         uint256 pyro = (baseBalance * ONE) / _redeemRate;
         _mint(recipient, pyro);
-        emit Transfer(address(0), recipient, amount, 0);
+        emit Transfer(address(0), recipient, uint128(amount), 0);
         return pyro;
+    }
+
+    function redeemFrom(
+        address owner,
+        address recipient,
+        uint256 amount
+    ) external returns (uint256) {
+        uint256 currentAllowance = _allowances[owner][_msgSender()];
+        _approve(owner, _msgSender(), currentAllowance - amount);
+        return _redeem(owner, recipient, amount);
     }
 
     function redeem(address recipient, uint256 amount)
         external
-        updateReserve
         returns (uint256)
     {
+        return _redeem(recipient, _msgSender(), amount);
+    }
+
+    function _redeem(
+        address recipient,
+        address owner,
+        uint256 amount
+    ) internal updateReserve returns (uint256) {
         uint256 _redeemRate = redeemRate();
-        _balances[_msgSender()] -= amount;
+        _balances[owner] -= amount;
         _totalSupply -= amount;
-        uint256 fee = (amount * 2) / 100;
-        if (noBurnAllowance[_msgSender()][recipient]) {
-            fee = 0;
-            noBurnAllowance[_msgSender()][recipient] = false;
-        }
+        uint256 fee = calculateRedemptionFee(amount, owner);
+
         uint256 net = amount - fee;
         uint256 baseTokens = (_redeemRate * net) / ONE;
-        emit Transfer(_msgSender(), address(0), amount, amount);
+        emit Transfer(owner, address(0), uint128(amount), uint128(amount));
         require(
             config.baseToken.transfer(recipient, baseTokens),
-            "Pyrotoken reserve transfer faled"
+            "Pyrotoken reserve transfer failed."
         );
         return baseTokens;
     }
@@ -519,9 +480,7 @@ contract Pyrotoken is ERC20 {
         override
         returns (bool)
     {
-        bool noFee = noBurnAllowance[_msgSender()][_msgSender()];
-        if (noFee) noBurnAllowance[_msgSender()][_msgSender()] = false;
-        _transfer(_msgSender(), recipient, amount, noFee);
+        _transfer(_msgSender(), recipient, amount);
         return true;
     }
 
@@ -530,11 +489,7 @@ contract Pyrotoken is ERC20 {
         address recipient,
         uint256 amount
     ) public virtual override returns (bool) {
-        bool noFee = noBurnAllowance[sender][_msgSender()];
-        if (noFee) {
-            noBurnAllowance[sender][_msgSender()] = false;
-        }
-        _transfer(sender, recipient, amount, noFee);
+        _transfer(sender, recipient, amount);
 
         uint256 currentAllowance = _allowances[sender][_msgSender()];
         require(
@@ -548,18 +503,63 @@ contract Pyrotoken is ERC20 {
         return true;
     }
 
+    function setObligationFor(
+        address borrower,
+        uint256 baseTokenBorrowed,
+        uint256 pyrotokenStaked
+    ) external onlyLoanOfficer nonReentrant returns (bool success) {
+        DebtObligation memory currentDebt = debtObligations[borrower];
+        uint256 rate = redeemRate();
+        uint256 minPyroStake = (baseTokenBorrowed * ONE) / rate;
+        require(pyrotokenStaked >= minPyroStake, "Pyro: Unsustainable loan.");
+
+        debtObligations[borrower] = DebtObligation(
+            baseTokenBorrowed,
+            pyrotokenStaked,
+            rate
+        );
+
+        int256 netStake = int256(pyrotokenStaked) - int256(currentDebt.pyro);
+        if (netStake > 0) {
+            _balances[borrower] -= uint256(netStake);
+            _balances[address(this)] += uint256(netStake);
+        } else if (netStake < 0) {
+            _balances[borrower] += uint256(-netStake);
+            _balances[address(this)] -= uint256(-netStake);
+        }
+
+        int256 netBorrowing = int256(baseTokenBorrowed) -
+            int256(currentDebt.base);
+        if (netBorrowing > 0) {
+            config.baseToken.transfer(borrower, uint256(netBorrowing));
+        } else if (netBorrowing < 0) {
+            config.baseToken.transferFrom(
+                borrower,
+                address(this),
+                uint256(-netBorrowing)
+            );
+        }
+
+        success = true;
+    }
+
+    function destroyObligationFor(
+        address borrower,
+        uint256 baseTokenRepaid,
+        uint256 pyroTokenRequested
+    ) external onlyLoanOfficer returns (bool succes) {}
+
     function _transfer(
         address sender,
         address recipient,
-        uint256 amount,
-        bool noFee
+        uint256 amount
     ) internal override {
         if (recipient == address(0)) {
             burn(amount);
             return;
         }
         uint256 senderBalance = _balances[sender];
-        uint256 fee = noFee ? 0 : amount / 1000;
+        uint256 fee = calculateTransferFee(amount, sender, recipient);
 
         _totalSupply -= fee;
 
@@ -567,6 +567,32 @@ contract Pyrotoken is ERC20 {
         _balances[sender] = senderBalance - amount;
         _balances[recipient] += netReceived;
 
-        emit Transfer(sender, recipient, amount, fee); //extra parameters don't throw off parsers when interpreted through JSON.
+        emit Transfer(sender, recipient, uint128(amount), uint128(fee)); //extra parameters don't throw off parsers when interpreted through JSON.
+    }
+
+    function calculateTransferFee(
+        uint256 amount,
+        address sender,
+        address receiver
+    ) internal view returns (uint256) {
+        uint256 senderStatus = uint256(feeExemptionStatus[sender]);
+        uint256 receiverStatus = uint256(feeExemptionStatus[receiver]);
+        if (
+            (senderStatus >= 1 && senderStatus <= 4) ||
+            (receiverStatus >= 4 && receiverStatus <= 6)
+        ) {
+            return 0;
+        }
+        return amount / 1000;
+    }
+
+    function calculateRedemptionFee(uint256 amount, address redeemer)
+        internal
+        view
+        returns (uint256)
+    {
+        uint256 status = uint256(feeExemptionStatus[redeemer]);
+        if ((status >= 3 || status <= 4) || status > 5) return 0;
+        return (amount * 2) / 100;
     }
 }

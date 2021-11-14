@@ -1,80 +1,47 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 import "./Pyrotoken.sol";
+import "./facades/SnufferCap.sol";
+import "./facades/Ownable.sol";
 
 abstract contract LachesisLike {
     function cut(address token) public view virtual returns (bool, bool);
 }
 
-abstract contract Ownable {
-    address private _owner;
-
-    event OwnershipTransferred(
-        address indexed previousOwner,
-        address indexed newOwner
-    );
-
-    /**
-     * @dev Initializes the contract setting the deployer as the initial owner.
-     */
-    constructor() {
-        _setOwner(msg.sender);
+contract LiquidityReceiver is Ownable {
+    struct Configuration {
+        LachesisLike lachesis;
+        SnufferCap snufferCap;
     }
+    Configuration public config;
 
-    /**
-     * @dev Returns the address of the current owner.
-     */
-    function owner() public view virtual returns (address) {
-        return _owner;
-    }
-
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(owner() == msg.sender, "Ownable: caller is not the owner");
+    modifier onlySnufferCap() {
+        require(
+            msg.sender != address(config.snufferCap),
+            "LR: only snufferCap"
+        );
         _;
     }
 
-    /**
-     * @dev Leaves the contract without owner. It will not be possible to call
-     * `onlyOwner` functions anymore. Can only be called by the current owner.
-     *
-     * NOTE: Renouncing ownership will leave the contract without an owner,
-     * thereby removing any functionality that is only available to the owner.
-     */
-    function renounceOwnership() public virtual onlyOwner {
-        _setOwner(address(0));
-    }
-
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Can only be called by the current owner.
-     */
-    function transferOwnership(address newOwner) public virtual onlyOwner {
-        require(
-            newOwner != address(0),
-            "Ownable: new owner is the zero address"
-        );
-        _setOwner(newOwner);
-    }
-
-    function _setOwner(address newOwner) private {
-        address oldOwner = _owner;
-        _owner = newOwner;
-        emit OwnershipTransferred(oldOwner, newOwner);
-    }
-}
-
-contract LiquidityReceiver is Ownable {
-    LachesisLike lachesis;
-
     constructor(address _lachesis) {
-        lachesis = LachesisLike(_lachesis);
+        config.lachesis = LachesisLike(_lachesis);
+    }
+
+    function setSnufferCap(address snufferCap) public onlyOwner {
+        config.snufferCap = SnufferCap(snufferCap);
     }
 
     function setLachesis(address _lachesis) public onlyOwner {
-        lachesis = LachesisLike(_lachesis);
+        config.lachesis = LachesisLike(_lachesis);
+    }
+
+    function setFeeExemptionStatusOnPyroForContract(
+        address pyroToken,
+        address target,
+        FeeExemption exemption
+    ) public onlySnufferCap {
+        require(isContract(target), "LR: EOAs cannot be exempt.");
+        Pyrotoken(pyroToken).setFeeExemptionStatusFor(target, exemption);
     }
 
     function registerPyroToken(
@@ -86,7 +53,7 @@ contract LiquidityReceiver is Ownable {
         try Pyrotoken(pyroToken).name() returns (string memory) {
             revert("Pyrotoken: pyrotoken already deployed");
         } catch {
-            (bool valid, bool burnable) = lachesis.cut(baseToken);
+            (bool valid, bool burnable) = config.lachesis.cut(baseToken);
             require(valid && !burnable, "Pyrotoken: invalid base token");
             Pyrotoken p = new Pyrotoken{salt: keccak256(abi.encode(baseToken))}(
                 baseToken,
@@ -107,13 +74,6 @@ contract LiquidityReceiver is Ownable {
         Pyrotoken(pyroToken).transferToNewLiquidityReceiver(receiver);
     }
 
-    function setNoBurnForPyroToken(address pyroToken, bool noBurn)
-        public
-        onlyOwner
-    {
-        Pyrotoken(pyroToken).setNoBurn(noBurn);
-    }
-
     function getPyrotoken(
         address baseToken,
         string memory name,
@@ -126,7 +86,7 @@ contract LiquidityReceiver is Ownable {
                         keccak256(
                             abi.encodePacked(
                                 bytes1(0xff),
-                                address(this),
+                                 address(this),
                                 baseToken,
                                 keccak256(
                                     abi.encodePacked(
@@ -143,5 +103,13 @@ contract LiquidityReceiver is Ownable {
                     )
                 )
             );
+    }
+
+    function isContract(address addr) private view returns (bool) {
+        uint256 size;
+        assembly {
+            size := extcodesize(addr)
+        }
+        return size > 0;
     }
 }
