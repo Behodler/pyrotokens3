@@ -6,8 +6,7 @@ The third phase in Behodler's super deflationary token wrappers.
 
 Pyrotokens are wrapper tokens of existing tokens traded on Behodler, crafted on deflationary tokenomics. The relationship between Pyrotokens and Behodler listed tokens is 1 to 1. Eg. Weth has PyroWeth, OXT has PyroOXT and so on. Pyrotokens achieve deflationary price movements with respect to their base token by establishing a redeem rate that can only increase. The redeem rate is algorithmically calculated as the total base token in reserve divided by the supply of the pyrotoken. In notation, if R is the redeem rate, B the total reserve of base tokens held in a pyrotoken contract and T, the total supply of pyrotokens, then the redeem rate is given by the fraction,
 
-<img src="https://latex.codecogs.com/svg.latex?\Large;R=\frac{B}{T}" title="\Large R=\frac{B}{T}" />
-
+![Redeem](images/RedeemRate.png "redeem rate")
 
 EG. Suppose in that there are 10 Weth in reserve and the supply of PyroWeth is 8. This implies the redeem rate of PyroWeth is
 
