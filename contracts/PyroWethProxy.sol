@@ -53,30 +53,4 @@ contract PyroWethProxy is Ownable {
         uint256 weth10Balance = IERC20(weth10).balanceOf(address(this));
         return pyroWeth.mint(msg.sender, weth10Balance);
     }
-
-    function calculateMintedPyroWeth(uint256 baseTokenAmount)
-        external
-        view
-        returns (uint256)
-    {
-        uint256 pyroTokenRedeemRate = pyroWeth.redeemRate();
-        uint256 mintedPyroTokens = (baseTokenAmount * ONE) /
-            (pyroTokenRedeemRate);
-        return (mintedPyroTokens * 999) / 1000; //0.1% fee
-    }
-
-    function calculateRedeemedWeth(uint256 pyroTokenAmount)
-        external
-        view
-        returns (uint256)
-    {
-        uint256 pyroTokenSupply = pyroWeth.totalSupply() -
-            ((pyroTokenAmount * 1) / 1000);
-        uint256 wethBalance = IERC20(weth10).balanceOf(address(pyroWeth));
-        uint256 newRedeemRate = (wethBalance * ONE) / pyroTokenSupply;
-        uint256 newPyroTokenbalance = (pyroTokenAmount * 999) / 1000;
-        uint256 fee = (newPyroTokenbalance * 2) / 100;
-        uint256 net = newPyroTokenbalance - fee;
-        return (net * newRedeemRate) / ONE;
-    }
 }

@@ -76,7 +76,8 @@ contract V2Migrator {
 
         //REDEEM OLD PYROTOKENS
         pyrotoken2.transferFrom(sender, address(this), p2token_amount);
-        pyrotoken2.redeem(p2token_amount);
+        uint ptoken2Balance = pyrotoken2.balanceOf(address(this));
+        pyrotoken2.redeem(ptoken2Balance);
         uint256 commonBaseBalance = IERC20(commonBaseToken).balanceOf(
             address(this)
         );

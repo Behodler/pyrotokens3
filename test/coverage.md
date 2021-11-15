@@ -1,5 +1,6 @@
 
 
+**Note: for security reasons, this page does not render correctly in Github but a local markdown parser will show the correct colours.**
 <style>
 div{
     color:red;
@@ -50,9 +51,22 @@ Note: the line items don't necessarily correspond to tests 1:1 but instead repre
 <div>Borrower cannot borrow more base than implied by redeem rate.</div>
 <div>After borrowing max, redeem rate growth allows for larger borrowing</div>
 <div>Borrower cannot borrow more base than implied by redeem rate.</div>
-<div>Paying back all debt leads total unstaking of pyro</div>
+<div>Paying back all debt allows for total unstaking of pyro</div>
+<div>Loan officer cannot borrow if not approved</div>
+
+## PyroWeth Proxy
+<div>Minting incurs no fee, redeeming only incurs the exit fee</div>
+
+## V2 Migrator
+<div>Providing incorrect corresponding V3 token address fails</div>
+<div>Minted V3 amount must match expected amount</div>
+<div>Only fee is 2% exit V2 fee</div>
+<div>Minted V2 amount must match expected amount</div>
+<div>Sending more base token or pyrotoken2 or pyrotoken3 to migrator before migration doesn't break migrator</div>
+<div>Mint many works.</div>
 
 ## Constant Product Loan Officer test 
+
 
 
 
