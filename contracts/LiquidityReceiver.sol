@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 import "./Pyrotoken.sol";
 import "./facades/SnufferCap.sol";
 import "./facades/Ownable.sol";
+import "./facades/PyroTokenLike.sol";
 
 abstract contract LachesisLike {
     function cut(address token) public view virtual returns (bool, bool);
@@ -31,6 +32,21 @@ contract LiquidityReceiver is Ownable {
         config.snufferCap = SnufferCap(snufferCap);
     }
 
+    function togglePyrotokenPullFeeRevenue(address pyrotoken, bool pull) public onlyOwner {
+        PyroTokenLike(pyrotoken).togglePullPendingFeeRevenue(pull);
+    }
+
+    function setPyroTokenLoanOfficer(address pyrotoken, address loanOfficer)
+        public
+        onlyOwner
+    {
+        require(
+            loanOfficer != address(0) && pyrotoken != address(0),
+            "LR: zero address detected"
+        );
+        PyroTokenLike(pyrotoken).setLoanOfficer(loanOfficer);
+    }
+
     function setLachesis(address _lachesis) public onlyOwner {
         config.lachesis = LachesisLike(_lachesis);
     }
@@ -49,7 +65,7 @@ contract LiquidityReceiver is Ownable {
         string memory name,
         string memory symbol
     ) public onlyOwner {
-        address pyroToken = getPyrotoken(baseToken, name, symbol);
+        address pyroToken = getPyrotoken(baseToken);
         try Pyrotoken(pyroToken).name() returns (string memory) {
             revert("Pyrotoken: pyrotoken already deployed");
         } catch {
@@ -75,9 +91,7 @@ contract LiquidityReceiver is Ownable {
     }
 
     function getPyrotoken(
-        address baseToken,
-        string memory name,
-        string memory symbol
+        address baseToken
     ) public view returns (address) {
         return
             address(
@@ -86,15 +100,13 @@ contract LiquidityReceiver is Ownable {
                         keccak256(
                             abi.encodePacked(
                                 bytes1(0xff),
-                                 address(this),
+                                address(this),
                                 baseToken,
                                 keccak256(
                                     abi.encodePacked(
                                         type(Pyrotoken).creationCode,
                                         abi.encodePacked(
-                                            baseToken,
-                                            name,
-                                            symbol
+                                            baseToken
                                         )
                                     )
                                 )

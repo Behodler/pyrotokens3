@@ -336,6 +336,7 @@ contract Pyrotoken is ERC20, ReentrancyGuard {
         address liquidityReceiver;
         IERC20 baseToken;
         address loanOfficer;
+        bool pullPendingFeeRevenue;
     }
     struct DebtObligation {
         uint256 base;
@@ -347,7 +348,7 @@ contract Pyrotoken is ERC20, ReentrancyGuard {
 
     /*
     Exemptions aren't a form of cronyism. Rather, it will be decided on fair, open cryptoeconomic rules to allow protocols that need to
-    frequently work with pyrotokens to be able to do so without incurring unbearable cost to themselves. Always bear in mind that the big
+    frequently work with pyrotokens to be able to do so without incurring untenable cost to themselves. Always bear in mind that the big
     AMMs including Behodler will burn Pyrotokens with abandon and without exception.
     We don't need every single protocol to bear the cost of Pyro growth and would 
     prefer to hit the high volume bots where they benefit most.
@@ -371,6 +372,7 @@ contract Pyrotoken is ERC20, ReentrancyGuard {
     ) ERC20(name_, symbol_) {
         config.liquidityReceiver = _msgSender();
         config.baseToken = IERC20(baseToken);
+        config.pullPendingFeeRevenue = true;
     }
 
     modifier onlyReceiver() {
@@ -382,7 +384,9 @@ contract Pyrotoken is ERC20, ReentrancyGuard {
     }
 
     modifier updateReserve() {
-        LiquidiyReceiverLike(config.liquidityReceiver).drain(address(this));
+        if (config.pullPendingFeeRevenue) {
+            LiquidiyReceiverLike(config.liquidityReceiver).drain(address(this));
+        }
         _;
     }
 
@@ -392,6 +396,17 @@ contract Pyrotoken is ERC20, ReentrancyGuard {
             "Pyrotoken: Only Loan Officer."
         );
         _;
+    }
+
+    function setLoanOfficer(address loanOfficer) external onlyReceiver {
+        config.loanOfficer = loanOfficer;
+    }
+
+    function togglePullPendingFeeRevenue(bool pullPendingFeeRevenue)
+        external
+        onlyReceiver
+    {
+        config.pullPendingFeeRevenue = pullPendingFeeRevenue;
     }
 
     function setFeeExemptionStatusFor(address exempt, FeeExemption status)
@@ -520,12 +535,19 @@ contract Pyrotoken is ERC20, ReentrancyGuard {
         );
 
         int256 netStake = int256(pyrotokenStaked) - int256(currentDebt.pyro);
+        uint256 stake;
         if (netStake > 0) {
-            _balances[borrower] -= uint256(netStake);
-            _balances[address(this)] += uint256(netStake);
+            stake = uint256(netStake);
+
+            uint256 currentAllowance = _allowances[borrower][_msgSender()];
+            _approve(borrower, _msgSender(), currentAllowance - stake);
+
+            _balances[borrower] -= stake;
+            _balances[address(this)] += stake;
         } else if (netStake < 0) {
-            _balances[borrower] += uint256(-netStake);
-            _balances[address(this)] -= uint256(-netStake);
+            stake = uint256(-netStake);
+            _balances[borrower] += stake;
+            _balances[address(this)] -= stake;
         }
 
         int256 netBorrowing = int256(baseTokenBorrowed) -
@@ -542,12 +564,6 @@ contract Pyrotoken is ERC20, ReentrancyGuard {
 
         success = true;
     }
-
-    function destroyObligationFor(
-        address borrower,
-        uint256 baseTokenRepaid,
-        uint256 pyroTokenRequested
-    ) external onlyLoanOfficer returns (bool succes) {}
 
     function _transfer(
         address sender,
@@ -574,7 +590,7 @@ contract Pyrotoken is ERC20, ReentrancyGuard {
         uint256 amount,
         address sender,
         address receiver
-    ) internal view returns (uint256) {
+    ) public view returns (uint256) {
         uint256 senderStatus = uint256(feeExemptionStatus[sender]);
         uint256 receiverStatus = uint256(feeExemptionStatus[receiver]);
         if (
@@ -587,7 +603,7 @@ contract Pyrotoken is ERC20, ReentrancyGuard {
     }
 
     function calculateRedemptionFee(uint256 amount, address redeemer)
-        internal
+        public
         view
         returns (uint256)
     {
