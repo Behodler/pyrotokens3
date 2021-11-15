@@ -10,7 +10,9 @@ Pyrotokens are wrapper tokens of existing tokens traded on Behodler, crafted on 
 
 EG. Suppose in that there are 10 Weth in reserve and the supply of PyroWeth is 8. This implies the redeem rate of PyroWeth is
 
-<img src="https://latex.codecogs.com/svg.latex?\Large\frac{10}{8}=1.25" title="\Large frac{10}{8} = 1.25" />
+
+![RedeemEg](images/example.png "redeem rate eg")
+
 
 This means that if you wish to mint 1 PyroWeth, you require 1.25 Eth. Similarly redeeming 1 PyroWeth will give 1.25 Eth.
 
