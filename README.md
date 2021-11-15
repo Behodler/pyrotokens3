@@ -18,7 +18,7 @@ This means that if you wish to mint 1 PyroWeth, you require 1.25 Eth. Similarly 
 
 ## The 3 Laws of Pyrotokens
 
-The redeem rate equation is given by the fraction $\frac{B}{T}$. While minting and redeeming leave the fraction unchanged, the numerator and denominator can move independently of one another. However the following contract enforced rules apply:
+The redeem rate equation is given by the fraction B/T. While minting and redeeming leave the fraction unchanged, the numerator and denominator can move independently of one another. However the following contract enforced rules apply:
 
 1. When the denominator changes, the numerator must remain fixed.
 2. When the numerator changes, the denominator must remain fixed.
