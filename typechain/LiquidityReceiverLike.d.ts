@@ -21,16 +21,43 @@ import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 
 interface LiquidityReceiverLikeInterface extends ethers.utils.Interface {
   functions: {
+    "getPyroToken(address)": FunctionFragment;
+    "registerPyroToken(address,string,string)": FunctionFragment;
     "setFeeExemptionStatusOnPyroForContract(address,address,uint8)": FunctionFragment;
+    "setPyroTokenLoanOfficer(address,address)": FunctionFragment;
   };
 
+  encodeFunctionData(
+    functionFragment: "getPyroToken",
+    values: [string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "registerPyroToken",
+    values: [string, string, string]
+  ): string;
   encodeFunctionData(
     functionFragment: "setFeeExemptionStatusOnPyroForContract",
     values: [string, string, BigNumberish]
   ): string;
+  encodeFunctionData(
+    functionFragment: "setPyroTokenLoanOfficer",
+    values: [string, string]
+  ): string;
 
   decodeFunctionResult(
+    functionFragment: "getPyroToken",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "registerPyroToken",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "setFeeExemptionStatusOnPyroForContract",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setPyroTokenLoanOfficer",
     data: BytesLike
   ): Result;
 
@@ -81,13 +108,40 @@ export class LiquidityReceiverLike extends BaseContract {
   interface: LiquidityReceiverLikeInterface;
 
   functions: {
+    getPyroToken(
+      baseToken: string,
+      overrides?: CallOverrides
+    ): Promise<[string]>;
+
+    registerPyroToken(
+      baseToken: string,
+      name: string,
+      symbol: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     setFeeExemptionStatusOnPyroForContract(
       pyroToken: string,
       target: string,
       exemption: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
+
+    setPyroTokenLoanOfficer(
+      pyroToken: string,
+      loanOfficer: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
   };
+
+  getPyroToken(baseToken: string, overrides?: CallOverrides): Promise<string>;
+
+  registerPyroToken(
+    baseToken: string,
+    name: string,
+    symbol: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   setFeeExemptionStatusOnPyroForContract(
     pyroToken: string,
@@ -96,11 +150,32 @@ export class LiquidityReceiverLike extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  setPyroTokenLoanOfficer(
+    pyroToken: string,
+    loanOfficer: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   callStatic: {
+    getPyroToken(baseToken: string, overrides?: CallOverrides): Promise<string>;
+
+    registerPyroToken(
+      baseToken: string,
+      name: string,
+      symbol: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     setFeeExemptionStatusOnPyroForContract(
       pyroToken: string,
       target: string,
       exemption: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setPyroTokenLoanOfficer(
+      pyroToken: string,
+      loanOfficer: string,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -108,19 +183,55 @@ export class LiquidityReceiverLike extends BaseContract {
   filters: {};
 
   estimateGas: {
+    getPyroToken(
+      baseToken: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    registerPyroToken(
+      baseToken: string,
+      name: string,
+      symbol: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     setFeeExemptionStatusOnPyroForContract(
       pyroToken: string,
       target: string,
       exemption: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
+
+    setPyroTokenLoanOfficer(
+      pyroToken: string,
+      loanOfficer: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
+    getPyroToken(
+      baseToken: string,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    registerPyroToken(
+      baseToken: string,
+      name: string,
+      symbol: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     setFeeExemptionStatusOnPyroForContract(
       pyroToken: string,
       target: string,
       exemption: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setPyroTokenLoanOfficer(
+      pyroToken: string,
+      loanOfficer: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };

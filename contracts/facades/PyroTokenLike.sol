@@ -29,4 +29,10 @@ abstract contract PyroTokenLike is IERC20 {
     function togglePullPendingFeeRevenue(bool pullPendingFeeRevenue)
         external
         virtual;
+
+    function setObligationFor(
+        address borrower,
+        uint256 baseTokenBorrowed,
+        uint256 pyroTokenStaked
+    ) external virtual returns (bool);
 }

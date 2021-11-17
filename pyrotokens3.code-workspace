@@ -5,6 +5,6 @@
 		}
 	],
 	"settings": {
-		"solidity.compileUsingLocalVersion": "/home/justin/weidai ecosystem/pyrotokens3/soljson-v0.8.4+commit.c7e474f2.js"
+		"solidity.compileUsingLocalVersion": "/home/justin/weidai ecosystem/pyroTokens3/soljson-v0.8.4+commit.c7e474f2.js"
 	}
 }

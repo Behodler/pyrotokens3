@@ -21,6 +21,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IWETH10__factory>;
     getContractFactory(
+      name: "LachesisLike",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.LachesisLike__factory>;
+    getContractFactory(
       name: "LiquidityReceiverLike",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.LiquidityReceiverLike__factory>;
@@ -37,10 +41,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.SnufferCap__factory>;
     getContractFactory(
-      name: "LachesisLike",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.LachesisLike__factory>;
-    getContractFactory(
       name: "LiquidityReceiver",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.LiquidityReceiver__factory>;
@@ -53,9 +53,9 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.LiquidiyReceiverLike__factory>;
     getContractFactory(
-      name: "Pyrotoken",
+      name: "PyroToken",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.Pyrotoken__factory>;
+    ): Promise<Contracts.PyroToken__factory>;
     getContractFactory(
       name: "PyroWethProxy",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -69,17 +69,29 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.BurnEYESnufferCap__factory>;
     getContractFactory(
+      name: "BaseToken",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.BaseToken__factory>;
+    getContractFactory(
+      name: "TestERC20",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.TestERC20__factory>;
+    getContractFactory(
+      name: "Lachesis",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.Lachesis__factory>;
+    getContractFactory(
+      name: "SimpleLoanOfficer",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.SimpleLoanOfficer__factory>;
+    getContractFactory(
       name: "LRNew",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.LRNew__factory>;
     getContractFactory(
-      name: "LROld",
+      name: "PyroToken2",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.LROld__factory>;
-    getContractFactory(
-      name: "Pyrotoken2",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.Pyrotoken2__factory>;
+    ): Promise<Contracts.PyroToken2__factory>;
     getContractFactory(
       name: "V2Migrator",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -95,6 +107,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.IWETH10>;
+    getContractAt(
+      name: "LachesisLike",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.LachesisLike>;
     getContractAt(
       name: "LiquidityReceiverLike",
       address: string,
@@ -116,11 +133,6 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.SnufferCap>;
     getContractAt(
-      name: "LachesisLike",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.LachesisLike>;
-    getContractAt(
       name: "LiquidityReceiver",
       address: string,
       signer?: ethers.Signer
@@ -136,10 +148,10 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.LiquidiyReceiverLike>;
     getContractAt(
-      name: "Pyrotoken",
+      name: "PyroToken",
       address: string,
       signer?: ethers.Signer
-    ): Promise<Contracts.Pyrotoken>;
+    ): Promise<Contracts.PyroToken>;
     getContractAt(
       name: "PyroWethProxy",
       address: string,
@@ -156,20 +168,35 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.BurnEYESnufferCap>;
     getContractAt(
+      name: "BaseToken",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.BaseToken>;
+    getContractAt(
+      name: "TestERC20",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.TestERC20>;
+    getContractAt(
+      name: "Lachesis",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.Lachesis>;
+    getContractAt(
+      name: "SimpleLoanOfficer",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.SimpleLoanOfficer>;
+    getContractAt(
       name: "LRNew",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.LRNew>;
     getContractAt(
-      name: "LROld",
+      name: "PyroToken2",
       address: string,
       signer?: ethers.Signer
-    ): Promise<Contracts.LROld>;
-    getContractAt(
-      name: "Pyrotoken2",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.Pyrotoken2>;
+    ): Promise<Contracts.PyroToken2>;
     getContractAt(
       name: "V2Migrator",
       address: string,

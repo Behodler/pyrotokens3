@@ -14,6 +14,48 @@ const _abi = [
     inputs: [
       {
         internalType: "address",
+        name: "baseToken",
+        type: "address",
+      },
+    ],
+    name: "getPyroToken",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "baseToken",
+        type: "address",
+      },
+      {
+        internalType: "string",
+        name: "name",
+        type: "string",
+      },
+      {
+        internalType: "string",
+        name: "symbol",
+        type: "string",
+      },
+    ],
+    name: "registerPyroToken",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
         name: "pyroToken",
         type: "address",
       },
@@ -29,6 +71,24 @@ const _abi = [
       },
     ],
     name: "setFeeExemptionStatusOnPyroForContract",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "pyroToken",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "loanOfficer",
+        type: "address",
+      },
+    ],
+    name: "setPyroTokenLoanOfficer",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",

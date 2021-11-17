@@ -90,7 +90,7 @@ export class BurnEYESnufferCap extends BaseContract {
     _liquidityReceiver(overrides?: CallOverrides): Promise<[string]>;
 
     snuff(
-      pyrotoken: string,
+      pyroToken: string,
       targetContract: string,
       exempt: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -100,7 +100,7 @@ export class BurnEYESnufferCap extends BaseContract {
   _liquidityReceiver(overrides?: CallOverrides): Promise<string>;
 
   snuff(
-    pyrotoken: string,
+    pyroToken: string,
     targetContract: string,
     exempt: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -110,7 +110,7 @@ export class BurnEYESnufferCap extends BaseContract {
     _liquidityReceiver(overrides?: CallOverrides): Promise<string>;
 
     snuff(
-      pyrotoken: string,
+      pyroToken: string,
       targetContract: string,
       exempt: BigNumberish,
       overrides?: CallOverrides
@@ -123,7 +123,7 @@ export class BurnEYESnufferCap extends BaseContract {
     _liquidityReceiver(overrides?: CallOverrides): Promise<BigNumber>;
 
     snuff(
-      pyrotoken: string,
+      pyroToken: string,
       targetContract: string,
       exempt: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -136,7 +136,7 @@ export class BurnEYESnufferCap extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     snuff(
-      pyrotoken: string,
+      pyroToken: string,
       targetContract: string,
       exempt: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }

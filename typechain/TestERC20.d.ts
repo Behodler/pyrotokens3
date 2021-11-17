@@ -19,30 +19,21 @@ import { Listener, Provider } from "@ethersproject/providers";
 import { FunctionFragment, EventFragment, Result } from "@ethersproject/abi";
 import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 
-interface PyrotokenInterface extends ethers.utils.Interface {
+interface TestERC20Interface extends ethers.utils.Interface {
   functions: {
     "allowance(address,address)": FunctionFragment;
     "approve(address,uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
     "burn(uint256)": FunctionFragment;
     "burnFrom(address,uint256)": FunctionFragment;
-    "config()": FunctionFragment;
     "decimals()": FunctionFragment;
     "decreaseAllowance(address,uint256)": FunctionFragment;
-    "destroyObligationFor(address,uint256,uint256)": FunctionFragment;
     "increaseAllowance(address,uint256)": FunctionFragment;
-    "mint(address,uint256)": FunctionFragment;
     "name()": FunctionFragment;
-    "redeem(address,uint256)": FunctionFragment;
-    "redeemFrom(address,address,uint256)": FunctionFragment;
-    "redeemRate()": FunctionFragment;
-    "setFeeExemptionStatusFor(address,uint8)": FunctionFragment;
-    "setObligationFor(address,uint256,uint256)": FunctionFragment;
     "symbol()": FunctionFragment;
     "totalSupply()": FunctionFragment;
     "transfer(address,uint256)": FunctionFragment;
     "transferFrom(address,address,uint256)": FunctionFragment;
-    "transferToNewLiquidityReceiver(address)": FunctionFragment;
   };
 
   encodeFunctionData(
@@ -59,45 +50,16 @@ interface PyrotokenInterface extends ethers.utils.Interface {
     functionFragment: "burnFrom",
     values: [string, BigNumberish]
   ): string;
-  encodeFunctionData(functionFragment: "config", values?: undefined): string;
   encodeFunctionData(functionFragment: "decimals", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "decreaseAllowance",
     values: [string, BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "destroyObligationFor",
-    values: [string, BigNumberish, BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "increaseAllowance",
     values: [string, BigNumberish]
   ): string;
-  encodeFunctionData(
-    functionFragment: "mint",
-    values: [string, BigNumberish]
-  ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "redeem",
-    values: [string, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "redeemFrom",
-    values: [string, string, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "redeemRate",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setFeeExemptionStatusFor",
-    values: [string, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setObligationFor",
-    values: [string, BigNumberish, BigNumberish]
-  ): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "totalSupply",
@@ -111,43 +73,22 @@ interface PyrotokenInterface extends ethers.utils.Interface {
     functionFragment: "transferFrom",
     values: [string, string, BigNumberish]
   ): string;
-  encodeFunctionData(
-    functionFragment: "transferToNewLiquidityReceiver",
-    values: [string]
-  ): string;
 
   decodeFunctionResult(functionFragment: "allowance", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "burn", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "burnFrom", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "config", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "decimals", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "decreaseAllowance",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "destroyObligationFor",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "increaseAllowance",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "redeem", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "redeemFrom", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "redeemRate", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "setFeeExemptionStatusFor",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setObligationFor",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "totalSupply",
@@ -156,10 +97,6 @@ interface PyrotokenInterface extends ethers.utils.Interface {
   decodeFunctionResult(functionFragment: "transfer", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "transferFrom",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "transferToNewLiquidityReceiver",
     data: BytesLike
   ): Result;
 
@@ -189,7 +126,7 @@ export type TransferEvent = TypedEvent<
   }
 >;
 
-export class Pyrotoken extends BaseContract {
+export class TestERC20 extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
@@ -230,7 +167,7 @@ export class Pyrotoken extends BaseContract {
     toBlock?: string | number | undefined
   ): Promise<Array<TypedEvent<EventArgsArray & EventArgsObject>>>;
 
-  interface: PyrotokenInterface;
+  interface: TestERC20Interface;
 
   functions: {
     allowance(
@@ -258,28 +195,11 @@ export class Pyrotoken extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    config(
-      overrides?: CallOverrides
-    ): Promise<
-      [string, string, string] & {
-        liquidityReceiver: string;
-        baseToken: string;
-        loanOfficer: string;
-      }
-    >;
-
     decimals(overrides?: CallOverrides): Promise<[number]>;
 
     decreaseAllowance(
       spender: string,
       subtractedValue: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    destroyObligationFor(
-      borrower: string,
-      baseTokenRepaid: BigNumberish,
-      pyroTokenRequested: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -289,41 +209,7 @@ export class Pyrotoken extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    mint(
-      recipient: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
     name(overrides?: CallOverrides): Promise<[string]>;
-
-    redeem(
-      recipient: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    redeemFrom(
-      owner: string,
-      recipient: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    redeemRate(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    setFeeExemptionStatusFor(
-      exempt: string,
-      status: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    setObligationFor(
-      borrower: string,
-      baseTokenBorrowed: BigNumberish,
-      pyrotokenStaked: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
 
     symbol(overrides?: CallOverrides): Promise<[string]>;
 
@@ -339,11 +225,6 @@ export class Pyrotoken extends BaseContract {
       sender: string,
       recipient: string,
       amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    transferToNewLiquidityReceiver(
-      liquidityReceiver: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
   };
@@ -373,28 +254,11 @@ export class Pyrotoken extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  config(
-    overrides?: CallOverrides
-  ): Promise<
-    [string, string, string] & {
-      liquidityReceiver: string;
-      baseToken: string;
-      loanOfficer: string;
-    }
-  >;
-
   decimals(overrides?: CallOverrides): Promise<number>;
 
   decreaseAllowance(
     spender: string,
     subtractedValue: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  destroyObligationFor(
-    borrower: string,
-    baseTokenRepaid: BigNumberish,
-    pyroTokenRequested: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -404,41 +268,7 @@ export class Pyrotoken extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  mint(
-    recipient: string,
-    amount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
   name(overrides?: CallOverrides): Promise<string>;
-
-  redeem(
-    recipient: string,
-    amount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  redeemFrom(
-    owner: string,
-    recipient: string,
-    amount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  redeemRate(overrides?: CallOverrides): Promise<BigNumber>;
-
-  setFeeExemptionStatusFor(
-    exempt: string,
-    status: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  setObligationFor(
-    borrower: string,
-    baseTokenBorrowed: BigNumberish,
-    pyrotokenStaked: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
 
   symbol(overrides?: CallOverrides): Promise<string>;
 
@@ -454,11 +284,6 @@ export class Pyrotoken extends BaseContract {
     sender: string,
     recipient: string,
     amount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  transferToNewLiquidityReceiver(
-    liquidityReceiver: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -485,28 +310,11 @@ export class Pyrotoken extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    config(
-      overrides?: CallOverrides
-    ): Promise<
-      [string, string, string] & {
-        liquidityReceiver: string;
-        baseToken: string;
-        loanOfficer: string;
-      }
-    >;
-
     decimals(overrides?: CallOverrides): Promise<number>;
 
     decreaseAllowance(
       spender: string,
       subtractedValue: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    destroyObligationFor(
-      borrower: string,
-      baseTokenRepaid: BigNumberish,
-      pyroTokenRequested: BigNumberish,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
@@ -516,41 +324,7 @@ export class Pyrotoken extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    mint(
-      recipient: string,
-      amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     name(overrides?: CallOverrides): Promise<string>;
-
-    redeem(
-      recipient: string,
-      amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    redeemFrom(
-      owner: string,
-      recipient: string,
-      amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    redeemRate(overrides?: CallOverrides): Promise<BigNumber>;
-
-    setFeeExemptionStatusFor(
-      exempt: string,
-      status: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setObligationFor(
-      borrower: string,
-      baseTokenBorrowed: BigNumberish,
-      pyrotokenStaked: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
 
     symbol(overrides?: CallOverrides): Promise<string>;
 
@@ -568,11 +342,6 @@ export class Pyrotoken extends BaseContract {
       amount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<boolean>;
-
-    transferToNewLiquidityReceiver(
-      liquidityReceiver: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
   };
 
   filters: {
@@ -641,20 +410,11 @@ export class Pyrotoken extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    config(overrides?: CallOverrides): Promise<BigNumber>;
-
     decimals(overrides?: CallOverrides): Promise<BigNumber>;
 
     decreaseAllowance(
       spender: string,
       subtractedValue: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    destroyObligationFor(
-      borrower: string,
-      baseTokenRepaid: BigNumberish,
-      pyroTokenRequested: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -664,41 +424,7 @@ export class Pyrotoken extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    mint(
-      recipient: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
     name(overrides?: CallOverrides): Promise<BigNumber>;
-
-    redeem(
-      recipient: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    redeemFrom(
-      owner: string,
-      recipient: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    redeemRate(overrides?: CallOverrides): Promise<BigNumber>;
-
-    setFeeExemptionStatusFor(
-      exempt: string,
-      status: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    setObligationFor(
-      borrower: string,
-      baseTokenBorrowed: BigNumberish,
-      pyrotokenStaked: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
 
     symbol(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -714,11 +440,6 @@ export class Pyrotoken extends BaseContract {
       sender: string,
       recipient: string,
       amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    transferToNewLiquidityReceiver(
-      liquidityReceiver: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
   };
@@ -752,20 +473,11 @@ export class Pyrotoken extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    config(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     decimals(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     decreaseAllowance(
       spender: string,
       subtractedValue: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    destroyObligationFor(
-      borrower: string,
-      baseTokenRepaid: BigNumberish,
-      pyroTokenRequested: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -775,41 +487,7 @@ export class Pyrotoken extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    mint(
-      recipient: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
     name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    redeem(
-      recipient: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    redeemFrom(
-      owner: string,
-      recipient: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    redeemRate(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    setFeeExemptionStatusFor(
-      exempt: string,
-      status: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setObligationFor(
-      borrower: string,
-      baseTokenBorrowed: BigNumberish,
-      pyrotokenStaked: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
 
     symbol(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -825,11 +503,6 @@ export class Pyrotoken extends BaseContract {
       sender: string,
       recipient: string,
       amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    transferToNewLiquidityReceiver(
-      liquidityReceiver: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };

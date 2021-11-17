@@ -12,7 +12,6 @@ import {
   BaseContract,
   ContractTransaction,
   Overrides,
-  PayableOverrides,
   CallOverrides,
 } from "ethers";
 import { BytesLike } from "@ethersproject/bytes";
@@ -20,22 +19,19 @@ import { Listener, Provider } from "@ethersproject/providers";
 import { FunctionFragment, EventFragment, Result } from "@ethersproject/abi";
 import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 
-interface PyroTokenLikeInterface extends ethers.utils.Interface {
+interface BaseTokenInterface extends ethers.utils.Interface {
   functions: {
     "allowance(address,address)": FunctionFragment;
     "approve(address,uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
-    "baseToken()": FunctionFragment;
+    "burn(uint256)": FunctionFragment;
+    "burnFrom(address,uint256)": FunctionFragment;
     "decimals()": FunctionFragment;
-    "mint(address,uint256)": FunctionFragment;
+    "decreaseAllowance(address,uint256)": FunctionFragment;
+    "increaseAllowance(address,uint256)": FunctionFragment;
     "name()": FunctionFragment;
-    "redeem(address,uint256)": FunctionFragment;
-    "redeemFrom(address,address,uint256)": FunctionFragment;
-    "redeemRate()": FunctionFragment;
-    "setLoanOfficer(address)": FunctionFragment;
-    "setObligationFor(address,uint256,uint256)": FunctionFragment;
+    "rebaseBalance(address,uint256)": FunctionFragment;
     "symbol()": FunctionFragment;
-    "togglePullPendingFeeRevenue(bool)": FunctionFragment;
     "totalSupply()": FunctionFragment;
     "transfer(address,uint256)": FunctionFragment;
     "transferFrom(address,address,uint256)": FunctionFragment;
@@ -50,38 +46,26 @@ interface PyroTokenLikeInterface extends ethers.utils.Interface {
     values: [string, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "balanceOf", values: [string]): string;
-  encodeFunctionData(functionFragment: "baseToken", values?: undefined): string;
+  encodeFunctionData(functionFragment: "burn", values: [BigNumberish]): string;
+  encodeFunctionData(
+    functionFragment: "burnFrom",
+    values: [string, BigNumberish]
+  ): string;
   encodeFunctionData(functionFragment: "decimals", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "mint",
+    functionFragment: "decreaseAllowance",
+    values: [string, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "increaseAllowance",
     values: [string, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "redeem",
+    functionFragment: "rebaseBalance",
     values: [string, BigNumberish]
   ): string;
-  encodeFunctionData(
-    functionFragment: "redeemFrom",
-    values: [string, string, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "redeemRate",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setLoanOfficer",
-    values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setObligationFor",
-    values: [string, BigNumberish, BigNumberish]
-  ): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "togglePullPendingFeeRevenue",
-    values: [boolean]
-  ): string;
   encodeFunctionData(
     functionFragment: "totalSupply",
     values?: undefined
@@ -98,26 +82,23 @@ interface PyroTokenLikeInterface extends ethers.utils.Interface {
   decodeFunctionResult(functionFragment: "allowance", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "baseToken", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "burn", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "burnFrom", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "decimals", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "redeem", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "redeemFrom", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "redeemRate", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "setLoanOfficer",
+    functionFragment: "decreaseAllowance",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "setObligationFor",
+    functionFragment: "increaseAllowance",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "rebaseBalance",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "togglePullPendingFeeRevenue",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "totalSupply",
     data: BytesLike
@@ -154,7 +135,7 @@ export type TransferEvent = TypedEvent<
   }
 >;
 
-export class PyroTokenLike extends BaseContract {
+export class BaseToken extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
@@ -195,7 +176,7 @@ export class PyroTokenLike extends BaseContract {
     toBlock?: string | number | undefined
   ): Promise<Array<TypedEvent<EventArgsArray & EventArgsObject>>>;
 
-  interface: PyroTokenLikeInterface;
+  interface: BaseTokenInterface;
 
   functions: {
     allowance(
@@ -212,51 +193,40 @@ export class PyroTokenLike extends BaseContract {
 
     balanceOf(account: string, overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    baseToken(overrides?: CallOverrides): Promise<[string]>;
-
-    decimals(overrides?: CallOverrides): Promise<[number]>;
-
-    mint(
-      to: string,
-      baseTokenAmount: BigNumberish,
-      overrides?: PayableOverrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    name(overrides?: CallOverrides): Promise<[string]>;
-
-    redeem(
-      to: string,
-      pyroTokenAmount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    redeemFrom(
-      owner: string,
-      recipient: string,
+    burn(
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    redeemRate(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    setLoanOfficer(
-      loanOfficer: string,
+    burnFrom(
+      account: string,
+      amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    setObligationFor(
-      borrower: string,
-      baseTokenBorrowed: BigNumberish,
-      pyroTokenStaked: BigNumberish,
+    decimals(overrides?: CallOverrides): Promise<[number]>;
+
+    decreaseAllowance(
+      spender: string,
+      subtractedValue: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    increaseAllowance(
+      spender: string,
+      addedValue: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    name(overrides?: CallOverrides): Promise<[string]>;
+
+    rebaseBalance(
+      account: string,
+      amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
     symbol(overrides?: CallOverrides): Promise<[string]>;
-
-    togglePullPendingFeeRevenue(
-      pullPendingFeeRevenue: boolean,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
 
     totalSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
 
@@ -288,51 +258,40 @@ export class PyroTokenLike extends BaseContract {
 
   balanceOf(account: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-  baseToken(overrides?: CallOverrides): Promise<string>;
-
-  decimals(overrides?: CallOverrides): Promise<number>;
-
-  mint(
-    to: string,
-    baseTokenAmount: BigNumberish,
-    overrides?: PayableOverrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  name(overrides?: CallOverrides): Promise<string>;
-
-  redeem(
-    to: string,
-    pyroTokenAmount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  redeemFrom(
-    owner: string,
-    recipient: string,
+  burn(
     amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  redeemRate(overrides?: CallOverrides): Promise<BigNumber>;
-
-  setLoanOfficer(
-    loanOfficer: string,
+  burnFrom(
+    account: string,
+    amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  setObligationFor(
-    borrower: string,
-    baseTokenBorrowed: BigNumberish,
-    pyroTokenStaked: BigNumberish,
+  decimals(overrides?: CallOverrides): Promise<number>;
+
+  decreaseAllowance(
+    spender: string,
+    subtractedValue: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  increaseAllowance(
+    spender: string,
+    addedValue: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  name(overrides?: CallOverrides): Promise<string>;
+
+  rebaseBalance(
+    account: string,
+    amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   symbol(overrides?: CallOverrides): Promise<string>;
-
-  togglePullPendingFeeRevenue(
-    pullPendingFeeRevenue: boolean,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
 
   totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -364,51 +323,37 @@ export class PyroTokenLike extends BaseContract {
 
     balanceOf(account: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-    baseToken(overrides?: CallOverrides): Promise<string>;
+    burn(amount: BigNumberish, overrides?: CallOverrides): Promise<void>;
+
+    burnFrom(
+      account: string,
+      amount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     decimals(overrides?: CallOverrides): Promise<number>;
 
-    mint(
-      to: string,
-      baseTokenAmount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    name(overrides?: CallOverrides): Promise<string>;
-
-    redeem(
-      to: string,
-      pyroTokenAmount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    redeemFrom(
-      owner: string,
-      recipient: string,
-      amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    redeemRate(overrides?: CallOverrides): Promise<BigNumber>;
-
-    setLoanOfficer(
-      loanOfficer: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setObligationFor(
-      borrower: string,
-      baseTokenBorrowed: BigNumberish,
-      pyroTokenStaked: BigNumberish,
+    decreaseAllowance(
+      spender: string,
+      subtractedValue: BigNumberish,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    symbol(overrides?: CallOverrides): Promise<string>;
+    increaseAllowance(
+      spender: string,
+      addedValue: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
 
-    togglePullPendingFeeRevenue(
-      pullPendingFeeRevenue: boolean,
+    name(overrides?: CallOverrides): Promise<string>;
+
+    rebaseBalance(
+      account: string,
+      amount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    symbol(overrides?: CallOverrides): Promise<string>;
 
     totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -481,51 +426,40 @@ export class PyroTokenLike extends BaseContract {
 
     balanceOf(account: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-    baseToken(overrides?: CallOverrides): Promise<BigNumber>;
-
-    decimals(overrides?: CallOverrides): Promise<BigNumber>;
-
-    mint(
-      to: string,
-      baseTokenAmount: BigNumberish,
-      overrides?: PayableOverrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    name(overrides?: CallOverrides): Promise<BigNumber>;
-
-    redeem(
-      to: string,
-      pyroTokenAmount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    redeemFrom(
-      owner: string,
-      recipient: string,
+    burn(
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    redeemRate(overrides?: CallOverrides): Promise<BigNumber>;
-
-    setLoanOfficer(
-      loanOfficer: string,
+    burnFrom(
+      account: string,
+      amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    setObligationFor(
-      borrower: string,
-      baseTokenBorrowed: BigNumberish,
-      pyroTokenStaked: BigNumberish,
+    decimals(overrides?: CallOverrides): Promise<BigNumber>;
+
+    decreaseAllowance(
+      spender: string,
+      subtractedValue: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    increaseAllowance(
+      spender: string,
+      addedValue: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    name(overrides?: CallOverrides): Promise<BigNumber>;
+
+    rebaseBalance(
+      account: string,
+      amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
     symbol(overrides?: CallOverrides): Promise<BigNumber>;
-
-    togglePullPendingFeeRevenue(
-      pullPendingFeeRevenue: boolean,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
 
     totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -561,51 +495,40 @@ export class PyroTokenLike extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    baseToken(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    decimals(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    mint(
-      to: string,
-      baseTokenAmount: BigNumberish,
-      overrides?: PayableOverrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    redeem(
-      to: string,
-      pyroTokenAmount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    redeemFrom(
-      owner: string,
-      recipient: string,
+    burn(
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    redeemRate(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    setLoanOfficer(
-      loanOfficer: string,
+    burnFrom(
+      account: string,
+      amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    setObligationFor(
-      borrower: string,
-      baseTokenBorrowed: BigNumberish,
-      pyroTokenStaked: BigNumberish,
+    decimals(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    decreaseAllowance(
+      spender: string,
+      subtractedValue: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    increaseAllowance(
+      spender: string,
+      addedValue: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    rebaseBalance(
+      account: string,
+      amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     symbol(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    togglePullPendingFeeRevenue(
-      pullPendingFeeRevenue: boolean,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
 
     totalSupply(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 

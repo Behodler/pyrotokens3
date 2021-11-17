@@ -11,7 +11,6 @@ import {
   PopulatedTransaction,
   BaseContract,
   ContractTransaction,
-  Overrides,
   CallOverrides,
 } from "ethers";
 import { BytesLike } from "@ethersproject/bytes";
@@ -19,25 +18,25 @@ import { Listener, Provider } from "@ethersproject/providers";
 import { FunctionFragment, EventFragment, Result } from "@ethersproject/abi";
 import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 
-interface LachesisLikeInterface extends ethers.utils.Interface {
+interface Create2Interface extends ethers.utils.Interface {
   functions: {
-    "cut(address)": FunctionFragment;
-    "measure(address,bool,bool)": FunctionFragment;
+    "getBytecode()": FunctionFragment;
   };
 
-  encodeFunctionData(functionFragment: "cut", values: [string]): string;
   encodeFunctionData(
-    functionFragment: "measure",
-    values: [string, boolean, boolean]
+    functionFragment: "getBytecode",
+    values?: undefined
   ): string;
 
-  decodeFunctionResult(functionFragment: "cut", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "measure", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getBytecode",
+    data: BytesLike
+  ): Result;
 
   events: {};
 }
 
-export class LachesisLike extends BaseContract {
+export class Create2 extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
@@ -78,63 +77,25 @@ export class LachesisLike extends BaseContract {
     toBlock?: string | number | undefined
   ): Promise<Array<TypedEvent<EventArgsArray & EventArgsObject>>>;
 
-  interface: LachesisLikeInterface;
+  interface: Create2Interface;
 
   functions: {
-    cut(token: string, overrides?: CallOverrides): Promise<[boolean, boolean]>;
-
-    measure(
-      token: string,
-      valid: boolean,
-      burnable: boolean,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
+    getBytecode(overrides?: CallOverrides): Promise<[string]>;
   };
 
-  cut(token: string, overrides?: CallOverrides): Promise<[boolean, boolean]>;
-
-  measure(
-    token: string,
-    valid: boolean,
-    burnable: boolean,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
+  getBytecode(overrides?: CallOverrides): Promise<string>;
 
   callStatic: {
-    cut(token: string, overrides?: CallOverrides): Promise<[boolean, boolean]>;
-
-    measure(
-      token: string,
-      valid: boolean,
-      burnable: boolean,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    getBytecode(overrides?: CallOverrides): Promise<string>;
   };
 
   filters: {};
 
   estimateGas: {
-    cut(token: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    measure(
-      token: string,
-      valid: boolean,
-      burnable: boolean,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
+    getBytecode(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    cut(
-      token: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    measure(
-      token: string,
-      valid: boolean,
-      burnable: boolean,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+    getBytecode(overrides?: CallOverrides): Promise<PopulatedTransaction>;
   };
 }

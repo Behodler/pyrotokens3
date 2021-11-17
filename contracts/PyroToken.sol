@@ -20,22 +20,8 @@ abstract contract ERC20 is Context, IERC20 {
 
     uint256 internal _totalSupply;
 
-    string private _name;
-    string private _symbol;
-
-    /**
-     * @dev Sets the values for {name} and {symbol}.
-     *
-     * The default value of {decimals} is 18. To select a different value for
-     * {decimals} you should overload it.
-     *
-     * All two of these values are immutable: they can only be set once during
-     * construction.
-     */
-    constructor(string memory name_, string memory symbol_) {
-        _name = name_;
-        _symbol = symbol_;
-    }
+    string internal _name;
+    string internal _symbol;
 
     /**
      * @dev Returns the name of the token.
@@ -331,7 +317,7 @@ abstract contract ReentrancyGuard {
     }
 }
 
-contract Pyrotoken is ERC20, ReentrancyGuard {
+contract PyroToken is ERC20, ReentrancyGuard {
     struct Configuration {
         address liquidityReceiver;
         IERC20 baseToken;
@@ -348,37 +334,46 @@ contract Pyrotoken is ERC20, ReentrancyGuard {
 
     /*
     Exemptions aren't a form of cronyism. Rather, it will be decided on fair, open cryptoeconomic rules to allow protocols that need to
-    frequently work with pyrotokens to be able to do so without incurring untenable cost to themselves. Always bear in mind that the big
-    AMMs including Behodler will burn Pyrotokens with abandon and without exception.
+    frequently work with pyroTokens to be able to do so without incurring untenable cost to themselves. Always bear in mind that the big
+    AMMs including Behodler will burn PyroTokens with abandon and without exception.
     We don't need every single protocol to bear the cost of Pyro growth and would 
     prefer to hit the high volume bots where they benefit most.
     Regarding fair cryptoeconomic incentives, a contract that requires burning a certain level of EYE would be a good example though we may get more sophisticated than that. 
     As a pertinent example, since Behodler burns as a primitive, 
-    if we list a pyrotoken for trade as burnable, then the total fee will be the Behodler burn fee plus the incoming transfer burn as well as the outgoing transfer burn when it is bought.
-    This might be a little too much burning. In this case, we can turn of the transfer burns and still get the pyrotoken burning on sale.  
+    if we list a pyroToken for trade as burnable, then the total fee will be the Behodler burn fee plus the incoming transfer burn as well as the outgoing transfer burn when it is bought.
+    This might be a little too much burning. In this case, we can turn of the transfer burns and still get the pyroToken burning on sale.  
     */
     mapping(address => FeeExemption) feeExemptionStatus;
 
     //By separating logic (loan officer) from state(debtObligations), we can upgrade the loan system without requiring existing borrowers migrate.
     //Seamless upgrade. This allows for better loan logic to replace the initial version.
-    //By mapping debt on an individual pyrotoken basis, it means each pyrotoken can have it's own loan system. Potentially creating
+    //By mapping debt on an individual pyroToken basis, it means each pyroToken can have it's own loan system. Potentially creating
     //a flourising of competing ideas. Seasteading for debt.
     mapping(address => DebtObligation) debtObligations;
 
-    constructor(
+    constructor(){
+        config.liquidityReceiver = _msgSender();
+        config.pullPendingFeeRevenue = true;
+    }
+
+    modifier initialized {
+        require(address(config.baseToken)!=address(0), "PyroToken: base token not set");
+        _;
+    }
+    function initialize(
         address baseToken,
         string memory name_,
         string memory symbol_
-    ) ERC20(name_, symbol_) {
-        config.liquidityReceiver = _msgSender();
+    ) public onlyReceiver {
         config.baseToken = IERC20(baseToken);
-        config.pullPendingFeeRevenue = true;
+        _name = name_;
+        _symbol = symbol_;
     }
 
     modifier onlyReceiver() {
         require(
             _msgSender() == config.liquidityReceiver,
-            "Pyrotoken: Only Liquidity Receiver."
+            "PyroToken: Only Liquidity Receiver."
         );
         _;
     }
@@ -393,7 +388,7 @@ contract Pyrotoken is ERC20, ReentrancyGuard {
     modifier onlyLoanOfficer() {
         require(
             _msgSender() == config.loanOfficer,
-            "Pyrotoken: Only Loan Officer."
+            "PyroToken: Only Loan Officer."
         );
         _;
     }
@@ -422,7 +417,7 @@ contract Pyrotoken is ERC20, ReentrancyGuard {
     {
         require(
             liquidityReceiver != address(0),
-            "Pyrotoken: New Liquidity Receiver cannot be the zero address."
+            "PyroToken: New Liquidity Receiver cannot be the zero address."
         );
         config.liquidityReceiver = liquidityReceiver;
     }
@@ -430,6 +425,7 @@ contract Pyrotoken is ERC20, ReentrancyGuard {
     function mint(address recipient, uint256 amount)
         external
         updateReserve
+        initialized
         returns (uint256)
     {
         uint256 _redeemRate = redeemRate();
@@ -477,7 +473,7 @@ contract Pyrotoken is ERC20, ReentrancyGuard {
         emit Transfer(owner, address(0), uint128(amount), uint128(amount));
         require(
             config.baseToken.transfer(recipient, baseTokens),
-            "Pyrotoken reserve transfer failed."
+            "PyroToken reserve transfer failed."
         );
         return baseTokens;
     }
@@ -521,20 +517,20 @@ contract Pyrotoken is ERC20, ReentrancyGuard {
     function setObligationFor(
         address borrower,
         uint256 baseTokenBorrowed,
-        uint256 pyrotokenStaked
+        uint256 pyroTokenStaked
     ) external onlyLoanOfficer nonReentrant returns (bool success) {
         DebtObligation memory currentDebt = debtObligations[borrower];
         uint256 rate = redeemRate();
         uint256 minPyroStake = (baseTokenBorrowed * ONE) / rate;
-        require(pyrotokenStaked >= minPyroStake, "Pyro: Unsustainable loan.");
+        require(pyroTokenStaked >= minPyroStake, "Pyro: Unsustainable loan.");
 
         debtObligations[borrower] = DebtObligation(
             baseTokenBorrowed,
-            pyrotokenStaked,
+            pyroTokenStaked,
             rate
         );
 
-        int256 netStake = int256(pyrotokenStaked) - int256(currentDebt.pyro);
+        int256 netStake = int256(pyroTokenStaked) - int256(currentDebt.pyro);
         uint256 stake;
         if (netStake > 0) {
             stake = uint256(netStake);

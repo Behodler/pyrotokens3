@@ -14,18 +14,8 @@ const _abi = [
         name: "baseToken",
         type: "address",
       },
-      {
-        internalType: "string",
-        name: "name",
-        type: "string",
-      },
-      {
-        internalType: "string",
-        name: "symbol",
-        type: "string",
-      },
     ],
-    name: "getPyrotoken",
+    name: "getPyroToken",
     outputs: [
       {
         internalType: "address",

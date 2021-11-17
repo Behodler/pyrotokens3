@@ -24,7 +24,7 @@ const _abi = [
     inputs: [
       {
         internalType: "address",
-        name: "pyrotoken",
+        name: "pyroToken",
         type: "address",
       },
       {

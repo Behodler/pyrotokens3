@@ -8,4 +8,20 @@ abstract contract LiquidityReceiverLike {
         address target,
         FeeExemption exemption
     ) public virtual;
+
+    function setPyroTokenLoanOfficer(address pyroToken, address loanOfficer)
+        public
+        virtual;
+
+    function getPyroToken(address baseToken)
+        public
+        view
+        virtual
+        returns (address);
+
+    function registerPyroToken(
+        address baseToken,
+        string memory name,
+        string memory symbol
+    ) public virtual;
 }

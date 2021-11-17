@@ -22,20 +22,26 @@ import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 interface V2MigratorInterface extends ethers.utils.Interface {
   functions: {
     "LR_new()": FunctionFragment;
-    "LR_old()": FunctionFragment;
-    "migrate(address,address,string,string,uint256,uint256)": FunctionFragment;
+    "migrate(address,address,uint256,uint256)": FunctionFragment;
+    "migrateMany(address[],address[],uint256[],uint256[])": FunctionFragment;
   };
 
   encodeFunctionData(functionFragment: "LR_new", values?: undefined): string;
-  encodeFunctionData(functionFragment: "LR_old", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "migrate",
-    values: [string, string, string, string, BigNumberish, BigNumberish]
+    values: [string, string, BigNumberish, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "migrateMany",
+    values: [string[], string[], BigNumberish[], BigNumberish[]]
   ): string;
 
   decodeFunctionResult(functionFragment: "LR_new", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "LR_old", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "migrate", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "migrateMany",
+    data: BytesLike
+  ): Result;
 
   events: {};
 }
@@ -86,45 +92,57 @@ export class V2Migrator extends BaseContract {
   functions: {
     LR_new(overrides?: CallOverrides): Promise<[string]>;
 
-    LR_old(overrides?: CallOverrides): Promise<[string]>;
-
     migrate(
       ptoken2: string,
       ptoken3: string,
-      nameNew: string,
-      symbolNew: string,
       p2token_amount: BigNumberish,
       p3token_expectedAmount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    migrateMany(
+      ptoken2: string[],
+      ptoken3: string[],
+      p2token_amount: BigNumberish[],
+      p3token_expectedAmount: BigNumberish[],
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
   };
 
   LR_new(overrides?: CallOverrides): Promise<string>;
 
-  LR_old(overrides?: CallOverrides): Promise<string>;
-
   migrate(
     ptoken2: string,
     ptoken3: string,
-    nameNew: string,
-    symbolNew: string,
     p2token_amount: BigNumberish,
     p3token_expectedAmount: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  migrateMany(
+    ptoken2: string[],
+    ptoken3: string[],
+    p2token_amount: BigNumberish[],
+    p3token_expectedAmount: BigNumberish[],
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
     LR_new(overrides?: CallOverrides): Promise<string>;
 
-    LR_old(overrides?: CallOverrides): Promise<string>;
-
     migrate(
       ptoken2: string,
       ptoken3: string,
-      nameNew: string,
-      symbolNew: string,
       p2token_amount: BigNumberish,
       p3token_expectedAmount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    migrateMany(
+      ptoken2: string[],
+      ptoken3: string[],
+      p2token_amount: BigNumberish[],
+      p3token_expectedAmount: BigNumberish[],
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -134,15 +152,19 @@ export class V2Migrator extends BaseContract {
   estimateGas: {
     LR_new(overrides?: CallOverrides): Promise<BigNumber>;
 
-    LR_old(overrides?: CallOverrides): Promise<BigNumber>;
-
     migrate(
       ptoken2: string,
       ptoken3: string,
-      nameNew: string,
-      symbolNew: string,
       p2token_amount: BigNumberish,
       p3token_expectedAmount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    migrateMany(
+      ptoken2: string[],
+      ptoken3: string[],
+      p2token_amount: BigNumberish[],
+      p3token_expectedAmount: BigNumberish[],
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
   };
@@ -150,15 +172,19 @@ export class V2Migrator extends BaseContract {
   populateTransaction: {
     LR_new(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    LR_old(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     migrate(
       ptoken2: string,
       ptoken3: string,
-      nameNew: string,
-      symbolNew: string,
       p2token_amount: BigNumberish,
       p3token_expectedAmount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    migrateMany(
+      ptoken2: string[],
+      ptoken3: string[],
+      p2token_amount: BigNumberish[],
+      p3token_expectedAmount: BigNumberish[],
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };

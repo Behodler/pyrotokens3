@@ -11,13 +11,13 @@ abstract contract SnufferCap {
         _liquidityReceiver = LiquidityReceiverLike(liquidityReceiver);
     }
 
-    function snuff (address pyrotoken, address targetContract, FeeExemption exempt) public virtual returns (bool);
+    function snuff (address pyroToken, address targetContract, FeeExemption exempt) public virtual returns (bool);
 
     //after perfroming business logic, call this function
-    function _snuff(address pyrotoken, address targetContract, FeeExemption exempt)
+    function _snuff(address pyroToken, address targetContract, FeeExemption exempt)
         internal
         virtual
     {
-        _liquidityReceiver.setFeeExemptionStatusOnPyroForContract(pyrotoken,targetContract,exempt);
+        _liquidityReceiver.setFeeExemptionStatusOnPyroForContract(pyroToken,targetContract,exempt);
     }
 }

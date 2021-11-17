@@ -22,21 +22,23 @@ import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 interface LiquidityReceiverInterface extends ethers.utils.Interface {
   functions: {
     "config()": FunctionFragment;
-    "getPyrotoken(address,string,string)": FunctionFragment;
+    "getPyroToken(address)": FunctionFragment;
     "owner()": FunctionFragment;
     "registerPyroToken(address,string,string)": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "setFeeExemptionStatusOnPyroForContract(address,address,uint8)": FunctionFragment;
     "setLachesis(address)": FunctionFragment;
+    "setPyroTokenLoanOfficer(address,address)": FunctionFragment;
     "setSnufferCap(address)": FunctionFragment;
+    "togglePyroTokenPullFeeRevenue(address,bool)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
     "transferPyroTokenToNewReceiver(address,address)": FunctionFragment;
   };
 
   encodeFunctionData(functionFragment: "config", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "getPyrotoken",
-    values: [string, string, string]
+    functionFragment: "getPyroToken",
+    values: [string]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
@@ -53,8 +55,16 @@ interface LiquidityReceiverInterface extends ethers.utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "setLachesis", values: [string]): string;
   encodeFunctionData(
+    functionFragment: "setPyroTokenLoanOfficer",
+    values: [string, string]
+  ): string;
+  encodeFunctionData(
     functionFragment: "setSnufferCap",
     values: [string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "togglePyroTokenPullFeeRevenue",
+    values: [string, boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
@@ -67,7 +77,7 @@ interface LiquidityReceiverInterface extends ethers.utils.Interface {
 
   decodeFunctionResult(functionFragment: "config", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "getPyrotoken",
+    functionFragment: "getPyroToken",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
@@ -88,7 +98,15 @@ interface LiquidityReceiverInterface extends ethers.utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "setPyroTokenLoanOfficer",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "setSnufferCap",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "togglePyroTokenPullFeeRevenue",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -159,10 +177,8 @@ export class LiquidityReceiver extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string, string] & { lachesis: string; snufferCap: string }>;
 
-    getPyrotoken(
+    getPyroToken(
       baseToken: string,
-      name: string,
-      symbol: string,
       overrides?: CallOverrides
     ): Promise<[string]>;
 
@@ -191,8 +207,20 @@ export class LiquidityReceiver extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    setPyroTokenLoanOfficer(
+      pyroToken: string,
+      loanOfficer: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     setSnufferCap(
       snufferCap: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    togglePyroTokenPullFeeRevenue(
+      pyroToken: string,
+      pull: boolean,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -212,12 +240,7 @@ export class LiquidityReceiver extends BaseContract {
     overrides?: CallOverrides
   ): Promise<[string, string] & { lachesis: string; snufferCap: string }>;
 
-  getPyrotoken(
-    baseToken: string,
-    name: string,
-    symbol: string,
-    overrides?: CallOverrides
-  ): Promise<string>;
+  getPyroToken(baseToken: string, overrides?: CallOverrides): Promise<string>;
 
   owner(overrides?: CallOverrides): Promise<string>;
 
@@ -244,8 +267,20 @@ export class LiquidityReceiver extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  setPyroTokenLoanOfficer(
+    pyroToken: string,
+    loanOfficer: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   setSnufferCap(
     snufferCap: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  togglePyroTokenPullFeeRevenue(
+    pyroToken: string,
+    pull: boolean,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -265,12 +300,7 @@ export class LiquidityReceiver extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string, string] & { lachesis: string; snufferCap: string }>;
 
-    getPyrotoken(
-      baseToken: string,
-      name: string,
-      symbol: string,
-      overrides?: CallOverrides
-    ): Promise<string>;
+    getPyroToken(baseToken: string, overrides?: CallOverrides): Promise<string>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
@@ -292,7 +322,19 @@ export class LiquidityReceiver extends BaseContract {
 
     setLachesis(_lachesis: string, overrides?: CallOverrides): Promise<void>;
 
+    setPyroTokenLoanOfficer(
+      pyroToken: string,
+      loanOfficer: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     setSnufferCap(snufferCap: string, overrides?: CallOverrides): Promise<void>;
+
+    togglePyroTokenPullFeeRevenue(
+      pyroToken: string,
+      pull: boolean,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     transferOwnership(
       newOwner: string,
@@ -327,10 +369,8 @@ export class LiquidityReceiver extends BaseContract {
   estimateGas: {
     config(overrides?: CallOverrides): Promise<BigNumber>;
 
-    getPyrotoken(
+    getPyroToken(
       baseToken: string,
-      name: string,
-      symbol: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -359,8 +399,20 @@ export class LiquidityReceiver extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    setPyroTokenLoanOfficer(
+      pyroToken: string,
+      loanOfficer: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     setSnufferCap(
       snufferCap: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    togglePyroTokenPullFeeRevenue(
+      pyroToken: string,
+      pull: boolean,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -379,10 +431,8 @@ export class LiquidityReceiver extends BaseContract {
   populateTransaction: {
     config(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    getPyrotoken(
+    getPyroToken(
       baseToken: string,
-      name: string,
-      symbol: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -411,8 +461,20 @@ export class LiquidityReceiver extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    setPyroTokenLoanOfficer(
+      pyroToken: string,
+      loanOfficer: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     setSnufferCap(
       snufferCap: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    togglePyroTokenPullFeeRevenue(
+      pyroToken: string,
+      pull: boolean,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

@@ -20,16 +20,16 @@ import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 
 interface LRNewInterface extends ethers.utils.Interface {
   functions: {
-    "getPyrotoken(address,string,string)": FunctionFragment;
+    "getPyroToken(address)": FunctionFragment;
   };
 
   encodeFunctionData(
-    functionFragment: "getPyrotoken",
-    values: [string, string, string]
+    functionFragment: "getPyroToken",
+    values: [string]
   ): string;
 
   decodeFunctionResult(
-    functionFragment: "getPyrotoken",
+    functionFragment: "getPyroToken",
     data: BytesLike
   ): Result;
 
@@ -80,46 +80,30 @@ export class LRNew extends BaseContract {
   interface: LRNewInterface;
 
   functions: {
-    getPyrotoken(
+    getPyroToken(
       baseToken: string,
-      name: string,
-      symbol: string,
       overrides?: CallOverrides
     ): Promise<[string]>;
   };
 
-  getPyrotoken(
-    baseToken: string,
-    name: string,
-    symbol: string,
-    overrides?: CallOverrides
-  ): Promise<string>;
+  getPyroToken(baseToken: string, overrides?: CallOverrides): Promise<string>;
 
   callStatic: {
-    getPyrotoken(
-      baseToken: string,
-      name: string,
-      symbol: string,
-      overrides?: CallOverrides
-    ): Promise<string>;
+    getPyroToken(baseToken: string, overrides?: CallOverrides): Promise<string>;
   };
 
   filters: {};
 
   estimateGas: {
-    getPyrotoken(
+    getPyroToken(
       baseToken: string,
-      name: string,
-      symbol: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    getPyrotoken(
+    getPyroToken(
       baseToken: string,
-      name: string,
-      symbol: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
   };

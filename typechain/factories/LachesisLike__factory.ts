@@ -31,6 +31,29 @@ const _abi = [
     stateMutability: "view",
     type: "function",
   },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "token",
+        type: "address",
+      },
+      {
+        internalType: "bool",
+        name: "valid",
+        type: "bool",
+      },
+      {
+        internalType: "bool",
+        name: "burnable",
+        type: "bool",
+      },
+    ],
+    name: "measure",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
 ];
 
 export class LachesisLike__factory {

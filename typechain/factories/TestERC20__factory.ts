@@ -4,7 +4,7 @@
 
 import { Contract, Signer, utils } from "ethers";
 import { Provider } from "@ethersproject/providers";
-import type { Pyrotoken2, Pyrotoken2Interface } from "../Pyrotoken2";
+import type { TestERC20, TestERC20Interface } from "../TestERC20";
 
 const _abi = [
   {
@@ -131,16 +131,34 @@ const _abi = [
     type: "function",
   },
   {
-    inputs: [],
-    name: "baseToken",
-    outputs: [
+    inputs: [
       {
-        internalType: "address",
-        name: "",
-        type: "address",
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
       },
     ],
-    stateMutability: "view",
+    name: "burn",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "account",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+    ],
+    name: "burnFrom",
+    outputs: [],
+    stateMutability: "nonpayable",
     type: "function",
   },
   {
@@ -157,6 +175,54 @@ const _abi = [
     type: "function",
   },
   {
+    inputs: [
+      {
+        internalType: "address",
+        name: "spender",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "subtractedValue",
+        type: "uint256",
+      },
+    ],
+    name: "decreaseAllowance",
+    outputs: [
+      {
+        internalType: "bool",
+        name: "",
+        type: "bool",
+      },
+    ],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "spender",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "addedValue",
+        type: "uint256",
+      },
+    ],
+    name: "increaseAllowance",
+    outputs: [
+      {
+        internalType: "bool",
+        name: "",
+        type: "bool",
+      },
+    ],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
     inputs: [],
     name: "name",
     outputs: [
@@ -167,25 +233,6 @@ const _abi = [
       },
     ],
     stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "pyroTokenAmount",
-        type: "uint256",
-      },
-    ],
-    name: "redeem",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "nonpayable",
     type: "function",
   },
   {
@@ -269,15 +316,15 @@ const _abi = [
   },
 ];
 
-export class Pyrotoken2__factory {
+export class TestERC20__factory {
   static readonly abi = _abi;
-  static createInterface(): Pyrotoken2Interface {
-    return new utils.Interface(_abi) as Pyrotoken2Interface;
+  static createInterface(): TestERC20Interface {
+    return new utils.Interface(_abi) as TestERC20Interface;
   }
   static connect(
     address: string,
     signerOrProvider: Signer | Provider
-  ): Pyrotoken2 {
-    return new Contract(address, _abi, signerOrProvider) as Pyrotoken2;
+  ): TestERC20 {
+    return new Contract(address, _abi, signerOrProvider) as TestERC20;
   }
 }

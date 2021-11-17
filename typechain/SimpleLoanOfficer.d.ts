@@ -19,25 +19,25 @@ import { Listener, Provider } from "@ethersproject/providers";
 import { FunctionFragment, EventFragment, Result } from "@ethersproject/abi";
 import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 
-interface LachesisLikeInterface extends ethers.utils.Interface {
+interface SimpleLoanOfficerInterface extends ethers.utils.Interface {
   functions: {
-    "cut(address)": FunctionFragment;
-    "measure(address,bool,bool)": FunctionFragment;
+    "setObligationFor(address,address,uint256,uint256)": FunctionFragment;
   };
 
-  encodeFunctionData(functionFragment: "cut", values: [string]): string;
   encodeFunctionData(
-    functionFragment: "measure",
-    values: [string, boolean, boolean]
+    functionFragment: "setObligationFor",
+    values: [string, string, BigNumberish, BigNumberish]
   ): string;
 
-  decodeFunctionResult(functionFragment: "cut", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "measure", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "setObligationFor",
+    data: BytesLike
+  ): Result;
 
   events: {};
 }
 
-export class LachesisLike extends BaseContract {
+export class SimpleLoanOfficer extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
@@ -78,62 +78,54 @@ export class LachesisLike extends BaseContract {
     toBlock?: string | number | undefined
   ): Promise<Array<TypedEvent<EventArgsArray & EventArgsObject>>>;
 
-  interface: LachesisLikeInterface;
+  interface: SimpleLoanOfficerInterface;
 
   functions: {
-    cut(token: string, overrides?: CallOverrides): Promise<[boolean, boolean]>;
-
-    measure(
-      token: string,
-      valid: boolean,
-      burnable: boolean,
+    setObligationFor(
+      pyroToken: string,
+      borrower: string,
+      baseTokenBorrowed: BigNumberish,
+      pyroTokenStaked: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
   };
 
-  cut(token: string, overrides?: CallOverrides): Promise<[boolean, boolean]>;
-
-  measure(
-    token: string,
-    valid: boolean,
-    burnable: boolean,
+  setObligationFor(
+    pyroToken: string,
+    borrower: string,
+    baseTokenBorrowed: BigNumberish,
+    pyroTokenStaked: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    cut(token: string, overrides?: CallOverrides): Promise<[boolean, boolean]>;
-
-    measure(
-      token: string,
-      valid: boolean,
-      burnable: boolean,
+    setObligationFor(
+      pyroToken: string,
+      borrower: string,
+      baseTokenBorrowed: BigNumberish,
+      pyroTokenStaked: BigNumberish,
       overrides?: CallOverrides
-    ): Promise<void>;
+    ): Promise<boolean>;
   };
 
   filters: {};
 
   estimateGas: {
-    cut(token: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    measure(
-      token: string,
-      valid: boolean,
-      burnable: boolean,
+    setObligationFor(
+      pyroToken: string,
+      borrower: string,
+      baseTokenBorrowed: BigNumberish,
+      pyroTokenStaked: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    cut(
-      token: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    measure(
-      token: string,
-      valid: boolean,
-      burnable: boolean,
+    setObligationFor(
+      pyroToken: string,
+      borrower: string,
+      baseTokenBorrowed: BigNumberish,
+      pyroTokenStaked: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };

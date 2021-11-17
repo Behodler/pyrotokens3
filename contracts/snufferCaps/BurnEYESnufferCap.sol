@@ -16,14 +16,14 @@ contract BurnEYESnufferCap is SnufferCap {
     }
 
     function snuff(
-        address pyrotoken,
+        address pyroToken,
         address targetContract,
         FeeExemption exempt
     ) public override returns (bool) {
         require(eye.transferFrom(msg.sender,address(this), 1000 * (1 ether)),"ERC20: transfer failed.");
         uint balance = eye.balanceOf(address(this));
         eye.burn(balance);
-        _snuff(pyrotoken, targetContract, exempt);
+        _snuff(pyroToken, targetContract, exempt);
         return true;
     }
 }

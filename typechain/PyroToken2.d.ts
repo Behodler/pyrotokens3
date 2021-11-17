@@ -19,7 +19,7 @@ import { Listener, Provider } from "@ethersproject/providers";
 import { FunctionFragment, EventFragment, Result } from "@ethersproject/abi";
 import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 
-interface Pyrotoken2Interface extends ethers.utils.Interface {
+interface PyroToken2Interface extends ethers.utils.Interface {
   functions: {
     "allowance(address,address)": FunctionFragment;
     "approve(address,uint256)": FunctionFragment;
@@ -108,7 +108,7 @@ export type TransferEvent = TypedEvent<
   }
 >;
 
-export class Pyrotoken2 extends BaseContract {
+export class PyroToken2 extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
@@ -149,7 +149,7 @@ export class Pyrotoken2 extends BaseContract {
     toBlock?: string | number | undefined
   ): Promise<Array<TypedEvent<EventArgsArray & EventArgsObject>>>;
 
-  interface: Pyrotoken2Interface;
+  interface: PyroToken2Interface;
 
   functions: {
     allowance(

@@ -19,25 +19,31 @@ import { Listener, Provider } from "@ethersproject/providers";
 import { FunctionFragment, EventFragment, Result } from "@ethersproject/abi";
 import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 
-interface LROldInterface extends ethers.utils.Interface {
+interface LachesisInterface extends ethers.utils.Interface {
   functions: {
-    "baseTokenMapping(address)": FunctionFragment;
+    "cut(address)": FunctionFragment;
+    "measure(address,bool,bool)": FunctionFragment;
+    "status(address,uint256)": FunctionFragment;
   };
 
+  encodeFunctionData(functionFragment: "cut", values: [string]): string;
   encodeFunctionData(
-    functionFragment: "baseTokenMapping",
-    values: [string]
+    functionFragment: "measure",
+    values: [string, boolean, boolean]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "status",
+    values: [string, BigNumberish]
   ): string;
 
-  decodeFunctionResult(
-    functionFragment: "baseTokenMapping",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "cut", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "measure", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "status", data: BytesLike): Result;
 
   events: {};
 }
 
-export class LROld extends BaseContract {
+export class Lachesis extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
@@ -78,40 +84,93 @@ export class LROld extends BaseContract {
     toBlock?: string | number | undefined
   ): Promise<Array<TypedEvent<EventArgsArray & EventArgsObject>>>;
 
-  interface: LROldInterface;
+  interface: LachesisInterface;
 
   functions: {
-    baseTokenMapping(
-      baseToken: string,
+    cut(token: string, overrides?: CallOverrides): Promise<[boolean, boolean]>;
+
+    measure(
+      token: string,
+      valid: boolean,
+      burnable: boolean,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
+
+    status(
+      arg0: string,
+      arg1: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<[boolean]>;
   };
 
-  baseTokenMapping(
-    baseToken: string,
+  cut(token: string, overrides?: CallOverrides): Promise<[boolean, boolean]>;
+
+  measure(
+    token: string,
+    valid: boolean,
+    burnable: boolean,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  status(
+    arg0: string,
+    arg1: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<boolean>;
+
   callStatic: {
-    baseTokenMapping(
-      baseToken: string,
+    cut(token: string, overrides?: CallOverrides): Promise<[boolean, boolean]>;
+
+    measure(
+      token: string,
+      valid: boolean,
+      burnable: boolean,
       overrides?: CallOverrides
-    ): Promise<string>;
+    ): Promise<void>;
+
+    status(
+      arg0: string,
+      arg1: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
   };
 
   filters: {};
 
   estimateGas: {
-    baseTokenMapping(
-      baseToken: string,
+    cut(token: string, overrides?: CallOverrides): Promise<BigNumber>;
+
+    measure(
+      token: string,
+      valid: boolean,
+      burnable: boolean,
       overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    status(
+      arg0: string,
+      arg1: BigNumberish,
+      overrides?: CallOverrides
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    baseTokenMapping(
-      baseToken: string,
+    cut(
+      token: string,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    measure(
+      token: string,
+      valid: boolean,
+      burnable: boolean,
       overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    status(
+      arg0: string,
+      arg1: BigNumberish,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
   };
 }

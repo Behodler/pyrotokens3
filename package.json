@@ -1,24 +1,25 @@
 {
-  "name": "pyrotokens3",
+  "name": "pyroTokens3",
   "version": "1.0.0",
   "description": "The third phase in Behodler's super deflationary token wrappers.",
   "main": "index.js",
   "scripts": {
-    "test": "docker-compose up test",
+    "test:all": "docker-compose up test",
+    "test":"sudo npx hardhat test",
     "build": "sudo rm -rf cache/ && sudo rm -rf artifacts/ && sudo rm -rf typechain/* && docker-compose up build",
     "docker:install": "rm -rf node_modules/* && touch yarn.lock && rm yarn.lock && docker-compose up install"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gititGoro/pyrotokens3.git"
+    "url": "git+https://github.com/gititGoro/pyroTokens3.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/gititGoro/pyrotokens3/issues"
+    "url": "https://github.com/gititGoro/pyroTokens3/issues"
   },
-  "homepage": "https://github.com/gititGoro/pyrotokens3#readme",
+  "homepage": "https://github.com/gititGoro/pyroTokens3#readme",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-etherscan": "^2.1.7",
