@@ -2,8 +2,9 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 
 describe("LiquidityReceiver", async function () {
+  let owner: any, secondPerson: any;
   beforeEach(async function () {
-    const [owner, secondPerson] = await ethers.getSigners();
+    [owner, secondPerson] = await ethers.getSigners();
     var BaseToken = await ethers.getContractFactory("BaseToken");
     this.regularToken = await BaseToken.deploy("Base1", "BASE", 0);
     this.invalidToken1 = await BaseToken.deploy("Base2", "BASE", 0);
@@ -40,7 +41,7 @@ describe("LiquidityReceiver", async function () {
   it("CREATE2: Deployed PyroToken address matches predicted address", async function () {
     const expectedAddressOfPyroToken =
       await this.liquidityReceiver.getPyroToken(this.regularToken.address);
-   await this.liquidityReceiver.registerPyroToken(
+    await this.liquidityReceiver.registerPyroToken(
       this.regularToken.address,
       "hello",
       "there"
@@ -50,5 +51,23 @@ describe("LiquidityReceiver", async function () {
       expectedAddressOfPyroToken,
       this.loanOfficer.address
     );
+  });
+
+  it("SetFeeExempt on EOA fails", async function () {
+    await this.liquidityReceiver.registerPyroToken(
+      this.regularToken.address,
+      "hello",
+      "there"
+    );
+    const pyrotoken = await this.liquidityReceiver.getPyroToken(
+      this.regularToken.address
+    );
+    await this.EYE.approve(this.snufferCap.address, "100000000000000000000000");
+    //contract passes
+    await this.snufferCap.snuff(pyrotoken, this.loanOfficer.address, 3);
+
+    await expect(
+      this.snufferCap.snuff(pyrotoken, owner.address, 3)
+    ).to.be.revertedWith("LR: EOAs cannot be exempt.");
   });
 });

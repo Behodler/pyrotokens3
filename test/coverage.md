@@ -22,8 +22,8 @@ Note: the line items don't necessarily correspond to tests 1:1 but instead repre
 
 ## Liquidity Receiver
 
-<div> CREATE2: Deployed PyroToken address matches predicted address</div>
-<div> SetFeeExempt on EOA fails</div>
+<p> CREATE2: Deployed PyroToken address matches predicted address</p>
+<p> SetFeeExempt on EOA fails</p>
 <div> Non fee exempt contract charged all fees, EOA charged all fees</div>
 <div> SetFeeExempt on Contract passes for each scenario</div>
 <div> Redeploying existing PyroToken fails</div>

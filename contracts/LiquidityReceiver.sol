@@ -117,7 +117,7 @@ contract LiquidityReceiver is Ownable {
 
     modifier onlySnufferCap() {
         require(
-            msg.sender != address(config.snufferCap),
+            msg.sender == address(config.snufferCap),
             "LR: only snufferCap"
         );
         _;
