@@ -4,7 +4,7 @@ The third phase in Behodler's super deflationary token wrappers.
 
 # Description
 
-PyroTokens are wrapper tokens of existing tokens traded on Behodler, crafted on deflationary tokenomics. The relationship between PyroTokens and Behodler listed tokens is 1 to 1. Eg. Weth has PyroWeth, OXT has PyroOXT and so on. PyroTokens achieve deflationary price movements with respect to their base token by establishing a redeem rate that can only increase. The redeem rate is algorithmically calculated as the total base token in reserve divided by the supply of the pyroToken. In notation, if R is the redeem rate, B the total reserve of base tokens held in a pyroToken contract and T, the total supply of pyroTokens, then the redeem rate is given by the fraction,
+PyroTokens are wrapper tokens of existing tokens traded on Behodler, crafted on deflationary tokenomics. The relationship between PyroTokens and Behodler listed tokens is 1 to 1. Eg. Weth has PyroWeth, OXT has PyroOXT and so on. PyroTokens achieve deflationary price movements with respect to their base token by establishing a redeem rate that can only increase. The redeem rate is algorithmically calculated as the total base token in reserve divided by the supply of the PyroToken. In notation, if R is the redeem rate, B the total reserve of base tokens held in a PyroToken contract and T, the total supply of PyroTokens, then the redeem rate is given by the fraction,
 
 ![Redeem](images/RedeemRate.png "redeem rate")
 
@@ -41,7 +41,7 @@ Since independent movements in the components of the redeem rate are the algorit
 
 ### Independent numerator increases
 
-Every trade on Behodler levies a 0.5% fee on the input token. For tokens that have pyroTokens, the fee is sent to the corresponding pyroToken reserve, independently increasing the numerator and therefore the redeem rate.
+Every trade on Behodler levies a 0.5% fee on the input token. For tokens that have PyroTokens, the fee is sent to the corresponding PyroToken reserve, independently increasing the numerator and therefore the redeem rate.
 
 ### Independent denominator decreases
 
@@ -74,9 +74,9 @@ PyroTokens3 will allow for the caller of the creation function to set the name m
 
 **In addition to these necessary upgrades are some friction reducing features gleaned from experience:**
 
-1. Each pyroToken contract maintains a list of addresses that benefit from fee exemptions. This purpose of this is to assist composability for protocols that wish to be built on PyroTokens but which require the spread between prices to be minimized. While it's possible that protocols may seek to exploit the use of this feature, it's important to bear in mind that most burning will come from AMM trades and bots in particular. Furthermore, we can design the requirements for gaining a whitelisting to be a protocol wide bribe. For instance, burning 10000 EYE will whitelist your contract from paying the redeem fee. One of the use cases this feature will enable is allowing any project with a token listed on Behodler to implement a yield earning staking protocol for their user base. For instance, suppose a fictional dapp called DiamondDogs issues the token DD to its user base. DD trades on Behodler and has a corresponding PyroDD. Users who stake DD receive occasional NFT airdrops. When a user stakes DD, the token is converted into PyroDD. When the user unstaked, the PyroDD is unwrapped into DD and returned to the user. By disabling fees for these two operations, DiamondDogs can ensure that in the event when a user rapidly stakes and unstakes, the fees don't incur a liability on the DiamondDogs dapp.
+1. Each PyroToken contract maintains a list of addresses that benefit from fee exemptions. This purpose of this is to assist composability for protocols that wish to be built on PyroTokens but which require the spread between prices to be minimized. While it's possible that protocols may seek to exploit the use of this feature, it's important to bear in mind that most burning will come from AMM trades and bots in particular. Furthermore, we can design the requirements for gaining a whitelisting to be a protocol wide bribe. For instance, burning 10000 EYE will whitelist your contract from paying the redeem fee. One of the use cases this feature will enable is allowing any project with a token listed on Behodler to implement a yield earning staking protocol for their user base. For instance, suppose a fictional dapp called DiamondDogs issues the token DD to its user base. DD trades on Behodler and has a corresponding PyroDD. Users who stake DD receive occasional NFT airdrops. When a user stakes DD, the token is converted into PyroDD. When the user unstaked, the PyroDD is unwrapped into DD and returned to the user. By disabling fees for these two operations, DiamondDogs can ensure that in the event when a user rapidly stakes and unstakes, the fees don't incur a liability on the DiamondDogs dapp.
 
-2. MintTo and RedeemTo. In PyroTokens2, to mint PyroWeth with ETH, first ETH must be wrapped as Weth and then the Weth should be used to mint PyroWeth. A proxy contract has been deployed to combine these steps into one transaction. However, once the PyroWeth is minted, the proxy contract has to send it to the minting user which incurs a transfer fee. In PyroTokens3, a To address will allow the proxy contract to instruct the pyroTokens to mint directly into the wallet of the recipient.
+2. MintTo and RedeemTo. In PyroTokens2, to mint PyroWeth with ETH, first ETH must be wrapped as Weth and then the Weth should be used to mint PyroWeth. A proxy contract has been deployed to combine these steps into one transaction. However, once the PyroWeth is minted, the proxy contract has to send it to the minting user which incurs a transfer fee. In PyroTokens3, a To address will allow the proxy contract to instruct the PyroTokens to mint directly into the wallet of the recipient.
 
 ## Bad transfer etiquette.
 
@@ -106,7 +106,7 @@ Consider the diagram below
 
 ![IsoDebt](images/IsoDebt.png "IsoDebt")
 
-The horizontal axis, r, represents the ratio of debt to collateral.The vertical axis represents the lifetime of the loan in hours. The rule is that if a borrower takes more relative capital as a loan, they should be made to pay it back sooner to compensate the protocol for lent out reserves. Similarly, if the user takes out a small loan relative to their staked pyroTokens, the duration until the loan falls due should be longer. This creates the curve, given by 
+The horizontal axis, r, represents the ratio of debt to collateral.The vertical axis represents the lifetime of the loan in hours. The rule is that if a borrower takes more relative capital as a loan, they should be made to pay it back sooner to compensate the protocol for lent out reserves. Similarly, if the user takes out a small loan relative to their staked PyroTokens, the duration until the loan falls due should be longer. This creates the curve, given by 
 ```
 rH = k
 ``` 
@@ -129,18 +129,18 @@ We could let the community set the value of K through governance decisions routi
 However, a more elegant approach would be to use a smart contract to automatically adjust K. The community sets a total debt ratio policy target. For instance, suppose the community sets the total debt ratio target to 50%. If the actual total debt goes above 50% then the smart contract would lower the value of K in order to raise the interest rates. Conversely if the debt ratio falls below 50% then the smart contract would raise K in order to lower the interest rate.
 
 ## Bridging flash loans
-A rational borrower would only take an interest rate that was equal to or below the growth of the staked pyroToken. In this way, they can borrow base token and mint more pyro and know that their collateral base is growing faster than their debt obligation. When the loan falls due, they can pay back the entire debt and unstake their pyro, now owning more pyro than they did initially. Indeed, even if they don't have the funds to pay back the debt, they could construct a flashloan that borrows the necessary base token to clear the entire debt. In the same transaction, the liberated staked pyroTokens can be redeemed and used to pay back the flash loan. The left over base token will be profit.
+A rational borrower would only take an interest rate that was equal to or below the growth of the staked PyroToken. In this way, they can borrow base token and mint more pyro and know that their collateral base is growing faster than their debt obligation. When the loan falls due, they can pay back the entire debt and unstake their pyro, now owning more pyro than they did initially. Indeed, even if they don't have the funds to pay back the debt, they could construct a flashloan that borrows the necessary base token to clear the entire debt. In the same transaction, the liberated staked PyroTokens can be redeemed and used to pay back the flash loan. The left over base token will be profit.
 
 It's worth repeating and emphasising: Pyroloans will allow the borrower to profitably pay down long term loans with flash loans.
 
 ## A natural oracle
-Since it is only rational to borrow to the point where rates match redeem rate growth, successful repayments can be used as an onchain approximation of the growth in the redeem rate. Specifically the highest rates successfully paid off by borrowers can be used as an estimate for the redeem rate growth rate. Having an onchain, tamper resistant oracle for pyroToken APY will undoubtedly create downstream composability opportunities for smart contract which wish to perform decisions based on interest rates in the span of a transaction without requiring offchain oracle feeds.
+Since it is only rational to borrow to the point where rates match redeem rate growth, successful repayments can be used as an onchain approximation of the growth in the redeem rate. Specifically the highest rates successfully paid off by borrowers can be used as an estimate for the redeem rate growth rate. Having an onchain, tamper resistant oracle for PyroToken APY will undoubtedly create downstream composability opportunities for smart contract which wish to perform decisions based on interest rates in the span of a transaction without requiring offchain oracle feeds.
 
 ## Economic impact on systemic fragility
 Collateral backed borrowing on Ethereum, popularized by MakerDAO and Aave, have allowed self leveraged long positions to be built up by iteratively stacking debt. Essentially a user would deposit a risky token with good prospects such as Eth and borrow a stablecoin with a predictable and manageable interest rate such as Dai. They would only borrow a fraction of the value deposited but it would be used to purchase yet more Eth which is then deposited to borrow more Dai. The net result is to expose the borrower to large quantities of Eth. This very long position is in anticipation of Eth price growth exceeding the debt obligation of Dai plus interest. If correct in their predictions, the debt stack can be eventually unwound, leaving the depositor with more Eth that initially deposited.
 In a simple loan, a market downturn would see a certain portion of the borrower's eth sold onto the open market in order to liquidate the position. For a leveraged long position, a great deal more Eth is sold onto the open market. This increased sell pressure amplifies Eth downturns more than would otherwise would have occurred. Therefore borrowing on the margin increases systemic risk to the economy of the collateral asset.
 
-Pyroloans suffer from no such fragility. When a pyroloan position is insolvent (which can only happen because a loan falls due, the pyroToken collateral is burnt. The corresponding base token that was attached to the pyroToken collateral is released back into the reserve pool rather than being dumped on the open market, reflecting as a higher redeem rate for all pyroToken holders. So the first order effect of a pyroloan liquidation is to benefit all pyroToken holders. Since the pyroToken redeem rate has grown faster than it otherwise would have, the attractiveness of minting the base token into pyroTokens has risen which means the demand for base tokens will rise as this demand induces more pyroToken minting. In contrast to traditional loans, the circulating market supply of base token hasn't increased. So the second order effect of a pyroloan liquidation is to put upward price pressure on the base token. As with the rest of the pyroToken mechanisms, the effect of pyroloans is to dampen bear markets.
+Pyroloans suffer from no such fragility. When a pyroloan position is insolvent (which can only happen because a loan falls due, the PyroToken collateral is burnt. The corresponding base token that was attached to the PyroToken collateral is released back into the reserve pool rather than being dumped on the open market, reflecting as a higher redeem rate for all PyroToken holders. So the first order effect of a pyroloan liquidation is to benefit all PyroToken holders. Since the PyroToken redeem rate has grown faster than it otherwise would have, the attractiveness of minting the base token into PyroTokens has risen which means the demand for base tokens will rise as this demand induces more PyroToken minting. In contrast to traditional loans, the circulating market supply of base token hasn't increased. So the second order effect of a pyroloan liquidation is to put upward price pressure on the base token. As with the rest of the PyroToken mechanisms, the effect of pyroloans is to dampen bear markets.
 With traditional loans, liquidations are to the detriment of all borrowers against- and holders of the collateral token. With pyroloans, holders and solvent borrowers all benefit from liquidations.
 
 ## Liquidation Incentives
@@ -154,10 +154,10 @@ To keep the explanation as simple as possible, the above explanations included n
 Therefore an arbitrary additional fee should be levied on the loan so that the amount repaid exceeds the borrowed amount. This difference will be reflected as a higher redeem rate. The fee can be arbitrary and small such as 1%. The reason the percentage isn't important, as alluded to, is because the loan duration will determine the true annual interest rate. 1% of the debt paid back on a 100 day loan is a lot more than 1% per annum. If 3 successive 100 day loans are repaid, that allows for the same capital to be borrowed and repaid 3 times in one year. The total interest paid into the protocol is 1% of the debt multiplied by 3. Therefore a fixed arbitrary percentage has the effect of a floating market rate because of the duration dynamics inherent to pyroloans. The means that with a simple algorithm with analogous properties to a constant product AMM, we get an interest rate market for free without introducing complex algorithms.
 
 ## Putting it all together: Pyroloans heal credit markets
-Pyroloans offer an opportunity to derive yield on otherwise dormant pyroToken reserves. The mechanism of interest rate calculation implies that in the long run, the yield generated will match the very best DeFi has to offer to that particular PyroToken. For instance, if the best return on PyroWeth is to stake it on Sushi and that doing so yields a return of 30% APY, then the interest rate on PyroWeth loans will rise to approach 30% APY as borrowers deposit their loans on Sushi.
+Pyroloans offer an opportunity to derive yield on otherwise dormant PyroToken reserves. The mechanism of interest rate calculation implies that in the long run, the yield generated will match the very best DeFi has to offer to that particular PyroToken. For instance, if the best return on PyroWeth is to stake it on Sushi and that doing so yields a return of 30% APY, then the interest rate on PyroWeth loans will rise to approach 30% APY as borrowers deposit their loans on Sushi.
 This gives Behodler the benefit of chasing the best yields without having to make informed governance decisions and without introducing protocol risk to PyroTokens.
 The Behodler community can decide how much locked capital to put to work by calibrating the aggregate debt target. The smart contracts will then set K such that total loans adjust to meet the target. Again no external protocol risk is introduced. On a practical note, PyroTokens3 will be governed by a purpose built microDAO similar to LimboDAO. The microDAO will then be owned and controlled by one of the minions of MorgothDAO (Gothmog, king of the Balrogs, seems fitting in my opinion).
-Finally, unlike traditional crypto loan defaults which undermine the market for collateral, pyroToken loan defaults actually boost demand for both the base token and the pyroToken, and by extension all the holders of the collateral. Pyroloans are the first debt markets to sustainably offer positive counterpressure to market downturns.
+Finally, unlike traditional crypto loan defaults which undermine the market for collateral, PyroToken loan defaults actually boost demand for both the base token and the PyroToken, and by extension all the holders of the collateral. Pyroloans are the first debt markets to sustainably offer positive counterpressure to market downturns.
 
 ## A final word on external AMMs
 While trading of PyroTokens on external AMMs is an excellent source of redeem rate growth, the advent of Pyroloans means that Behodler can generate all the growth PyroTokens need without external assistance. However, PyroToken weaves of LP tokens are still very useful for automining and so the strategy of listing PyroToken weaves on Limbo will still be a dominant ecosystem strategy going forward. 
@@ -176,7 +176,7 @@ It should be noted also that each PyroToken can have its own loan officer so we 
 
 1. mint and redeem have recipient addresses to improve DeFi composability and reduce the cost of minting and redeeming PyroWeth in particular.
 2. TransferFrom is correctly specified to support indirect routing such as with Uniswap's V2 Router contract.
-3. Pyroloans (disabled by default): pyroToken collateral, base token loan.
+3. Pyroloans (disabled by default): PyroToken collateral, base token loan.
 4. Flexible name generation to allow for tight ERC20 compliant tokens to be made into PyroTokens.
 5. Governance controlled whitelisted removal of fees on contracts to assist with DeFi composability.
 6. PyroToken contracts will be deployed via CREATE2, using the address of the base token as the salt. This will allow future contracts built on PyroTokens to determined the address of the PyroToken contract without consulting a mapping, reducing the need for a gas expensive SSLOAD operation or an external contract call.
@@ -187,20 +187,20 @@ It should be noted also that each PyroToken can have its own loan officer so we 
 
 ## Existing holders
 
-Existing holders can either manually convert their pyroTokens from version 2 to 3 by first redeeming for the base token and then minting the new token or they can go through a reminting contract that bundles these operations into one. The redeem rates of V2 and V3 are not linked so the final number of PyroTokens may differ significantly. However this does not reflect lost or gained value. However, the move from V2 to V3 does imply an unavoidable 2% exit fee from V2.
+Existing holders can either manually convert their PyroTokens from version 2 to 3 by first redeeming for the base token and then minting the new token or they can go through a reminting contract that bundles these operations into one. The redeem rates of V2 and V3 are not linked so the final number of PyroTokens may differ significantly. However this does not reflect lost or gained value. However, the move from V2 to V3 does imply an unavoidable 2% exit fee from V2.
 The introduction of the once off no fee approval would prevent this situation from happening in the future.
-The UX for converting V2 to V3 will be as low friction as possible so that new users will not be aware of V2 and V2 holders will be prompted through a single transaction per pyroToken to upgrade.
-The option to batch migrate many pyroTokens exits which is cheaper on average than performing 1 transaction per PyroToken.
+The UX for converting V2 to V3 will be as low friction as possible so that new users will not be aware of V2 and V2 holders will be prompted through a single transaction per PyroToken to upgrade.
+The option to batch migrate many PyroTokens exits which is cheaper on average than performing 1 transaction per PyroToken.
 
-Note: V2 pyroTokens will not stop working but at some point, fee revenue from Behodler will go to V3 pyroTokens exclusively.
+Note: V2 PyroTokens will not stop working but at some point, fee revenue from Behodler will go to V3 PyroTokens exclusively.
 
 ## Lessons learnt from prior migrations
 
-Migrations in Ethereum have certain best practices, one of which is to never rely on external state or to make assumptions about state at all. Another it to not store the object being migrated on the migration contract. Instead, the contract should act as a stateless bridge. The V2 to V3 migration will be a purely mechanistic invocation of redeem and mint functionality with no reliance on exchange rates or balances. Indeed, the migration contract is not even aware of which pyroToken is being migrated in particular but simply consults the mappings of the respective Liquidity Receiver contracts.
+Migrations in Ethereum have certain best practices, one of which is to never rely on external state or to make assumptions about state at all. Another it to not store the object being migrated on the migration contract. Instead, the contract should act as a stateless bridge. The V2 to V3 migration will be a purely mechanistic invocation of redeem and mint functionality with no reliance on exchange rates or balances. Indeed, the migration contract is not even aware of which PyroToken is being migrated in particular but simply consults the mappings of the respective Liquidity Receiver contracts.
 
-# The history of pyroTokens
+# The history of PyroTokens
 
-PyroTokens have been a part of Behodler from the very beginning. In fact the concept traces its roots to WeiDai and therefore predates the existence of Behodler. The practical lessons learnt since V1 have informed an incremental improvement in each successive generation. This section briefly outlines the history of pyroTokens.
+PyroTokens have been a part of Behodler from the very beginning. In fact the concept traces its roots to WeiDai and therefore predates the existence of Behodler. The practical lessons learnt since V1 have informed an incremental improvement in each successive generation. This section briefly outlines the history of PyroTokens.
 
 ## V1
 
@@ -208,7 +208,7 @@ When a token was sold on Behodler 1, a portion of the input token would be wrapp
 The intent here was to give traders an immediate stake in the success of the Behodler protocol, similar to loyalty points earned in traditional retail stores.
 Early adopters benefit the most since subsequent trade by other users increases the value of existing PyroToken holders. There was no explicit mechanism for users to mint PyroTokens. Instead, trade on Behodler was required.
 
-The drawback to this approach was the gas cost of minting up, burning and then transferring a pyroToken in the span of a trade. When coupled with other features of Behodler 1 such as ephemeral minting of Scarcity, the gas cost of a trade on Behodler 1 exceeded all other popular AMMs.
+The drawback to this approach was the gas cost of minting up, burning and then transferring a PyroToken in the span of a trade. When coupled with other features of Behodler 1 such as ephemeral minting of Scarcity, the gas cost of a trade on Behodler 1 exceeded all other popular AMMs.
 
 ## V2
 
@@ -217,7 +217,7 @@ Borrowing from Aave's generation of ATokens, V2 PyroTokens are given names and s
 
 ## V3
 
-The use of a router contract on Uniswap V2 leads to an incompatibility between PyroToken V2 and Uniswap at the level of the front end user. Bots and technical users can still go directly to the underlying pair contracts. External AMM trade is an important feature of the tokenomic interaction between PyroTokens and Limbo and allowing non technical users to route their pyroTokens through external AMMs would reduce UX friction.
+The use of a router contract on Uniswap V2 leads to an incompatibility between PyroToken V2 and Uniswap at the level of the front end user. Bots and technical users can still go directly to the underlying pair contracts. External AMM trade is an important feature of the tokenomic interaction between PyroTokens and Limbo and allowing non technical users to route their PyroTokens through external AMMs would reduce UX friction.
 Since the advent of V2, DeFi yield opportunities have proliferated, coupled with an increasing emphasis on making capital efficient. V2 reserves were left intentionally idle to protect the protocol from external protocol risk. While it is impossible to protect from the protocol risks of the underlying base tokens, nothing should undermine the 3 Laws of PyroTokens. V3 introduces economic risk free loans that are compliant with the 3 Laws.
 Finally, while layer 2 appears to be the future of Ethereum dapps, V3 PyroTokens are still written such that if a Behodler 3 on mainnet were ever deployed, it could be done so with gas cost savings over the existing Behodler (version 2). 
 
