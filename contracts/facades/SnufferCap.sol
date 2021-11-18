@@ -16,7 +16,6 @@ abstract contract SnufferCap {
     //after perfroming business logic, call this function
     function _snuff(address pyroToken, address targetContract, FeeExemption exempt)
         internal
-        virtual
     {
         _liquidityReceiver.setFeeExemptionStatusOnPyroForContract(pyroToken,targetContract,exempt);
     }

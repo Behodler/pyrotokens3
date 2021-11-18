@@ -598,7 +598,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
         uint256 receiverStatus = uint256(feeExemptionStatus[receiver]);
         if (
             (senderStatus >= 1 && senderStatus <= 4) ||
-            (receiverStatus >= 4 && receiverStatus <= 6)
+            (receiverStatus == 2 || (receiverStatus >= 4 && receiverStatus <= 6))
         ) {
             return 0;
         }

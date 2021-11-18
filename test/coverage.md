@@ -26,7 +26,7 @@ Note: the line items don't necessarily correspond to tests 1:1 but instead repre
 <p> CREATE2: Deployed PyroToken address matches predicted address</p>
 <p> SetFeeExempt on EOA fails</p>
 <p> Non fee exempt contract charged all fees, EOA charged all fees</p>
-<div> SetFeeExempt on Contract passes for each scenario</div>
+<p> SetFeeExempt on Contract passes for each scenario</p>
 <div> Redeploying existing PyroToken fails</div>
 <div> Only valid nonburnable tokens can have pyroTokens</div>
 <div> Transfer of pyroToken to new liquidity receiver works fully</div>

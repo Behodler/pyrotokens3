@@ -291,7 +291,7 @@ contract BaseToken is TestERC20 {
         string memory symbol_,
         uint256 _burnFee
     ) TestERC20(name_, symbol_) {
-        _totalSupply = 100000 ether;
+        _totalSupply = 1000000 ether;
         _balances[msg.sender] = _totalSupply;
         burnFee = _burnFee;
     }

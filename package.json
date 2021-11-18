@@ -6,6 +6,7 @@
   "scripts": {
     "test:all": "docker-compose up test",
     "test":"sudo npx hardhat test",
+    "test:fresh":"yarn build && yarn test",
     "build": "sudo rm -rf cache/ && sudo rm -rf artifacts/ && sudo rm -rf typechain/* && docker-compose up build",
     "docker:install": "rm -rf node_modules/* && touch yarn.lock && rm yarn.lock && docker-compose up install"
   },
