@@ -10,9 +10,7 @@ PyroTokens are wrapper tokens of existing tokens traded on Behodler, crafted on 
 
 EG. Suppose that there are 10 WEth in reserve and the supply of PyroWEth is 8. This implies the redeem rate of PyroWEth is
 
-
 ![RedeemEg](images/example.png "redeem rate eg")
-
 
 This means that if you wish to mint 1 PyroWeth, you require 1.25 Eth. Similarly redeeming 1 PyroWEth will give 1.25 Eth.
 
@@ -47,7 +45,7 @@ Every trade on Behodler levies a 0.5% fee on the input token. For tokens that ha
 
 The mechanism for decreasing the denominator is burning:
 
-1. Every transfer of the PyroToken incurs a fee, 100% of which is burnt. To use Uniswap's terminology, the transfer fee is *inclusive*.
+1. Every transfer of the PyroToken incurs a fee, 100% of which is burnt. To use Uniswap's terminology, the transfer fee is _inclusive_.
 2. Exiting the PyroToken by redeeming for the base token incurs a burn fee which is higher than the transfer fee.
 
 The purpose of the burn on transfer is to benefit from high frequency AMM trades. By listing the PyroTokens on all the major AMMs including Behodler, regular trade will transfer value to hodlers. This mechanism is part of Behodler's broader MEV capture and underpins the strategy for deepening liquidity. However these topics are beyond the scope of this document and interested readers can dive deeper into the relationship between MEV capture, Limbo and the Behodler AMM by consulting other Behodler documentation.
@@ -90,38 +88,42 @@ Trading directly with the underlying token pair succeeds which means bots will h
 The 3 laws of PyroTokens create a certain economic guarantee that cannot be ignored: since PyroTokens cannot fall in value relative to the base token, PyroToken as collateral against base token loans are economically risk free. In traditional collateralized borrowing dapps, there has to be an upper limit on the percentage of loaned token to collateral. For instance, if you wish to deposit Eth on Aave in order to borrow dai, you will only be able to borrow about 70% of the value of your Eth deposit. This is to give liquidators a margin of error in which to protect the protocol from insolvency. Pyroloan collateral staked in order to borrow base token liquidity cannot ever be insolvent which means that this ratio can be much closer to 100%.
 
 ## Interest rate policy and some new cryptoeonomics
+
 Why does the lack of insolvency from collateral price movements matter? It means that liquidation from market price movements can't exist on a Pyroloan. Instead, the only thing that can cause liquidation is if the accumulated interest plus the original debt exceeds the original collateral.
 However, even this isn't a strong requirement. Consider the following example:
-1 PyroWEth is worth 1 Eth for simplicity. Suppose I stake 100 PyroWEth and borrow 60 Eth. The interest rate is non zero and so interest gradually accumulates. Eventually the accumulated interest obligations exceeds 40 Eth. This means there is more outstanding debt than collateral. It would seem on the surface that this should require an immediate liquidation to protect the protocol. However, the interest isn't owed to any user in particular but the protocol as a whole. Indeed the interest doesn't exist until it is paid. As far as the protocol is concerned, 100 PyroWEth has been staked and 60 Eth has been borrowed. If we burn 60 PyroWEth as an act of liquidation, the redeem rate will tick up slightly and the debt and collateral will cancel. It doesn't matter if the interest obligation is 100000 Eth. it has no bearing on the health of the protocol. 
-Contrast this with protocols that connect user deposits with debtor loans like full reserve Rothbardian banks operating on a blockchain. Here interest is paid to depositors from loan repayments. If those loans begin to fail, interest paid to borrowers has to decline. If enough loans fail, the deposits themselves are in jeopardy. With PyroTokens, each loan is denominated in the collateral put up by the borrower rather than *against* it. The risk is completely ringfenced within the financial welfare of that borrower. But because we're dealing with PyroTokens, the gains are shared by all holders of the PyroToken in question.
+1 PyroWEth is worth 1 Eth for simplicity. Suppose I stake 100 PyroWEth and borrow 60 Eth. The interest rate is non zero and so interest gradually accumulates. Eventually the accumulated interest obligations exceeds 40 Eth. This means there is more outstanding debt than collateral. It would seem on the surface that this should require an immediate liquidation to protect the protocol. However, the interest isn't owed to any user in particular but the protocol as a whole. Indeed the interest doesn't exist until it is paid. As far as the protocol is concerned, 100 PyroWEth has been staked and 60 Eth has been borrowed. If we burn 60 PyroWEth as an act of liquidation, the redeem rate will tick up slightly and the debt and collateral will cancel. It doesn't matter if the interest obligation is 100000 Eth. it has no bearing on the health of the protocol.
+Contrast this with protocols that connect user deposits with debtor loans like full reserve Rothbardian banks operating on a blockchain. Here interest is paid to depositors from loan repayments. If those loans begin to fail, interest paid to borrowers has to decline. If enough loans fail, the deposits themselves are in jeopardy. With PyroTokens, each loan is denominated in the collateral put up by the borrower rather than _against_ it. The risk is completely ringfenced within the financial welfare of that borrower. But because we're dealing with PyroTokens, the gains are shared by all holders of the PyroToken in question.
 
 Since individual borrowers can in theory accumulate infinite debt without endangering the system, positive interest rates have no bearing on the incentive for the borrower to repay. An analogy would be how the Japanese government is able to sustain a national debt many times greater than its GDP. Since Japanese private savings are so high, the government is borrowing from its own people to reduce taxation on its people. There are distributional implications but the Yen is not put under strain by increasing foreign obligations. Unless the Japanese government self imposes a debt payoff timeline, this position has no end in sight.
 Similarly with Pyroloans, we wish to avoid the situation where borrowers accumulate such large interest burdens that it would make more sense for borrowers to simply abandon their position. A fixed timeline on loans should be added to enforce repayment. If we define a loan by its maturation date, then an implicit interest rate emerges. Technically it's not an interest rate, since the repayment includes interest and payments on principal. So the entire loan obligation is amortized over the fixed duration. For brevity, we'll refer to the average annual repayment required as the repayment rate, or just rate.
-For instance, suppose the timeline to repay a Pyroloan is 10 years. And suppose the borrower repays the loan in equal annual installments. This implies an annual rate of 10% per annum on the original debt. If we shorten the repayment period to 5 years then the rate doubles to 20% per annum. 
+For instance, suppose the timeline to repay a Pyroloan is 10 years. And suppose the borrower repays the loan in equal annual installments. This implies an annual rate of 10% per annum on the original debt. If we shorten the repayment period to 5 years then the rate doubles to 20% per annum.
 
 If we set the period of repayment to less than a year then the rate is by definition greater than 100% per annum because 100% of the debt has to be repaid within less than a year.
 
-By controlling the rate through the maturation date, we can create an amortization rate bonding curve where a user can select their interest rate based on the duration of the pyroloan. 
+By controlling the rate through the maturation date, we can create an amortization rate bonding curve where a user can select their interest rate based on the duration of the pyroloan.
 Consider the diagram below
 
 ![IsoDebt](images/IsoDebt.png "IsoDebt")
 
-The horizontal axis, r, represents the ratio of debt to collateral.The vertical axis represents the lifetime of the loan in hours. The rule is that if a borrower takes more relative capital as a loan, they should be made to pay it back sooner to compensate the protocol for lent out reserves. Similarly, if the user takes out a small loan relative to their staked PyroTokens, the duration until the loan falls due should be longer. This creates the curve, given by 
+The horizontal axis, r, represents the ratio of debt to collateral.The vertical axis represents the lifetime of the loan in hours. The rule is that if a borrower takes more relative capital as a loan, they should be made to pay it back sooner to compensate the protocol for lent out reserves. Similarly, if the user takes out a small loan relative to their staked PyroTokens, the duration until the loan falls due should be longer. This creates the curve, given by
+
 ```
 rH = k
-``` 
+```
 
 where k is a constant. We'll label this curve the isodebt curve. Moving within the isodebt curve affects the interest you pay. suppose point A represents a 5% loan due in 8760 hours. This means rH = 0.05x8760 = 438.  
-8760 happens to be the number of hours in a year so the rate is exactly 100%. That is, 100% of the loan is due in exactly one year. The rate as measured against the staked collateral is 5%. 
+8760 happens to be the number of hours in a year so the rate is exactly 100%. That is, 100% of the loan is due in exactly one year. The rate as measured against the staked collateral is 5%.
 Now suppose point B represents a loan of 70% of capital. We can calculate how much time this loan requires to be paid because we know k is 438. H = 438/0.7 = 625.71 which is 26 days. Borrowing more relative to the stake shortens the loan duration.
-If we calculate the annual rate using a simple interest formula since there is no debt compounding in this scenario then we get (0.7/26)*365 = 9.82 = 982%.
+If we calculate the annual rate using a simple interest formula since there is no debt compounding in this scenario then we get (0.7/26)\*365 = 9.82 = 982%.
 
 ## Repayment schedule
+
 Recall that a loan is not called until the duration is over. If a user borrows 70% and expects to pay a rate of 982% per annum then they may just incur the default rather than pay such a high rate. So the smart contract should be written such that if a user makes a payment before the due date, the loan is recalculated to reflect a lower interest rate. In other words, the rate is set by an amortization bonding curve (ABC). As the borrower increases their debt, the rate rises and as they decrease their debt the rate falls. Also, by implication, as the debt obligation is paid off, the duration to liquidation increases. In other words, paying off debt is a way for the borrower to buy time in the literal sense of the word buy. Figure 2 shows how the required annual repayment rate, given by vertical axis A, increases as the loan size increases relative to capital, given by the same horizontal axis as in figure 1. This graph is analogous to a graph of slippage from an AMM, except that the thing slipping is the ease of loan repayment.
 
 ![ABC](images/ABC.png "Amortization bonding curve")
 
 ## Policy instruments for MorgothDAO
+
 Return to the isodebt formulation which is used to determine the repayment rate (r) in the equation: rH = K. While the relationship between r and H is algorithmic, the choice of the value of K is completely arbitrary. It should also be noted that the relationship between K and the rate for any given level of debt is inverse. In other words, in the example above, K is 438 and the annual rate on debt equal to 0.05% of collateral is 100%. Suppose we set the value of K to be 900. Then H will be 900/0.05 = 18000 hours which is 2.5 years. The annual simple interest rate would then fall to 0.05/2.5 = 2.4%.
 
 We could let the community set the value of K through governance decisions routinely to control the across the board interest rate on all loans. This in turn would control how much debt is taken out in aggregate as a proportion of capital. For instance, if the total value of Pyroloans by all borrowers equals 80% of capital for K=1000 then setting K to 500 will cause interest rates to rise which may prompt existing borrowers to either pay off their debt to reduce their interest rates or allow the debt to be liquidated. This would cause the total debt outstanding to fall below 80%. Conversely if the community sets K to 2000, it would cause interest rates across the curve to fall which would prompt more borrowing.
@@ -129,14 +131,17 @@ We could let the community set the value of K through governance decisions routi
 However, a more elegant approach would be to use a smart contract to automatically adjust K. The community sets a total debt ratio policy target. For instance, suppose the community sets the total debt ratio target to 50%. If the actual total debt goes above 50% then the smart contract would lower the value of K in order to raise the interest rates. Conversely if the debt ratio falls below 50% then the smart contract would raise K in order to lower the interest rate.
 
 ## Bridging flash loans
+
 A rational borrower would only take an interest rate that was equal to or below the growth of the staked PyroToken. In this way, they can borrow base token and mint more pyro and know that their collateral base is growing faster than their debt obligation. When the loan falls due, they can pay back the entire debt and unstake their pyro, now owning more pyro than they did initially. Indeed, even if they don't have the funds to pay back the debt, they could construct a flashloan that borrows the necessary base token to clear the entire debt. In the same transaction, the liberated staked PyroTokens can be redeemed and used to pay back the flash loan. The left over base token will be profit.
 
 It's worth repeating and emphasising: Pyroloans will allow the borrower to profitably pay down long term loans with flash loans.
 
 ## A natural oracle
+
 Since it is only rational to borrow to the point where rates match redeem rate growth, successful repayments can be used as an onchain approximation of the growth in the redeem rate. Specifically the highest rates successfully paid off by borrowers can be used as an estimate for the redeem rate growth rate. Having an onchain, tamper resistant oracle for PyroToken APY will undoubtedly create downstream composability opportunities for smart contract which wish to perform decisions based on interest rates in the span of a transaction without requiring offchain oracle feeds.
 
 ## Economic impact on systemic fragility
+
 Collateral backed borrowing on Ethereum, popularized by MakerDAO and Aave, have allowed self leveraged long positions to be built up by iteratively stacking debt. Essentially a user would deposit a risky token with good prospects such as Eth and borrow a stablecoin with a predictable and manageable interest rate such as Dai. They would only borrow a fraction of the value deposited but it would be used to purchase yet more Eth which is then deposited to borrow more Dai. The net result is to expose the borrower to large quantities of Eth. This very long position is in anticipation of Eth price growth exceeding the debt obligation of Dai plus interest. If correct in their predictions, the debt stack can be eventually unwound, leaving the depositor with more Eth that initially deposited.
 In a simple loan, a market downturn would see a certain portion of the borrower's Eth sold onto the open market in order to liquidate the position. For a leveraged long position, a great deal more Eth is sold onto the open market. This increased sell pressure amplifies Eth downturns more than would otherwise would have occurred. Therefore borrowing on the margin increases systemic risk to the economy of the collateral asset.
 
@@ -144,25 +149,113 @@ Pyroloans suffer from no such fragility. When a pyroloan position is insolvent (
 With traditional loans, liquidations are to the detriment of all borrowers against- and holders of the collateral token. With pyroloans, holders and solvent borrowers all benefit from liquidations.
 
 ## Liquidation Incentives
-While it is theoretically possible to allow borrowers to take out 100% loans on their staked PyroTokens, we'd like to create an incentive for liquidation bots to clean up outstanding debt. As such, it would make sense to set the borrowing threshold to less than 100% such as 90%. Then on liquidation, the portion of collateral corresponding to the borrowed base token is burnt and an additional 10% is given to the liquidator. 
+
+While it is theoretically possible to allow borrowers to take out 100% loans on their staked PyroTokens, we'd like to create an incentive for liquidation bots to clean up outstanding debt. As such, it would make sense to set the borrowing threshold to less than 100% such as 90%. Then on liquidation, the portion of collateral corresponding to the borrowed base token is burnt and an additional 10% is given to the liquidator.
 For instance, suppose I stake 100 PyroWEth and borrow 90 Eth (assume redeem rate of 1). The due date arrives. A liquidator then burns 90 of my PyroWEth and claims the remaining 10. Note that this act will increase the PyroWEth redeem rate so that in practice, the liquidator receives more than 10 Eth worth of PyroWeth.
 
 The PyroToken liquidation market is therefore a key contributor to redeem rate growth for PyroTokens.
 
 ## Additional redeem rate support
+
 To keep the explanation as simple as possible, the above explanations included no interest as the adjustable amortization rate, given by the ABC is enough to mediate borrower behaviour, even without charging interest. However, without a positive interest rate, the reserve pool for a PyroToken won't grow from repayments, only from loan defaults. The benefit of adjustable time periods is that it isn't necessary to introduce an additional interest rate dynamic. Instead, simply increasing the burden of repayment by an arbitrary fixed amount will have this effect. In other words, 10% stretched over 5 years is less than 10% per annum but 10% compressed into 3 months is far more than 10% per annum.
 Therefore an arbitrary additional fee should be levied on the loan so that the amount repaid exceeds the borrowed amount. This difference will be reflected as a higher redeem rate. The fee can be arbitrary and small such as 1%. The reason the percentage isn't important, as alluded to, is because the loan duration will determine the true annual interest rate. 1% of the debt paid back on a 100 day loan is a lot more than 1% per annum. If 3 successive 100 day loans are repaid, that allows for the same capital to be borrowed and repaid 3 times in one year. The total interest paid into the protocol is 1% of the debt multiplied by 3. Therefore a fixed arbitrary percentage has the effect of a floating market rate because of the duration dynamics inherent to pyroloans. The means that with a simple algorithm with analogous properties to a constant product AMM, we get an interest rate market for free without introducing complex algorithms.
 
 ## Putting it all together: Pyroloans heal credit markets
+
 Pyroloans offer an opportunity to derive yield on otherwise dormant PyroToken reserves. The mechanism of interest rate calculation implies that in the long run, the yield generated will match the very best DeFi has to offer to that particular PyroToken. For instance, if the best return on PyroWEth is to stake it on Sushi and that doing so yields a return of 30% APY, then the interest rate on PyroWEth loans will rise to approach 30% APY as borrowers deposit their loans on Sushi.
 This gives Behodler the benefit of chasing the best yields without having to make informed governance decisions and without introducing protocol risk to PyroTokens.
 The Behodler community can decide how much locked capital to put to work by calibrating the aggregate debt target. The smart contracts will then set K such that total loans adjust to meet the target. Again no external protocol risk is introduced. On a practical note, PyroTokens3 will be governed by a purpose built microDAO similar to LimboDAO. The microDAO will then be owned and controlled by one of the minions of MorgothDAO (Gothmog, king of the Balrogs, seems fitting in my opinion).
 Finally, unlike traditional crypto loan defaults which undermine the market for collateral, PyroToken loan defaults actually boost demand for both the base token and the PyroToken, and by extension benefit all the holders of the collateral. Pyroloans are the first debt markets to sustainably offer positive counterpressure to market downturns.
 
-# INSERT TABLE CONTRASTING TRADITIONAL LOANS WITH PYROLOANS
+The following table contrasts some important differences between Pyroloans and traditional debt markets on Ethereum such as Aave.
 
+<table>
+<thead>
+<tr>
+<th colspan="2">Loan market comparison</th>
+</tr>
+<tr>
+<th>Traditional</th>
+<th>PyroLoan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+      <td>
+         Individual debt risk protocol
+      </td>
+      <td>
+         Individual debt risk is localized
+      </td>
+</tr>
+<tr>
+      <td>
+         Insolvent positions must be liquidated
+      </td>
+      <td>
+      Insolvent positions are sustainable
+      </td>
+</tr>
+<tr>
+      <td>
+         Borrowers accept interest rate set by market
+      </td>
+      <td>
+     Borrowers choose interest rate from bonding curve
+      </td>
+</tr>
+<tr>
+      <td>
+         Borrowed asset must be different to staked asset
+      </td>
+      <td>
+     Borrowed asset must by base token of staked pyrotoken
+      </td>
+</tr>
+<tr>
+      <td>
+         Debt repayments do not reduce interest rate
+      </td>
+      <td>
+      Debt repayments reduce interest rate
+      </td>
+</tr>
+<tr>
+      <td>
+         Liquidated debt puts downward price pressure on collateral asset
+      </td>
+      <td>
+      Liquidated debt puts upward price pressure on collateral asset
+      </td>
+</tr>
+<tr>
+      <td>
+         Liquidation bots receive entire benefit from liquidations
+      </td>
+      <td>
+      All holders of both base token and pyrotoken benefit from liquidations
+      </td>
+</tr>
+<tr>
+      <td>
+        By lowering the price of collateral, liquidations can cascade into more liquidations, amplifying bear markets
+      </td>
+      <td>
+      Every liquidation improves the health of existing borrowers by raising the price of collateral, helping to stop liquidation waves.
+      </td>
+</tr>
+<tr>
+      <td>
+        Debt and logic are part of one big protocol, requiring entire protocol to be upgraded when improvements are made
+      </td>
+      <td>
+      Debt and logic are separated allowing loan logic facades to be replaced without affecting existing positions
+      </td>
+</tr>
+</tbody>
+</table>
 ## A final word on external AMMs
-While trading of PyroTokens on external AMMs is an excellent source of redeem rate growth, the advent of Pyroloans means that Behodler can generate all the growth PyroTokens need without external assistance. However, PyroToken weaves of LP tokens are still very useful for automining and so the strategy of listing PyroToken weaves on Limbo will still be a dominant ecosystem strategy going forward. 
+While trading of PyroTokens on external AMMs is an excellent source of redeem rate growth, the advent of Pyroloans means that Behodler can generate all the growth PyroTokens need without external assistance. However, PyroToken weaves of LP tokens are still very useful for automining and so the strategy of listing PyroToken weaves on Limbo will still be a dominant ecosystem strategy going forward.
 
 ## Protocol safety
 
@@ -171,6 +264,7 @@ While Pyroloans offer no economic risk, every new smart contract introduces prot
 </div>
 
 ## Separation of concerns
+
 The operation of loans will be separated into logic and state. What this means is that each PyroToken contract will maintain a bookkeeping of debt and staked collateral. However, no loan logic will exist other than to enforce debt does not exceed collateral. An external contract called the LoanOfficer will control the logic of loans including the administration of the isodebt relationship and the production of the ABC. What this means is that if a better version of Pyroloans can be designed in the future, the current system can be swapped out for the upgrade without affecting any existing positions. No migrations for existing users or any need for them to be aware of the change. The appointment of LoanOfficer as the debt gatekeeper will be controlled by the microDAO in charge of PyroTokens3.
 It should be noted also that each PyroToken can have its own loan officer so we may enter a future with different loan paradigms competing across various PyroTokens. This sort of meta market in governance will certainly create some lockup pressure for EYE.
 
@@ -221,6 +315,4 @@ Borrowing from Aave's generation of ATokens, V2 PyroTokens are given names and s
 
 The use of a router contract on Uniswap V2 leads to an incompatibility between PyroToken V2 and Uniswap at the level of the front end user. Bots and technical users can still go directly to the underlying pair contracts. External AMM trade is an important feature of the tokenomic interaction between PyroTokens and Limbo and allowing non technical users to route their PyroTokens through external AMMs would reduce UX friction.
 Since the advent of V2, DeFi yield opportunities have proliferated, coupled with an increasing emphasis on making capital efficient. V2 reserves were left intentionally idle to protect the protocol from external protocol risk. While it is impossible to protect from the protocol risks of the underlying base tokens, nothing should undermine the 3 Laws of PyroTokens. V3 introduces economic risk free loans that are compliant with the 3 Laws.
-Finally, while layer 2 appears to be the future of Ethereum dapps, V3 PyroTokens are still written such that if a Behodler 3 on mainnet were ever deployed, it could be done so with gas cost savings over the existing Behodler (version 2). 
-
-
+Finally, while layer 2 appears to be the future of Ethereum dapps, V3 PyroTokens are still written such that if a Behodler 3 on mainnet were ever deployed, it could be done so with gas cost savings over the existing Behodler (version 2).
