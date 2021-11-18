@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 import "./facades/Enums.sol";
 import "./facades/IERC20.sol";
+import "hardhat/console.sol";
 
 abstract contract Context {
     function _msgSender() internal view virtual returns (address) {
@@ -351,15 +352,19 @@ contract PyroToken is ERC20, ReentrancyGuard {
     //a flourising of competing ideas. Seasteading for debt.
     mapping(address => DebtObligation) debtObligations;
 
-    constructor(){
+    constructor() {
         config.liquidityReceiver = _msgSender();
         config.pullPendingFeeRevenue = true;
     }
 
-    modifier initialized {
-        require(address(config.baseToken)!=address(0), "PyroToken: base token not set");
+    modifier initialized() {
+        require(
+            address(config.baseToken) != address(0),
+            "PyroToken: base token not set"
+        );
         _;
     }
+
     function initialize(
         address baseToken,
         string memory name_,
@@ -380,7 +385,9 @@ contract PyroToken is ERC20, ReentrancyGuard {
 
     modifier updateReserve() {
         if (config.pullPendingFeeRevenue) {
-            LiquidiyReceiverLike(config.liquidityReceiver).drain(address(this));
+            LiquidiyReceiverLike(config.liquidityReceiver).drain(
+                address(config.baseToken)
+            );
         }
         _;
     }
@@ -465,11 +472,11 @@ contract PyroToken is ERC20, ReentrancyGuard {
     ) internal updateReserve returns (uint256) {
         uint256 _redeemRate = redeemRate();
         _balances[owner] -= amount;
-        _totalSupply -= amount;
         uint256 fee = calculateRedemptionFee(amount, owner);
 
         uint256 net = amount - fee;
         uint256 baseTokens = (_redeemRate * net) / ONE;
+        _totalSupply -= fee;
         emit Transfer(owner, address(0), uint128(amount), uint128(amount));
         require(
             config.baseToken.transfer(recipient, baseTokens),
@@ -604,7 +611,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
         returns (uint256)
     {
         uint256 status = uint256(feeExemptionStatus[redeemer]);
-        if ((status >= 3 || status <= 4) || status > 5) return 0;
+        if ((status >= 3 && status <= 4) || status > 5) return 0;
         return (amount * 2) / 100;
     }
 }

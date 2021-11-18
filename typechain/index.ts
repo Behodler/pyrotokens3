@@ -18,6 +18,7 @@ export type { BurnEYESnufferCap } from "./BurnEYESnufferCap";
 export type { BaseToken } from "./BaseToken";
 export type { TestERC20 } from "./TestERC20";
 export type { Lachesis } from "./Lachesis";
+export type { PyroSender } from "./PyroSender";
 export type { SimpleLoanOfficer } from "./SimpleLoanOfficer";
 export type { LRNew } from "./LRNew";
 export type { PyroToken2 } from "./PyroToken2";
@@ -40,6 +41,7 @@ export { BurnEYESnufferCap__factory } from "./factories/BurnEYESnufferCap__facto
 export { BaseToken__factory } from "./factories/BaseToken__factory";
 export { TestERC20__factory } from "./factories/TestERC20__factory";
 export { Lachesis__factory } from "./factories/Lachesis__factory";
+export { PyroSender__factory } from "./factories/PyroSender__factory";
 export { SimpleLoanOfficer__factory } from "./factories/SimpleLoanOfficer__factory";
 export { LRNew__factory } from "./factories/LRNew__factory";
 export { PyroToken2__factory } from "./factories/PyroToken2__factory";

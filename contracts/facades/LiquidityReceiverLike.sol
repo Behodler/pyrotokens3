@@ -24,4 +24,6 @@ abstract contract LiquidityReceiverLike {
         string memory name,
         string memory symbol
     ) public virtual;
+
+    function drain(address baseToken) external virtual returns (uint);
 }

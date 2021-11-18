@@ -11,6 +11,7 @@ import {
   PopulatedTransaction,
   BaseContract,
   ContractTransaction,
+  Overrides,
   CallOverrides,
 } from "ethers";
 import { BytesLike } from "@ethersproject/bytes";
@@ -18,25 +19,28 @@ import { Listener, Provider } from "@ethersproject/providers";
 import { FunctionFragment, EventFragment, Result } from "@ethersproject/abi";
 import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 
-interface Create2Interface extends ethers.utils.Interface {
+interface PyroSenderInterface extends ethers.utils.Interface {
   functions: {
-    "getBytecode()": FunctionFragment;
+    "redeem(address,uint256)": FunctionFragment;
+    "send(address,address,uint256)": FunctionFragment;
   };
 
   encodeFunctionData(
-    functionFragment: "getBytecode",
-    values?: undefined
+    functionFragment: "redeem",
+    values: [string, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "send",
+    values: [string, string, BigNumberish]
   ): string;
 
-  decodeFunctionResult(
-    functionFragment: "getBytecode",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "redeem", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "send", data: BytesLike): Result;
 
   events: {};
 }
 
-export class Create2 extends BaseContract {
+export class PyroSender extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
@@ -77,25 +81,80 @@ export class Create2 extends BaseContract {
     toBlock?: string | number | undefined
   ): Promise<Array<TypedEvent<EventArgsArray & EventArgsObject>>>;
 
-  interface: Create2Interface;
+  interface: PyroSenderInterface;
 
   functions: {
-    getBytecode(overrides?: CallOverrides): Promise<[string]>;
+    redeem(
+      pyro: string,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    send(
+      PyroToken: string,
+      recipient: string,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
   };
 
-  getBytecode(overrides?: CallOverrides): Promise<string>;
+  redeem(
+    pyro: string,
+    amount: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  send(
+    PyroToken: string,
+    recipient: string,
+    amount: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   callStatic: {
-    getBytecode(overrides?: CallOverrides): Promise<string>;
+    redeem(
+      pyro: string,
+      amount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    send(
+      PyroToken: string,
+      recipient: string,
+      amount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
   };
 
   filters: {};
 
   estimateGas: {
-    getBytecode(overrides?: CallOverrides): Promise<BigNumber>;
+    redeem(
+      pyro: string,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    send(
+      PyroToken: string,
+      recipient: string,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    getBytecode(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    redeem(
+      pyro: string,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    send(
+      PyroToken: string,
+      recipient: string,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
   };
 }

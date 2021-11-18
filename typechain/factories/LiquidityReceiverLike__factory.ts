@@ -18,6 +18,25 @@ const _abi = [
         type: "address",
       },
     ],
+    name: "drain",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "baseToken",
+        type: "address",
+      },
+    ],
     name: "getPyroToken",
     outputs: [
       {

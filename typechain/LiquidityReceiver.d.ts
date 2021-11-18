@@ -22,6 +22,7 @@ import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 interface LiquidityReceiverInterface extends ethers.utils.Interface {
   functions: {
     "config()": FunctionFragment;
+    "drain(address)": FunctionFragment;
     "getPyroToken(address)": FunctionFragment;
     "owner()": FunctionFragment;
     "registerPyroToken(address,string,string)": FunctionFragment;
@@ -36,6 +37,7 @@ interface LiquidityReceiverInterface extends ethers.utils.Interface {
   };
 
   encodeFunctionData(functionFragment: "config", values?: undefined): string;
+  encodeFunctionData(functionFragment: "drain", values: [string]): string;
   encodeFunctionData(
     functionFragment: "getPyroToken",
     values: [string]
@@ -76,6 +78,7 @@ interface LiquidityReceiverInterface extends ethers.utils.Interface {
   ): string;
 
   decodeFunctionResult(functionFragment: "config", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "drain", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getPyroToken",
     data: BytesLike
@@ -177,6 +180,11 @@ export class LiquidityReceiver extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string, string] & { lachesis: string; snufferCap: string }>;
 
+    drain(
+      baseToken: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     getPyroToken(
       baseToken: string,
       overrides?: CallOverrides
@@ -240,6 +248,11 @@ export class LiquidityReceiver extends BaseContract {
     overrides?: CallOverrides
   ): Promise<[string, string] & { lachesis: string; snufferCap: string }>;
 
+  drain(
+    baseToken: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   getPyroToken(baseToken: string, overrides?: CallOverrides): Promise<string>;
 
   owner(overrides?: CallOverrides): Promise<string>;
@@ -299,6 +312,8 @@ export class LiquidityReceiver extends BaseContract {
     config(
       overrides?: CallOverrides
     ): Promise<[string, string] & { lachesis: string; snufferCap: string }>;
+
+    drain(baseToken: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     getPyroToken(baseToken: string, overrides?: CallOverrides): Promise<string>;
 
@@ -369,6 +384,11 @@ export class LiquidityReceiver extends BaseContract {
   estimateGas: {
     config(overrides?: CallOverrides): Promise<BigNumber>;
 
+    drain(
+      baseToken: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     getPyroToken(
       baseToken: string,
       overrides?: CallOverrides
@@ -430,6 +450,11 @@ export class LiquidityReceiver extends BaseContract {
 
   populateTransaction: {
     config(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    drain(
+      baseToken: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
 
     getPyroToken(
       baseToken: string,

@@ -81,6 +81,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Lachesis__factory>;
     getContractFactory(
+      name: "PyroSender",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.PyroSender__factory>;
+    getContractFactory(
       name: "SimpleLoanOfficer",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.SimpleLoanOfficer__factory>;
@@ -182,6 +186,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.Lachesis>;
+    getContractAt(
+      name: "PyroSender",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.PyroSender>;
     getContractAt(
       name: "SimpleLoanOfficer",
       address: string,

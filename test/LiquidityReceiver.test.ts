@@ -54,13 +54,9 @@ describe("LiquidityReceiver", async function () {
   });
 
   it("SetFeeExempt on EOA fails", async function () {
-    await this.liquidityReceiver.registerPyroToken(
-      this.regularToken.address,
-      "hello",
-      "there"
-    );
-    const pyrotoken = await this.liquidityReceiver.getPyroToken(
-      this.regularToken.address
+    const pyrotoken = await getNewPyroToken(
+      this.liquidityReceiver,
+      this.regularToken
     );
     await this.EYE.approve(this.snufferCap.address, "100000000000000000000000");
     //contract passes
@@ -70,4 +66,51 @@ describe("LiquidityReceiver", async function () {
       this.snufferCap.snuff(pyrotoken, owner.address, 3)
     ).to.be.revertedWith("LR: EOAs cannot be exempt.");
   });
+
+  it("Non fee exempt contract charged all fees, EOA charged all fees", async function () {
+    const pyrotokenAddress = await getNewPyroToken(
+      this.liquidityReceiver,
+      this.regularToken
+    );
+    const pyrotoken = await ethers.getContractAt("PyroToken", pyrotokenAddress);
+    await this.regularToken.approve(pyrotokenAddress, "1000000000000");
+    await pyrotoken.mint(owner.address, "1000000000000");
+
+    //EOA
+    await pyrotoken.transfer(secondPerson.address, "10000000");
+    const totalSupplyAfterTransfer = (await pyrotoken.totalSupply()).toString();
+    expect(totalSupplyAfterTransfer).to.equal("999999990000");
+
+    await pyrotoken.redeem(owner.address, "10000000000");
+    expect(await pyrotoken.totalSupply()).to.equal("999799990000");
+
+    //Contract
+    const PyroSender = await ethers.getContractFactory("PyroSender");
+    const pyroSender = await PyroSender.deploy();
+
+    //send from EOA to contract
+    await pyrotoken.transfer(pyroSender.address, "1000000000");
+    expect(await pyrotoken.totalSupply()).to.equal("999798990000");
+
+    //send from contract to EOA
+    await pyroSender.send(pyrotoken.address, owner.address, "100000000");
+    expect(await pyrotoken.totalSupply()).to.equal("999798890000");
+    //send from contract to contract
+    await pyroSender.send(
+      pyrotoken.address,
+      this.regularToken.address,
+      "100000000"
+    );
+    expect(await pyrotoken.totalSupply()).to.equal("999798790000");
+
+    //redeem from contract
+    await pyroSender.redeem(pyrotoken.address, "100000000");
+    expect(await pyrotoken.totalSupply()).to.equal("999796790000");
+  });
 });
+
+async function getNewPyroToken(liquidityReceiver: any, token: any) {
+  await liquidityReceiver.registerPyroToken(token.address, "hello", "there");
+  const pyrotoken = await liquidityReceiver.getPyroToken(token.address);
+  return pyrotoken;
+}

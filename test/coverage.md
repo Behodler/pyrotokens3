@@ -12,6 +12,7 @@ p {
     color:green;
     font-weight:bold;
     font-size:1.2rem;
+    margin:0;
 }
 </style>
 
@@ -24,11 +25,13 @@ Note: the line items don't necessarily correspond to tests 1:1 but instead repre
 
 <p> CREATE2: Deployed PyroToken address matches predicted address</p>
 <p> SetFeeExempt on EOA fails</p>
-<div> Non fee exempt contract charged all fees, EOA charged all fees</div>
+<p> Non fee exempt contract charged all fees, EOA charged all fees</p>
 <div> SetFeeExempt on Contract passes for each scenario</div>
 <div> Redeploying existing PyroToken fails</div>
 <div> Only valid nonburnable tokens can have pyroTokens</div>
 <div> Transfer of pyroToken to new liquidity receiver works fully</div>
+
+
 
 ## PyroToken
 
@@ -37,7 +40,7 @@ Note: the line items don't necessarily correspond to tests 1:1 but instead repre
 <div>Burning, transferring, redeeming or sending tokens to reserve increases redeem rate</div>
 <div>Redeeming with pending LR has a bigger update than just regular redeem</div>
 <div>Minted amount and redeemed amount match predictions based on redeemRate</div>
-<div>RedeemFor requires ERC20 allowance as though it's a transferFrom operation</div>
+<div>RedeemFrom requires ERC20 allowance as though it's a transferFrom operation</div>
 <div>Redeeming all pyroTokens sets redeemRate to 1</div>
 <div>FOT transfer tokens can be minted and redeemed without causing reverts</div>
 <div>Rebase up tokens increase redeem rate</div>
