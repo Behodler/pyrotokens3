@@ -13,16 +13,18 @@ describe("LiquidityReceiver", async function () {
     this.EYE = await BaseToken.deploy("EYE", "EYE", 0);
 
     var Lachesis = await ethers.getContractFactory("Lachesis");
-    var lachesis = await Lachesis.deploy();
-    await lachesis.measure(this.regularToken.address, true, false);
-    await lachesis.measure(this.invalidToken1.address, false, false);
-    await lachesis.measure(this.invalidToken2.address, true, true);
-    await lachesis.measure(this.invalidToken3.address, false, true);
+    this.lachesis = await Lachesis.deploy();
+    await this.lachesis.measure(this.regularToken.address, true, false);
+    await this.lachesis.measure(this.invalidToken1.address, false, false);
+    await this.lachesis.measure(this.invalidToken2.address, true, true);
+    await this.lachesis.measure(this.invalidToken3.address, false, true);
 
-    const LiquidityReceiver = await ethers.getContractFactory(
+    this.LiquidityReceiver = await ethers.getContractFactory(
       "LiquidityReceiver"
     );
-    this.liquidityReceiver = await LiquidityReceiver.deploy(lachesis.address);
+    this.liquidityReceiver = await this.LiquidityReceiver.deploy(
+      this.lachesis.address
+    );
 
     const BurnEYESnufferCap = await ethers.getContractFactory(
       "BurnEYESnufferCap"
@@ -196,6 +198,66 @@ describe("LiquidityReceiver", async function () {
     await pyroSender.redeem(pyrotoken.address, "100000");
     totalSupplyAfter = BigInt((await pyrotoken.totalSupply()).toString());
     expect(totalSupplyBefore.toString()).to.equal(totalSupplyAfter.toString());
+  });
+
+  it("Redeploying existing PyroToken fails", async function () {
+    await this.liquidityReceiver.registerPyroToken(
+      this.regularToken.address,
+      "hello",
+      "there"
+    );
+    await expect(
+      this.liquidityReceiver.registerPyroToken(
+        this.regularToken.address,
+        "general",
+        "kenobi"
+      )
+    ).to.be.revertedWith("PyroToken Address occupied");
+  });
+
+  it("Only valid nonburnable tokens can have pyroTokens", async function () {
+    await expect(
+      this.liquidityReceiver.registerPyroToken(
+        this.invalidToken1.address,
+        "hello",
+        "there"
+      )
+    ).to.be.revertedWith("PyroToken: invalid base token");
+
+    await expect(
+      this.liquidityReceiver.registerPyroToken(
+        this.invalidToken2.address,
+        "hello",
+        "there"
+      )
+    ).to.be.revertedWith("PyroToken: invalid base token");
+
+    await expect(
+      this.liquidityReceiver.registerPyroToken(
+        this.invalidToken3.address,
+        "hello",
+        "there"
+      )
+    ).to.be.revertedWith("PyroToken: invalid base token");
+  });
+
+  it("Transfer of pyroToken to new liquidity receiver works fully", async function () {
+    const pyrotokenAddress = await getNewPyroToken(
+      this.liquidityReceiver,
+      this.regularToken
+    );
+    const pyrotoken = await ethers.getContractAt("PyroToken", pyrotokenAddress);
+    const liquidityReceiver2 = await this.LiquidityReceiver.deploy(
+      this.lachesis.address
+    );
+
+    await this.liquidityReceiver.transferPyroTokenToNewReceiver(
+      pyrotoken.address,
+      liquidityReceiver2.address
+    );
+
+    const receiverAddress = (await pyrotoken.config())[0];
+    expect(receiverAddress).to.equal(liquidityReceiver2.address);
   });
 });
 
