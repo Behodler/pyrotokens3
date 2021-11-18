@@ -254,6 +254,7 @@ The following table contrasts some important differences between Pyroloans and t
 </tr>
 </tbody>
 </table>
+
 ## A final word on external AMMs
 While trading of PyroTokens on external AMMs is an excellent source of redeem rate growth, the advent of Pyroloans means that Behodler can generate all the growth PyroTokens need without external assistance. However, PyroToken weaves of LP tokens are still very useful for automining and so the strategy of listing PyroToken weaves on Limbo will still be a dominant ecosystem strategy going forward.
 
