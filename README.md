@@ -2,6 +2,14 @@
 
 The third phase in Behodler's super deflationary token wrappers.
 
+# Introduction
+In preparation for the launch of Limbo, the functionality of the existing generation of Pyrotokens was internally reviewed for compatibility with the requirements of Limbo and while there are no serious issues, there are aspects that prevent the Behodler ecosystem from reaching its full potential. This article explains what those aspects are and why this required an upgrade to the Pyrotoken protocol. In designing a new set of Pyrotokens, an economic risk free form of yield generation was discovered in the form of a unique loan dapp that could have significant ramifications for all of DeFi. This paper covers the following topics:
+1. Pyrotokens are defined and a set of laws governing redeem rates is established.
+2. A list of justifications for requiring an upgrade as well as what this means for existing holders.
+3. The introduction and explanation of Pyroloans, a new form of debt market that radically alters the fundamental cryptoeconomics of debt on Ethereum, hopefully ushering in a new era of loan markets that doesn't simply imitate existing fiat loan markets. In addition to the economics, the practical software implications are discussed to illustrate the flexibility and safety of Pyroloans compared to existing protocols.
+4. A summary of all the changes to PyroTokens and a summary of the differences between Pyroloans and traditional collateralized loan markets such as Aave and Maker.
+5. A brief historical epilogue into the evolution of the Pyrotoken experiment over the 3 generations.
+
 # Description
 
 PyroTokens are wrapper tokens of existing tokens traded on Behodler, crafted on deflationary tokenomics. The relationship between PyroTokens and Behodler listed tokens is 1 to 1. Eg. WEth has PyroWeth, OXT has PyroOXT and so on. PyroTokens achieve deflationary price movements with respect to their base token by establishing a redeem rate that can only increase. The redeem rate is algorithmically calculated as the total base token in reserve divided by the supply of the PyroToken. In notation, if R is the redeem rate, B the total reserve of base tokens held in a PyroToken contract and T, the total supply of PyroTokens, then the redeem rate is given by the fraction,
