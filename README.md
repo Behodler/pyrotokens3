@@ -241,7 +241,7 @@ The following table contrasts some important differences between Pyroloans and t
         By lowering the price of collateral, liquidations can cascade into more liquidations, amplifying bear markets
       </td>
       <td>
-      Every liquidation improves the health of existing borrowers by raising the price of collateral, helping to stop liquidation waves.
+      Every liquidation improves the health of existing borrowers by raising the price of collateral, helping to stop liquidation waves
       </td>
 </tr>
 <tr>
