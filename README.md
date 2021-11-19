@@ -260,9 +260,7 @@ While trading of PyroTokens on external AMMs is an excellent source of redeem ra
 
 ## Protocol safety
 
-<div style="color:red; font-weight: bold">
-While Pyroloans offer no economic risk, every new smart contract introduces protocol risk. A loan component is particularly risky to write. As such, the loan component will be inactive by default and will only be turned on through governance. The community is urged to not turn on the loan module until after a full code audit has been conducted.
-</div>
+**Although Pyroloans offer no economic risk, every new smart contract introduces protocol risk. A loan component is particularly risky to write. As such, the loan component will be inactive by default and will only be turned on through governance. The community is urged to not turn on the loan module until after a full code audit has been conducted.**
 
 ## Separation of concerns
 
