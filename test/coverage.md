@@ -27,6 +27,14 @@ Note: the line items don't necessarily correspond to tests 1:1 but instead repre
 <p> SetFeeExempt on EOA fails</p>
 <p> Non fee exempt contract charged all fees, EOA charged all fees</p>
 <p> SetFeeExempt on ConBycreases redeem rate</div>
+<p> SetFeeExempt on Contract passes for each scenario</p>
+<p> Redeploying existing PyroToken fails</p>
+<p> Only valid nonburnable tokens can have pyroTokens</p>
+<p> Transfer of pyroToken to new liquidity receiver works fully</p>
+
+## PyroToken
+
+<div> Mint when LR has pending reserves increases redeem rate</div>
 <div>Burning, transferring, redeeming or sending tokens to reserve increases redeem rate</div>
 <div>Redeeming with pending LR has a bigger update than just regular redeem</div>
 <div>Minted amount and redeemed amount match predictions based on redeemRate</div>
