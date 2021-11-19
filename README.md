@@ -182,10 +182,10 @@ The following table contrasts some important differences between Pyroloans and t
 <tbody>
 <tr>
       <td>
-         Individual debt risk protocol
+         Individual debt increases risk to protocol
       </td>
       <td>
-         Individual debt risk is localized
+         Individual debt risk is to borrower
       </td>
 </tr>
 <tr>
@@ -246,10 +246,10 @@ The following table contrasts some important differences between Pyroloans and t
 </tr>
 <tr>
       <td>
-        Debt and logic are part of one big protocol, requiring entire protocol to be upgraded when improvements are made
+        Debt and logic are part of one big protocol, requiring the entire protocol to be upgraded when improvements are made
       </td>
       <td>
-      Debt and logic are separated allowing loan logic facades to be replaced without affecting existing positions
+      Debt and logic are separated, allowing loan logic facades to be replaced without affecting existing positions
       </td>
 </tr>
 </tbody>
