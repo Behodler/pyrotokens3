@@ -476,7 +476,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
 
         uint256 net = amount - fee;
         uint256 baseTokens = (_redeemRate * net) / ONE;
-        _totalSupply -= fee;
+        _totalSupply -= amount;
         emit Transfer(owner, address(0), uint128(amount), uint128(amount));
         require(
             config.baseToken.transfer(recipient, baseTokens),

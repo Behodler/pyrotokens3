@@ -90,7 +90,7 @@ describe("LiquidityReceiver", async function () {
       expect(totalSupplyAfterTransfer).to.equal("999999990000");
 
       await pyrotoken.redeem(owner.address, "10000000000");
-      expect(await pyrotoken.totalSupply()).to.equal("999799990000");
+      expect(await pyrotoken.totalSupply()).to.equal("989999990000");
 
       //Contract
       const PyroSender = await ethers.getContractFactory("PyroSender");
@@ -106,22 +106,22 @@ describe("LiquidityReceiver", async function () {
 
       //send from EOA to contract
       await pyrotoken.transfer(pyroSender.address, "1000000000");
-      expect(await pyrotoken.totalSupply()).to.equal("999798990000");
+      expect(await pyrotoken.totalSupply()).to.equal("989998990000");
 
       //send from contract to EOA
       await pyroSender.send(pyrotoken.address, owner.address, "100000000");
-      expect(await pyrotoken.totalSupply()).to.equal("999798890000");
+      expect(await pyrotoken.totalSupply()).to.equal("989998890000");
       //send from contract to contract
       await pyroSender.send(
         pyrotoken.address,
         this.regularToken.address,
         "100000000"
       );
-      expect(await pyrotoken.totalSupply()).to.equal("999798790000");
+      expect(await pyrotoken.totalSupply()).to.equal("989998790000");
 
       //redeem from contract
       await pyroSender.redeem(pyrotoken.address, "100000000");
-      expect(await pyrotoken.totalSupply()).to.equal("999796790000");
+      expect(await pyrotoken.totalSupply()).to.equal("989898790000");
     });
   });
 
@@ -166,7 +166,9 @@ describe("LiquidityReceiver", async function () {
     await pyroSender.send(pyrotoken.address, owner.address, "100000");
     await pyroSender.redeem(pyrotoken.address, "100000");
     totalSupplyAfter = BigInt((await pyrotoken.totalSupply()).toString());
-    expect(totalSupplyBefore.toString()).to.equal(totalSupplyAfter.toString());
+    expect(totalSupplyBefore.toString()).to.equal(
+      (totalSupplyAfter + BigInt("100000")).toString()
+    );
 
     // REDEEM_EXEMPT_AND_SENDER_AND_RECEIVER_EXEMPT
     await this.snufferCap.snuff(pyrotokenAddress, pyroSender.address, 4);
@@ -175,7 +177,9 @@ describe("LiquidityReceiver", async function () {
     await pyroSender.redeem(pyrotoken.address, "100000");
     await pyrotoken.transfer(pyroSender.address, "100000");
     totalSupplyAfter = BigInt((await pyrotoken.totalSupply()).toString());
-    expect(totalSupplyBefore.toString()).to.equal(totalSupplyAfter.toString());
+    expect(totalSupplyBefore.toString()).to.equal(
+      (totalSupplyAfter + BigInt("100000")).toString()
+    );
 
     // RECEIVER_EXEMPT
     await this.snufferCap.snuff(pyrotokenAddress, pyroSender.address, 5);
@@ -190,14 +194,18 @@ describe("LiquidityReceiver", async function () {
     await pyroSender.redeem(pyrotoken.address, "100000");
     await pyrotoken.transfer(pyroSender.address, "100000");
     totalSupplyAfter = BigInt((await pyrotoken.totalSupply()).toString());
-    expect(totalSupplyBefore.toString()).to.equal(totalSupplyAfter.toString());
+    expect(totalSupplyBefore.toString()).to.equal(
+      (totalSupplyAfter + BigInt("100000")).toString()
+    );
 
     // REDEEM_EXEMPT_ONLY
     await this.snufferCap.snuff(pyrotokenAddress, pyroSender.address, 7);
     totalSupplyBefore = totalSupplyAfter;
     await pyroSender.redeem(pyrotoken.address, "100000");
     totalSupplyAfter = BigInt((await pyrotoken.totalSupply()).toString());
-    expect(totalSupplyBefore.toString()).to.equal(totalSupplyAfter.toString());
+    expect(totalSupplyBefore.toString()).to.equal(
+      (totalSupplyAfter + BigInt("100000")).toString()
+    );
   });
 
   it("Redeploying existing PyroToken fails", async function () {
