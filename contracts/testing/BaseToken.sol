@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.9;
 import "../facades/IERC20.sol";
 
 abstract contract TestERC20 is IERC20 {

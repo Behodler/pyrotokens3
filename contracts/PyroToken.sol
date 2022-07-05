@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.9;
 import "./facades/Enums.sol";
 import "./facades/IERC20.sol";
 import "hardhat/console.sol";
