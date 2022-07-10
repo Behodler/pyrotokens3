@@ -2,19 +2,10 @@
 pragma solidity ^0.8.9;
 import "./facades/Enums.sol";
 import "./facades/IERC20.sol";
+import "./facades/LiquidityReceiverLike.sol";
 import "hardhat/console.sol";
 
-abstract contract Context {
-    function _msgSender() internal view virtual returns (address) {
-        return msg.sender;
-    }
-
-    function _msgData() internal view virtual returns (bytes calldata) {
-        return msg.data;
-    }
-}
-
-abstract contract ERC20 is Context, IERC20 {
+abstract contract ERC20 is IERC20 {
     mapping(address => uint256) internal _balances;
 
     mapping(address => mapping(address => uint256)) internal _allowances;
@@ -102,7 +93,7 @@ abstract contract ERC20 is Context, IERC20 {
         override
         returns (bool)
     {
-        _approve(_msgSender(), spender, amount);
+        _approve(msg.sender, spender, amount);
         return true;
     }
 
@@ -124,9 +115,9 @@ abstract contract ERC20 is Context, IERC20 {
         returns (bool)
     {
         _approve(
-            _msgSender(),
+            msg.sender,
             spender,
-            _allowances[_msgSender()][spender] + addedValue
+            _allowances[msg.sender][spender] + addedValue
         );
         return true;
     }
@@ -150,13 +141,13 @@ abstract contract ERC20 is Context, IERC20 {
         virtual
         returns (bool)
     {
-        uint256 currentAllowance = _allowances[_msgSender()][spender];
+        uint256 currentAllowance = _allowances[msg.sender][spender];
         require(
             currentAllowance >= subtractedValue,
             "ERC20: decreased allowance below zero"
         );
         unchecked {
-            _approve(_msgSender(), spender, currentAllowance - subtractedValue);
+            _approve(msg.sender, spender, currentAllowance - subtractedValue);
         }
 
         return true;
@@ -254,7 +245,7 @@ abstract contract ERC20 is Context, IERC20 {
      * See {ERC20-_burn}.
      */
     function burn(uint256 amount) public virtual {
-        _burn(_msgSender(), amount);
+        _burn(msg.sender, amount);
     }
 
     /**
@@ -269,28 +260,16 @@ abstract contract ERC20 is Context, IERC20 {
      * `amount`.
      */
     function burnFrom(address account, uint256 amount) public virtual {
-        uint256 currentAllowance = allowance(account, _msgSender());
+        uint256 currentAllowance = allowance(account, msg.sender);
         require(
             currentAllowance >= amount,
             "ERC20: burn amount exceeds allowance"
         );
         unchecked {
-            _approve(account, _msgSender(), currentAllowance - amount);
+            _approve(account, msg.sender, currentAllowance - amount);
         }
         _burn(account, amount);
     }
-}
-
-// File @openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol@v4.3.2
-
-// : MIT
-
-// File contracts/BurnableToken.sol
-
-//: Unlicense
-
-interface LiquidiyReceiverLike {
-    function drain(address baseToken) external returns (uint256);
 }
 
 abstract contract ReentrancyGuard {
@@ -353,7 +332,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
     mapping(address => DebtObligation) debtObligations;
 
     constructor() {
-        config.liquidityReceiver = _msgSender();
+        config.liquidityReceiver = msg.sender;
         config.pullPendingFeeRevenue = true;
     }
 
@@ -377,7 +356,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
 
     modifier onlyReceiver() {
         require(
-            _msgSender() == config.liquidityReceiver,
+            msg.sender == config.liquidityReceiver,
             "PyroToken: Only Liquidity Receiver."
         );
         _;
@@ -385,7 +364,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
 
     modifier updateReserve() {
         if (config.pullPendingFeeRevenue) {
-            LiquidiyReceiverLike(config.liquidityReceiver).drain(
+            LiquidityReceiverLike(config.liquidityReceiver).drain(
                 address(config.baseToken)
             );
         }
@@ -394,7 +373,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
 
     modifier onlyLoanOfficer() {
         require(
-            _msgSender() == config.loanOfficer,
+            msg.sender == config.loanOfficer,
             "PyroToken: Only Loan Officer."
         );
         _;
@@ -437,7 +416,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
     {
         uint256 _redeemRate = redeemRate();
         require(
-            config.baseToken.transferFrom(_msgSender(), address(this), amount)
+            config.baseToken.transferFrom(msg.sender, address(this), amount)
         );
 
         //fee on transfer tokens
@@ -453,8 +432,8 @@ contract PyroToken is ERC20, ReentrancyGuard {
         address recipient,
         uint256 amount
     ) external returns (uint256) {
-        uint256 currentAllowance = _allowances[owner][_msgSender()];
-        _approve(owner, _msgSender(), currentAllowance - amount);
+        uint256 currentAllowance = _allowances[owner][msg.sender];
+        _approve(owner, msg.sender, currentAllowance - amount);
         return _redeem(owner, recipient, amount);
     }
 
@@ -462,7 +441,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
         external
         returns (uint256)
     {
-        return _redeem(recipient, _msgSender(), amount);
+        return _redeem(recipient, msg.sender, amount);
     }
 
     function _redeem(
@@ -498,7 +477,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
         override
         returns (bool)
     {
-        _transfer(_msgSender(), recipient, amount);
+        _transfer(msg.sender, recipient, amount);
         return true;
     }
 
@@ -509,18 +488,23 @@ contract PyroToken is ERC20, ReentrancyGuard {
     ) public virtual override returns (bool) {
         _transfer(sender, recipient, amount);
 
-        uint256 currentAllowance = _allowances[sender][_msgSender()];
+        uint256 currentAllowance = _allowances[sender][msg.sender];
         require(
             currentAllowance >= amount,
             "ERC20: transfer amount exceeds allowance"
         );
         unchecked {
-            _approve(sender, _msgSender(), currentAllowance - amount);
+            _approve(sender, msg.sender, currentAllowance - amount);
         }
 
         return true;
     }
 
+    /**
+     *@notice debt accounting function. The DAO approved loan officer (a contract) sets the debt obligation for a borrower. 
+     * The loan officer can build in any form of debt complexity. For example, the amortization rate bonding curve outlined in the white paper (README.md)
+     * @dev keep in mind that msg.sender is the loan officer contract.
+     */
     function setObligationFor(
         address borrower,
         uint256 baseTokenBorrowed,
@@ -542,8 +526,8 @@ contract PyroToken is ERC20, ReentrancyGuard {
         if (netStake > 0) {
             stake = uint256(netStake);
 
-            uint256 currentAllowance = _allowances[borrower][_msgSender()];
-            _approve(borrower, _msgSender(), currentAllowance - stake);
+            uint256 currentAllowance = _allowances[borrower][msg.sender];
+            _approve(borrower, msg.sender, currentAllowance - stake);
 
             _balances[borrower] -= stake;
             _balances[address(this)] += stake;
@@ -598,7 +582,8 @@ contract PyroToken is ERC20, ReentrancyGuard {
         uint256 receiverStatus = uint256(feeExemptionStatus[receiver]);
         if (
             (senderStatus >= 1 && senderStatus <= 4) ||
-            (receiverStatus == 2 || (receiverStatus >= 4 && receiverStatus <= 6))
+            (receiverStatus == 2 ||
+                (receiverStatus >= 4 && receiverStatus <= 6))
         ) {
             return 0;
         }
@@ -612,6 +597,6 @@ contract PyroToken is ERC20, ReentrancyGuard {
     {
         uint256 status = uint256(feeExemptionStatus[redeemer]);
         if ((status >= 3 && status <= 4) || status > 5) return 0;
-        return (amount * 2) / 100;
+        return (amount << 1) / 100;
     }
 }

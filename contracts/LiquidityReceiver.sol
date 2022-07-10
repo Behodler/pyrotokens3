@@ -49,8 +49,11 @@ contract LiquidityReceiver is Ownable {
     struct Configuration {
         LachesisLike lachesis;
         SnufferCap snufferCap;
+        address defaultLoanOfficer;
     }
+
     Configuration public config;
+    
     bytes constant internal PYROTOKEN_BYTECODE = type(PyroToken).creationCode;
     modifier onlySnufferCap() {
         require(
@@ -66,6 +69,10 @@ contract LiquidityReceiver is Ownable {
 
     function setSnufferCap(address snufferCap) public onlyOwner {
         config.snufferCap = SnufferCap(snufferCap);
+    }
+
+    function setDefaultLoanOfficer(address officer) public onlyOwner{
+        config.defaultLoanOfficer = officer;
     }
 
     function drain(address baseToken) external returns (uint) {
@@ -119,7 +126,8 @@ contract LiquidityReceiver is Ownable {
         require(valid && !burnable, "PyroToken: invalid base token");
         address p = Create2.deploy(keccak256(abi.encode(baseToken)),PYROTOKEN_BYTECODE);
         PyroToken(p).initialize(baseToken, name, symbol);
-
+        PyroToken(p).setLoanOfficer(config.defaultLoanOfficer);
+        
         require(
             address(p) == expectedAddress,
             "PyroToken: address prediction failed"
