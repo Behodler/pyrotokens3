@@ -1,35 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
-import "../ERC20/IERC20.sol";
+import "./IERC20.sol";
 
-abstract contract TestERC20 is IERC20 {
+abstract contract ERC20 is IERC20 {
     mapping(address => uint256) internal _balances;
 
     mapping(address => mapping(address => uint256)) internal _allowances;
 
     uint256 internal _totalSupply;
 
-    string private _name;
-    string private _symbol;
-
-    /**
-     * @dev Sets the values for {name} and {symbol}.
-     *
-     * The default value of {decimals} is 18. To select a different value for
-     * {decimals} you should overload it.
-     *
-     * All two of these values are immutable: they can only be set once during
-     * construction.
-     */
-    constructor(string memory name_, string memory symbol_) {
-        _name = name_;
-        _symbol = symbol_;
-    }
+    string internal _name;
+    string internal _symbol;
 
     /**
      * @dev Returns the name of the token.
      */
-    function name() external view virtual override returns (string memory) {
+    function name() public view virtual override returns (string memory) {
         return _name;
     }
 
@@ -37,7 +23,7 @@ abstract contract TestERC20 is IERC20 {
      * @dev Returns the symbol of the token, usually a shorter version of the
      * name.
      */
-    function symbol() external view virtual override returns (string memory) {
+    function symbol() public view virtual override returns (string memory) {
         return _symbol;
     }
 
@@ -54,14 +40,14 @@ abstract contract TestERC20 is IERC20 {
      * no way affects any of the arithmetic of the contract, including
      * {IERC20-balanceOf} and {IERC20-transfer}.
      */
-    function decimals() external view virtual override returns (uint8) {
+    function decimals() public view virtual override returns (uint8) {
         return 18;
     }
 
     /**
      * @dev See {IERC20-totalSupply}.
      */
-    function totalSupply() external view virtual override returns (uint256) {
+    function totalSupply() public view virtual override returns (uint256) {
         return _totalSupply;
     }
 
@@ -69,7 +55,7 @@ abstract contract TestERC20 is IERC20 {
      * @dev See {IERC20-balanceOf}.
      */
     function balanceOf(address account)
-        external
+        public
         view
         virtual
         override
@@ -82,7 +68,7 @@ abstract contract TestERC20 is IERC20 {
      * @dev See {IERC20-allowance}.
      */
     function allowance(address owner, address spender)
-        external
+        public
         view
         virtual
         override
@@ -99,7 +85,7 @@ abstract contract TestERC20 is IERC20 {
      * - `spender` cannot be the zero address.
      */
     function approve(address spender, uint256 amount)
-        external
+        public
         virtual
         override
         returns (bool)
@@ -121,7 +107,7 @@ abstract contract TestERC20 is IERC20 {
      * - `spender` cannot be the zero address.
      */
     function increaseAllowance(address spender, uint256 addedValue)
-        external
+        public
         virtual
         returns (bool)
     {
@@ -148,7 +134,7 @@ abstract contract TestERC20 is IERC20 {
      * `subtractedValue`.
      */
     function decreaseAllowance(address spender, uint256 subtractedValue)
-        external
+        public
         virtual
         returns (bool)
     {
@@ -243,8 +229,6 @@ abstract contract TestERC20 is IERC20 {
         address spender,
         uint256 amount
     ) internal virtual {
-        require(owner != address(0), "ERC20: approve from the zero address");
-        require(spender != address(0), "ERC20: approve to the zero address");
 
         _allowances[owner][spender] = amount;
         emit Approval(owner, spender, amount);
@@ -255,7 +239,7 @@ abstract contract TestERC20 is IERC20 {
      *
      * See {ERC20-_burn}.
      */
-    function burn(uint256 amount) external virtual {
+    function burn(uint256 amount) public virtual {
         _burn(msg.sender, amount);
     }
 
@@ -270,8 +254,8 @@ abstract contract TestERC20 is IERC20 {
      * - the caller must have allowance for ``accounts``'s tokens of at least
      * `amount`.
      */
-    function burnFrom(address account, uint256 amount) external virtual {
-        uint256 currentAllowance = _allowances[account][msg.sender];
+    function burnFrom(address account, uint256 amount) public virtual {
+        uint256 currentAllowance = allowance(account, msg.sender);
         require(
             currentAllowance >= amount,
             "ERC20: burn amount exceeds allowance"
@@ -280,62 +264,5 @@ abstract contract TestERC20 is IERC20 {
             _approve(account, msg.sender, currentAllowance - amount);
         }
         _burn(account, amount);
-    }
-}
-
-contract BaseToken is TestERC20 {
-    uint256 burnFee;
-
-    constructor(
-        string memory name_,
-        string memory symbol_,
-        uint256 _burnFee
-    ) TestERC20(name_, symbol_) {
-        _totalSupply = 1000000 ether;
-        _balances[msg.sender] = _totalSupply;
-        burnFee = _burnFee;
-    }
-
-    function _transfer(
-        address sender,
-        address recipient,
-        uint256 amount
-    ) internal override {
-        uint256 fee = (amount * burnFee) / 1000;
-        _balances[sender] -= amount;
-        _balances[recipient] += amount - fee;
-        _totalSupply -= fee;
-        emit Transfer(sender, recipient, uint128(amount), 0);
-    }
-
-    function transfer(address recipient, uint256 amount)
-        external
-        override
-        returns (bool)
-    {
-        _transfer(msg.sender, recipient, amount);
-        return true;
-    }
-
-    function transferFrom(
-        address sender,
-        address recipient,
-        uint256 amount
-    ) external override returns (bool) {
-        uint256 currentAllowance = _allowances[sender][msg.sender];
-        require(
-            currentAllowance >= amount,
-            "ERC20: transfer amount exceeds allowance"
-        );
-        unchecked {
-            _approve(sender, msg.sender, currentAllowance - amount);
-        }
-        _transfer(sender, recipient, amount);
-        return true;
-    }
-
-    function rebaseBalance(address account, uint amount) public {
-        _totalSupply+=amount;
-        _balances[account]+=amount;
     }
 }

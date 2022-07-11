@@ -3,7 +3,11 @@ pragma solidity ^0.8.9;
 import "./Enums.sol";
 import "./LiquidityReceiverLike.sol";
 
-/*Snuffs out fees for given address */
+/**
+ *@author Justin Goro
+ *@notice Snuffer caps are gatekeeper contracts for applying logic to the exemption of pyrotoken fee payment.
+ *The SnufferCap is asigned on the LiquidityReceiver level which means all PyroTokens conform to the same snuffer cap at any one time 
+ */
 abstract contract SnufferCap {
     LiquidityReceiverLike public _liquidityReceiver;
 

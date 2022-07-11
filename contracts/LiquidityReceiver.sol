@@ -5,8 +5,7 @@ import "./facades/SnufferCap.sol";
 import "./facades/Ownable.sol";
 import "./facades/LachesisLike.sol";
 import "hardhat/console.sol";
-import "./facades/IERC20.sol";
-
+import "./ERC20/IERC20.sol";
 
 library Create2 {
     /**
@@ -14,7 +13,10 @@ library Create2 {
      * will be deployed can be known in advance via {computeAddress}. Note that
      * a contract cannot be deployed twice using the same salt.
      */
-    function deploy(bytes32 salt, bytes memory bytecode) internal returns (address) {
+    function deploy(bytes32 salt, bytes memory bytecode)
+        internal
+        returns (address)
+    {
         address addr;
         // solhint-disable-next-line no-inline-assembly
         assembly {
@@ -28,7 +30,11 @@ library Create2 {
      * @dev Returns the address where a contract will be stored if deployed via {deploy}. Any change in the `bytecode`
      * or `salt` will result in a new destination address.
      */
-    function computeAddress(bytes32 salt, bytes memory bytecode) internal view returns (address) {
+    function computeAddress(bytes32 salt, bytes memory bytecode)
+        internal
+        view
+        returns (address)
+    {
         return computeAddress(salt, bytecode, address(this));
     }
 
@@ -36,7 +42,11 @@ library Create2 {
      * @dev Returns the address where a contract will be stored if deployed via {deploy} from a contract located at
      * `deployer`. If `deployer` is this contract's address, returns the same value as {computeAddress}.
      */
-    function computeAddress(bytes32 salt, bytes memory bytecodeHash, address deployer) internal pure returns (address) {
+    function computeAddress(
+        bytes32 salt,
+        bytes memory bytecodeHash,
+        address deployer
+    ) internal pure returns (address) {
         bytes32 bytecodeHashHash = keccak256(bytecodeHash);
         bytes32 _data = keccak256(
             abi.encodePacked(bytes1(0xff), deployer, salt, bytecodeHashHash)
@@ -45,16 +55,23 @@ library Create2 {
     }
 }
 
+/**
+ * @author Justin Goro
+ * For every swap and liquidity addition on Behodler AMM, a % of the input token is either burnt or sent to LiquidityReceiver.
+ * The LiquidityReceiver is responsible for creating and configuring PyroTokens and for distributing fee revenue to them.
+ *@title LiquidityReceiver
+ *@dev owner is MorgothDao
+ */
 contract LiquidityReceiver is Ownable {
     struct Configuration {
-        LachesisLike lachesis;
+        LachesisLike lachesis; //Token approval contract on Behodler AMM
         SnufferCap snufferCap;
         address defaultLoanOfficer;
     }
 
     Configuration public config;
-    
-    bytes constant internal PYROTOKEN_BYTECODE = type(PyroToken).creationCode;
+
+    bytes internal constant PYROTOKEN_BYTECODE = type(PyroToken).creationCode;
     modifier onlySnufferCap() {
         require(
             msg.sender == address(config.snufferCap),
@@ -67,15 +84,29 @@ contract LiquidityReceiver is Ownable {
         config.lachesis = LachesisLike(_lachesis);
     }
 
+    /**
+     *@notice SnufferCap sets the rules for fee exemption. It could be a simple whitelist or a fee based system.
+     * Fee exemption is meant to help certain usecases for PyroTokens remain valid. For instance, a dapp that stakes their protocol token in PyroTokens for yield may not be sustainable
+     *in the short run if the exit fee applies
+     *@param snufferCap address of snufferCap compliant contract
+     */
     function setSnufferCap(address snufferCap) public onlyOwner {
         config.snufferCap = SnufferCap(snufferCap);
     }
 
-    function setDefaultLoanOfficer(address officer) public onlyOwner{
+    /** @notice newly deployed PyroTokens are seeded with the defaultLoan officer.
+     *@param officer LoanOfficer
+     */
+    function setDefaultLoanOfficer(address officer) public onlyOwner {
         config.defaultLoanOfficer = officer;
     }
 
-    function drain(address baseToken) external returns (uint) {
+    /**
+     *@notice PyroTokens can pull their accrued trade revenue from Behodler.
+     *@dev anyone can call this function because there is no downside, security or otherwise
+     *@param baseToken is the Behodler listed token
+     */
+    function drain(address baseToken) external returns (uint256) {
         address pyroToken = getPyroToken(baseToken);
         IERC20 reserve = IERC20(baseToken);
         uint256 amount = reserve.balanceOf(address(this));
@@ -83,6 +114,10 @@ contract LiquidityReceiver is Ownable {
         return amount;
     }
 
+    /**@notice on mint PyroTokens can pull pending trade revenue from Behodler AMM to increase reserves.
+    @param pyroToken contract address of pyroToken
+    @param pull if true, pyroToken pulls revenue on every mint
+     */
     function togglePyroTokenPullFeeRevenue(address pyroToken, bool pull)
         public
         onlyOwner
@@ -90,6 +125,11 @@ contract LiquidityReceiver is Ownable {
         PyroToken(pyroToken).togglePullPendingFeeRevenue(pull);
     }
 
+    /**
+     *@notice sets the loan officer for a specific pyroToken.
+     *@param pyroToken address of pyroToken
+     *@param loanOfficer contract which determines loan logic
+     */
     function setPyroTokenLoanOfficer(address pyroToken, address loanOfficer)
         public
         onlyOwner
@@ -101,10 +141,19 @@ contract LiquidityReceiver is Ownable {
         PyroToken(pyroToken).setLoanOfficer(loanOfficer);
     }
 
+    /**@notice Lacheis is the Behodler AMM contract which determines if a token should have a pyroToken
+     *@param _lachesis address of Lachesis token gatekeeper
+     */
     function setLachesis(address _lachesis) public onlyOwner {
         config.lachesis = LachesisLike(_lachesis);
     }
 
+    /**
+     *@notice Specific contracts can be exempt from certain fees such as exit fee
+     *@param pyroToken address of PyroToken
+     *@param target contract receiving fee exemption
+     *@param exemption from an Enum of every type of exemption.
+     */
     function setFeeExemptionStatusOnPyroForContract(
         address pyroToken,
         address target,
@@ -114,6 +163,12 @@ contract LiquidityReceiver is Ownable {
         PyroToken(pyroToken).setFeeExemptionStatusFor(target, exemption);
     }
 
+    /**
+     *@notice deploys a new pyroToken contract
+     *@param baseToken is the BehodlerListed token
+     *@param name extended ERC20 name
+     *@param symbol extended ERC20 symbol.
+     */
     function registerPyroToken(
         address baseToken,
         string memory name,
@@ -121,19 +176,29 @@ contract LiquidityReceiver is Ownable {
     ) public onlyOwner {
         address expectedAddress = getPyroToken(baseToken);
 
+        //Although contracts can pretend to be EOAs, we're only concerned that EOAs don't spoof contract addresses.
         require(!isContract(expectedAddress), "PyroToken Address occupied");
         (bool valid, bool burnable) = config.lachesis.cut(baseToken);
         require(valid && !burnable, "PyroToken: invalid base token");
-        address p = Create2.deploy(keccak256(abi.encode(baseToken)),PYROTOKEN_BYTECODE);
+
+        //Using a salted address let's us predict where each PyroToken will be deployed.
+        address p = Create2.deploy(
+            keccak256(abi.encode(baseToken)),
+            PYROTOKEN_BYTECODE
+        );
         PyroToken(p).initialize(baseToken, name, symbol);
         PyroToken(p).setLoanOfficer(config.defaultLoanOfficer);
-        
+
         require(
             address(p) == expectedAddress,
             "PyroToken: address prediction failed"
         );
     }
 
+    /**@notice migration of a PyroToken contract to new LiquidityReceiver
+     *@param pyroToken pyroToken to be migrated
+     *@param receiver new LiquidityReceiver
+     */
     function transferPyroTokenToNewReceiver(address pyroToken, address receiver)
         public
         onlyOwner
