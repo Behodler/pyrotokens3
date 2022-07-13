@@ -29,11 +29,15 @@ contract BurnEYESnufferCap is SnufferCap {
         address pyroToken,
         address targetContract,
         FeeExemption exempt
-    ) public override returns (bool) {
+    )
+        public
+        override
+        completeSnuff(pyroToken, targetContract, exempt)
+        returns (bool)
+    {
         eye.transferFrom(msg.sender, address(this), 1000 * (1 ether));
         uint256 balance = eye.balanceOf(address(this));
         eye.burn(balance);
-        _snuff(pyroToken, targetContract, exempt);
         return true;
     }
 }

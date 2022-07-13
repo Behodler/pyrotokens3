@@ -363,6 +363,12 @@ contract PyroToken is ERC20, ReentrancyGuard {
         success = true;
     }
 
+    /**
+     *@notice calculates the exemption adjusted transfer fee, depending on both the sender and receiver exemptions.
+     *@param amount transfer amount
+     *@param sender of pyroToken
+     *@param receiver of pyroToken
+     */
     function calculateTransferFee(
         uint256 amount,
         address sender,
@@ -380,6 +386,11 @@ contract PyroToken is ERC20, ReentrancyGuard {
         return amount / 1000;
     }
 
+    /**
+     *@notice calculates the exemption adjusted redemption fee, depending on redeemer exemptions.
+     *@param amount transfer amount
+     *@param redeemer of pyroToken for underlying base token
+     */
     function calculateRedemptionFee(uint256 amount, address redeemer)
         public
         view
