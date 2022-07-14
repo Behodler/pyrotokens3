@@ -5,6 +5,7 @@ import "./ERC20/ERC20.sol";
 import "./ERC20/SafeERC20.sol";
 import "./facades/LiquidityReceiverLike.sol";
 import "./facades/ReentrancyGuard.sol";
+
 /**
  *@title Pyrotoken
  *@author Justin Goro
@@ -122,7 +123,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
     }
 
     modifier onlyLoanOfficer() {
-        if(  msg.sender != config.loanOfficer){
+        if (msg.sender != config.loanOfficer) {
             revert OnlyLoanOfficer(config.loanOfficer, msg.sender);
         }
         _;
@@ -167,7 +168,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
         external
         onlyReceiver
     {
-        if(liquidityReceiver==address(0)){
+        if (liquidityReceiver == address(0)) {
             revert AddressNonZero();
         }
         config.liquidityReceiver = liquidityReceiver;
@@ -273,7 +274,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
         uint256 currentAllowance = _allowances[sender][msg.sender];
 
         if (currentAllowance != type(uint256).max) {
-            if(currentAllowance<amount){
+            if (currentAllowance < amount) {
                 revert AllowanceExceeded(currentAllowance, amount);
             }
             unchecked {
@@ -301,9 +302,9 @@ contract PyroToken is ERC20, ReentrancyGuard {
         uint256 rate = redeemRate();
 
         uint256 minPyroStake = (baseTokenBorrowed * ONE) / rate;
-      if(pyroTokenStaked<minPyroStake){
-          revert UnsustainablePyroLoan(pyroTokenStaked,minPyroStake );
-      }
+        if (pyroTokenStaked < minPyroStake) {
+            revert UnsustainablePyroLoan(pyroTokenStaked, minPyroStake);
+        }
 
         debtObligations[borrower] = DebtObligation(
             baseTokenBorrowed,
@@ -392,7 +393,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
         returns (uint256)
     {
         uint256 status = uint256(feeExemptionStatus[redeemer]);
-        if ((status >= 3 && status <= 4) || status > 5) return 0;
+        if (status > 2 && status != 5) return 0;
         return (amount << 1) / 100;
     }
 
