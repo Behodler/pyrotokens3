@@ -6,6 +6,7 @@ import "./facades/Ownable.sol";
 import "./facades/LachesisLike.sol";
 import "hardhat/console.sol";
 import "./ERC20/IERC20.sol";
+import "./Errors.sol";
 
 library Create2 {
     /**
@@ -22,7 +23,9 @@ library Create2 {
         assembly {
             addr := create2(0, add(bytecode, 0x20), mload(bytecode), salt)
         }
-        require(addr != address(0), "Create2: Failed on deploy");
+        if (addr == address(0)) {
+            revert Create2Failed();
+        }
         return addr;
     }
 
@@ -63,6 +66,19 @@ library Create2 {
  *@dev owner is MorgothDao
  */
 contract LiquidityReceiver is Ownable {
+    /**
+     *@param pyroToken address of new PyroToken
+     *@param baseToken address of underlying base token
+     *@param name of new PyroToken
+     *@param symbol of new PyroToken
+     */
+    event PyroTokenDeployed(
+        address pyroToken,
+        address baseToken,
+        string name,
+        string symbol
+    );
+
     struct Configuration {
         LachesisLike lachesis; //Token approval contract on Behodler AMM
         SnufferCap snufferCap;
@@ -73,10 +89,9 @@ contract LiquidityReceiver is Ownable {
 
     bytes internal constant PYROTOKEN_BYTECODE = type(PyroToken).creationCode;
     modifier onlySnufferCap() {
-        require(
-            msg.sender == address(config.snufferCap),
-            "LR: only snufferCap"
-        );
+        if (msg.sender != address(config.snufferCap)) {
+            revert SnufferCapExpected(address(config.snufferCap), msg.sender);
+        }
         _;
     }
 
@@ -134,10 +149,6 @@ contract LiquidityReceiver is Ownable {
         public
         onlyOwner
     {
-        require(
-            loanOfficer != address(0) && pyroToken != address(0),
-            "LR: zero address detected"
-        );
         PyroToken(pyroToken).setLoanOfficer(loanOfficer);
     }
 
@@ -159,7 +170,9 @@ contract LiquidityReceiver is Ownable {
         address target,
         FeeExemption exemption
     ) public onlySnufferCap {
-        require(isContract(target), "LR: EOAs cannot be exempt.");
+        if (!isContract(target)) {
+            revert OnlyContracts(target);
+        }
         PyroToken(pyroToken).setFeeExemptionStatusFor(target, exemption);
     }
 
@@ -177,9 +190,14 @@ contract LiquidityReceiver is Ownable {
         address expectedAddress = getPyroToken(baseToken);
 
         //Although contracts can pretend to be EOAs, we're only concerned that EOAs don't spoof contract addresses.
-        require(!isContract(expectedAddress), "PyroToken Address occupied");
+        if (isContract(expectedAddress)) {
+            revert AddressOccupied(expectedAddress);
+        }
         (bool valid, bool burnable) = config.lachesis.cut(baseToken);
-        require(valid && !burnable, "PyroToken: invalid base token");
+
+        if (!valid || burnable) {
+            revert LachesisValidationFailed(baseToken, valid, burnable);
+        }
 
         //Using a salted address let's us predict where each PyroToken will be deployed.
         address p = Create2.deploy(
@@ -189,10 +207,10 @@ contract LiquidityReceiver is Ownable {
         PyroToken(p).initialize(baseToken, name, symbol);
         PyroToken(p).setLoanOfficer(config.defaultLoanOfficer);
 
-        require(
-            address(p) == expectedAddress,
-            "PyroToken: address prediction failed"
-        );
+        if (p != expectedAddress) {
+            revert AddressPredictionInvariant(p, expectedAddress);
+        }
+        emit PyroTokenDeployed(p, baseToken, name, symbol);
     }
 
     /**@notice migration of a PyroToken contract to new LiquidityReceiver

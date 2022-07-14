@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
+import "../Errors.sol";
 
 abstract contract Ownable {
     address private _owner;
@@ -27,7 +28,9 @@ abstract contract Ownable {
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        require(owner() == msg.sender, "Ownable: caller is not the owner");
+        if (owner() != msg.sender) {
+            revert OnlyOwner(owner(), msg.sender);
+        }
         _;
     }
 
@@ -47,10 +50,7 @@ abstract contract Ownable {
      * Can only be called by the current owner.
      */
     function transferOwnership(address newOwner) public virtual onlyOwner {
-        require(
-            newOwner != address(0),
-            "Ownable: new owner is the zero address"
-        );
+        //nothing special about address(0). Any incorrect address is a disaster
         _setOwner(newOwner);
     }
 

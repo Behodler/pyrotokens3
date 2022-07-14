@@ -2,6 +2,7 @@
 pragma solidity ^0.8.9;
 import "./ERC20/IERC20.sol";
 import "./facades/PyroTokenLike.sol";
+import "./Errors.sol";
 
 abstract contract PyroToken2 is IERC20 {
     function redeem(uint256 pyroTokenAmount) external virtual returns (uint256);
@@ -23,6 +24,18 @@ abstract contract LRNew {
  *@author Justin Goro
  */
 contract V2Migrator {
+    /**
+     *@param pyroToken2 contract that needs to be migratid
+     *@param pyroToken2 destination token
+     *@param pyroToken2Amount amount of pyroToken2 to migrate
+     *@param pyroToken3Amount expected amount of pyroToken3 after exit fee
+     */
+    event SuccessfulMigration(
+        address indexed pyroToken2,
+        address indexed pyroToken3,
+        uint256 pyroToken2Amount,
+        uint256 pyroToken3Amount
+    );
     LRNew public LR_new;
 
     constructor(address lr_new) {
@@ -88,10 +101,9 @@ contract V2Migrator {
         address expectedPyroToken3 = LR_new.getPyroToken(commonBaseToken);
 
         //Extra safety required in migration contracts
-        require(
-            expectedPyroToken3 == ptoken3,
-            "V2Migrate: invalid pyroToken contract."
-        );
+        if(expectedPyroToken3!= ptoken3){
+            revert AddressPredictionInvariant(ptoken3, expectedPyroToken3);
+        }
 
         //REDEEM OLD PYROTOKENS
         pyroToken2.transferFrom(sender, address(this), p2tokenAmount);
@@ -109,9 +121,14 @@ contract V2Migrator {
 
         //CHECK MINTING SUCCEEDED
         // >= instead of == prevents malicious griefing
-        require(
-            p3BalanceAfter >= p3BalanceBefore + p3tokenExpectedAmount,
-            "V2Migrate: Invariant failure."
+        if(p3BalanceAfter<p3BalanceBefore+p3tokenExpectedAmount){
+            revert P3AmountInvariant (p3BalanceAfter, p3BalanceBefore, p3tokenExpectedAmount);
+        }
+        emit SuccessfulMigration(
+            ptoken2,
+            expectedPyroToken3,
+            p2tokenAmount,
+            p3tokenExpectedAmount
         );
     }
 }

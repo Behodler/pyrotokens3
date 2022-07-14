@@ -4,32 +4,7 @@ import "./facades/Enums.sol";
 import "./ERC20/ERC20.sol";
 import "./ERC20/SafeERC20.sol";
 import "./facades/LiquidityReceiverLike.sol";
-
-abstract contract ReentrancyGuard {
-    uint256 private constant _NOT_ENTERED = 1;
-    uint256 private constant _ENTERED = 2;
-
-    uint256 private _status;
-
-    constructor() {
-        _status = _NOT_ENTERED;
-    }
-
-    modifier nonReentrant() {
-        // On the first call to nonReentrant, _notEntered will be true
-        require(_status != _ENTERED, "ReentrancyGuard: reentrant call");
-
-        // Any calls to nonReentrant after this point will fail
-        _status = _ENTERED;
-
-        _;
-
-        // By storing the original value once again, a refund is triggered (see
-        // https://eips.ethereum.org/EIPS/eip-2200)
-        _status = _NOT_ENTERED;
-    }
-}
-
+import "./facades/ReentrancyGuard.sol";
 /**
  *@title Pyrotoken
  *@author Justin Goro
@@ -46,6 +21,24 @@ abstract contract ReentrancyGuard {
  */
 contract PyroToken is ERC20, ReentrancyGuard {
     using SafeERC20 for IERC20;
+    /**
+     *@param loanOfficer address of new loan officer contract
+     */
+    event LoadOfficerAssigned(address indexed loanOfficer);
+
+    /**
+     *@param borrower of base token
+     *@param baseTokenBorrowed final amount borrowed, not change
+     *@param pyroTokenStaked final amount staked, not change
+     *@param rate redeem rate at the time of adjustment
+     */
+    event LoanObligationSet(
+        address borrower,
+        uint256 baseTokenBorrowed,
+        uint256 pyroTokenStaked,
+        uint256 rate
+    );
+
     struct Configuration {
         address liquidityReceiver;
         IERC20 baseToken;
@@ -89,10 +82,9 @@ contract PyroToken is ERC20, ReentrancyGuard {
     }
 
     modifier initialized() {
-        require(
-            address(config.baseToken) != address(0),
-            "PyroToken: base token not set"
-        );
+        if (address(config.baseToken) == address(0)) {
+            revert BaseTokenNotSet(address(this));
+        }
         _;
     }
 
@@ -114,10 +106,9 @@ contract PyroToken is ERC20, ReentrancyGuard {
     }
 
     modifier onlyReceiver() {
-        require(
-            msg.sender == config.liquidityReceiver,
-            "PyroToken: Only Liquidity Receiver."
-        );
+        if (msg.sender != config.liquidityReceiver) {
+            revert OnlyReceiver(config.liquidityReceiver, msg.sender);
+        }
         _;
     }
 
@@ -131,10 +122,9 @@ contract PyroToken is ERC20, ReentrancyGuard {
     }
 
     modifier onlyLoanOfficer() {
-        require(
-            msg.sender == config.loanOfficer,
-            "PyroToken: Only Loan Officer."
-        );
+        if(  msg.sender != config.loanOfficer){
+            revert OnlyLoanOfficer(config.loanOfficer, msg.sender);
+        }
         _;
     }
 
@@ -177,10 +167,9 @@ contract PyroToken is ERC20, ReentrancyGuard {
         external
         onlyReceiver
     {
-        require(
-            liquidityReceiver != address(0),
-            "PyroToken: New Liquidity Receiver cannot be the zero address."
-        );
+        if(liquidityReceiver==address(0)){
+            revert AddressNonZero();
+        }
         config.liquidityReceiver = liquidityReceiver;
     }
 
@@ -284,10 +273,9 @@ contract PyroToken is ERC20, ReentrancyGuard {
         uint256 currentAllowance = _allowances[sender][msg.sender];
 
         if (currentAllowance != type(uint256).max) {
-            require(
-                currentAllowance >= amount,
-                "ERC20: transfer amount exceeds allowance"
-            );
+            if(currentAllowance<amount){
+                revert AllowanceExceeded(currentAllowance, amount);
+            }
             unchecked {
                 _approve(sender, msg.sender, currentAllowance - amount);
             }
@@ -313,7 +301,9 @@ contract PyroToken is ERC20, ReentrancyGuard {
         uint256 rate = redeemRate();
 
         uint256 minPyroStake = (baseTokenBorrowed * ONE) / rate;
-        require(pyroTokenStaked >= minPyroStake, "Pyro: Unsustainable loan.");
+      if(pyroTokenStaked<minPyroStake){
+          revert UnsustainablePyroLoan(pyroTokenStaked,minPyroStake );
+      }
 
         debtObligations[borrower] = DebtObligation(
             baseTokenBorrowed,
@@ -359,7 +349,12 @@ contract PyroToken is ERC20, ReentrancyGuard {
                 uint256(-netBorrowing)
             );
         }
-
+        emit LoanObligationSet(
+            borrower,
+            baseTokenBorrowed,
+            pyroTokenStaked,
+            rate
+        );
         success = true;
     }
 

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 import "./IERC20.sol";
+import "../Errors.sol";
 
 abstract contract ERC20 is IERC20 {
     mapping(address => uint256) internal _balances;
@@ -139,10 +140,9 @@ abstract contract ERC20 is IERC20 {
         returns (bool)
     {
         uint256 currentAllowance = _allowances[msg.sender][spender];
-        require(
-            currentAllowance >= subtractedValue,
-            "ERC20: decreased allowance below zero"
-        );
+        if(currentAllowance<subtractedValue){
+            revert AllowanceUnderflow(currentAllowance, subtractedValue);
+        }
         unchecked {
             _approve(msg.sender, spender, currentAllowance - subtractedValue);
         }
@@ -180,8 +180,6 @@ abstract contract ERC20 is IERC20 {
      * - `account` cannot be the zero address.
      */
     function _mint(address account, uint256 amount) internal virtual {
-        require(account != address(0), "ERC20: mint to the zero address");
-
         _totalSupply += amount;
         _balances[account] += amount;
         emit Transfer(address(0), account, uint128(amount), 0);
@@ -199,10 +197,11 @@ abstract contract ERC20 is IERC20 {
      * - `account` must have at least `amount` tokens.
      */
     function _burn(address account, uint256 amount) internal virtual {
-        require(account != address(0), "ERC20: burn from the zero address");
 
         uint256 accountBalance = _balances[account];
-        require(accountBalance >= amount, "ERC20: burn amount exceeds balance");
+        if(accountBalance<amount){
+            revert InsufficinetFunds(accountBalance, amount);
+        }
         unchecked {
             _balances[account] = accountBalance - amount;
         }
@@ -256,10 +255,9 @@ abstract contract ERC20 is IERC20 {
      */
     function burnFrom(address account, uint256 amount) public virtual {
         uint256 currentAllowance = allowance(account, msg.sender);
-        require(
-            currentAllowance >= amount,
-            "ERC20: burn amount exceeds allowance"
-        );
+        if(amount>currentAllowance){
+            revert AllowanceExceeded(currentAllowance,amount);
+        }
         unchecked {
             _approve(account, msg.sender, currentAllowance - amount);
         }

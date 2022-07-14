@@ -4,23 +4,16 @@ import "./facades/PyroTokenLike.sol";
 import "./facades/IWETH10.sol";
 import "./ERC20/IERC20.sol";
 import "./facades/Ownable.sol";
+import "./facades/ReentrancyGuard.sol";
 
 /**
  *@author Justin Goro
  *@notice Eth->Weth->PyroWeth and reverse in one tx. Simplifies UI of working with Eth.
  */
-contract PyroWethProxy is Ownable {
+contract PyroWethProxy is Ownable, ReentrancyGuard {
     IWETH10 public weth10;
     uint256 private constant ONE = 1e18;
-    bool private unlocked = true;
     PyroTokenLike public pyroWeth;
-
-    modifier reentrancyGuard() {
-        require(unlocked, "PyroProxy: reentrancy guard");
-        unlocked = false;
-        _;
-        unlocked = true;
-    }
 
     constructor(address _pyroWeth) {
         pyroWeth = PyroTokenLike(_pyroWeth);
@@ -42,7 +35,7 @@ contract PyroWethProxy is Ownable {
      */
     function redeem(uint256 pyroTokenAmount)
         external
-        reentrancyGuard
+        nonReentrant
         returns (uint256)
     {
         pyroWeth.redeemFrom(msg.sender, address(this), pyroTokenAmount);
@@ -51,20 +44,19 @@ contract PyroWethProxy is Ownable {
         return balanceOfWeth;
     }
 
-  /**
+    /**
      *@notice mints PyroWeth from a given amount of native token (ETH on mainnet)
      *@param baseTokenAmount amount of native token to use in minting PyroWeth from msg.sender.
      */
     function mint(uint256 baseTokenAmount)
         external
         payable
-        reentrancyGuard
+        nonReentrant
         returns (uint256)
     {
-        require(
-            msg.value == baseTokenAmount && baseTokenAmount > 0,
-            "PyroWethProxy: amount invariant"
-        );
+        if (msg.value != baseTokenAmount || baseTokenAmount == 0) {
+            revert EthForwardingFailed(msg.value, baseTokenAmount);
+        }
         weth10.deposit{value: msg.value}();
         uint256 weth10Balance = IERC20(weth10).balanceOf(address(this));
         return pyroWeth.mint(msg.sender, weth10Balance);

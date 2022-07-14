@@ -9,6 +9,17 @@ import "./LiquidityReceiverLike.sol";
  *The SnufferCap is asigned on the LiquidityReceiver level which means all PyroTokens conform to the same snuffer cap at any one time
  */
 abstract contract SnufferCap {
+    /**
+     *@param pyroToken contract of pyroToken for which the fee exemption applies
+     *@param target contract that will not pay fee.
+     *@param exempt fee exemption type
+     */
+    event Snuffed(
+        address indexed pyroToken,
+        address indexed target,
+        FeeExemption exempt
+    );
+
     LiquidityReceiverLike public _liquidityReceiver;
 
     constructor(address liquidityReceiver) {
@@ -48,5 +59,6 @@ abstract contract SnufferCap {
             targetContract,
             exempt
         );
+        emit Snuffed(pyroToken, targetContract, exempt);
     }
 }
