@@ -1,85 +1,128 @@
 import { expect } from "chai";
+import { Contract, ContractFactory } from "ethers";
 import { ethers } from "hardhat";
+
+import * as TypeChainTypes from "../typechain-types";
+import { deploy } from "./helper";
+
+interface BaseTokenSet{
+  regularToken1:TypeChainTypes.BaseToken
+  regularToken2:TypeChainTypes.BaseToken
+  
+  invalidToken1:TypeChainTypes.BaseToken
+  invalidToken2:TypeChainTypes.BaseToken
+  invalidToken3:TypeChainTypes.BaseToken
+  EYE:TypeChainTypes.BaseToken
+}
+
+interface ConstantSet{
+  ZERO_ADDRESS:"0x0000000000000000000000000000000000000000"
+}
+const CONSTANTS:ConstantSet ={
+  ZERO_ADDRESS:"0x0000000000000000000000000000000000000000"
+}
+interface TestSet{
+  BaseTokens:BaseTokenSet
+  lachesis:TypeChainTypes.Lachesis
+  liquidityReceiver:TypeChainTypes.LiquidityReceiver
+  burnEYESnufferCap:TypeChainTypes.SnufferCap
+  loanOfficer:TypeChainTypes.SimpleLoanOfficer
+  snufferCap:TypeChainTypes.SnufferCap
+  LiquidityReceiverFactory:TypeChainTypes.LiquidityReceiver__factory
+  CONSTANTS:ConstantSet
+}
+
+
 
 describe("LiquidityReceiver", async function () {
   let owner: any, secondPerson: any;
+  let SET = {} as TestSet
+  SET.CONSTANTS = CONSTANTS
   beforeEach(async function () {
     [owner, secondPerson] = await ethers.getSigners();
+
+   
+    let BaseTokens = {} as BaseTokenSet
     var BaseToken = await ethers.getContractFactory("BaseToken");
-    this.regularToken = await BaseToken.deploy("Base1", "BASE", 0);
-    this.invalidToken1 = await BaseToken.deploy("Base2", "BASE", 0);
-    this.invalidToken2 = await BaseToken.deploy("Base3", "BASE", 10);
-    this.invalidToken3 = await BaseToken.deploy("Base3", "BASE", 0);
-    this.EYE = await BaseToken.deploy("EYE", "EYE", 0);
+    BaseTokens.regularToken1 = await deploy<TypeChainTypes.BaseToken>(BaseToken,"Base1", "BASE", 0);
+    BaseTokens.regularToken2 = await deploy<TypeChainTypes.BaseToken>(BaseToken,"Base2", "BASE", 0);
+
+    BaseTokens.invalidToken1 = await deploy<TypeChainTypes.BaseToken>(BaseToken,"Base2", "BASE", 0);
+    BaseTokens.invalidToken2  = await deploy<TypeChainTypes.BaseToken>(BaseToken,"Base3", "BASE", 10);
+    BaseTokens.invalidToken3  = await deploy<TypeChainTypes.BaseToken>(BaseToken,"Base3", "BASE", 0);
+    BaseTokens.EYE  = await deploy<TypeChainTypes.BaseToken>(BaseToken,"EYE", "EYE", 0);
+    
+    SET.BaseTokens = BaseTokens
 
     var Lachesis = await ethers.getContractFactory("Lachesis");
-    this.lachesis = await Lachesis.deploy();
-    await this.lachesis.measure(this.regularToken.address, true, false);
-    await this.lachesis.measure(this.invalidToken1.address, false, false);
-    await this.lachesis.measure(this.invalidToken2.address, true, true);
-    await this.lachesis.measure(this.invalidToken3.address, false, true);
+    SET.lachesis = await deploy<TypeChainTypes.Lachesis>(Lachesis);
+    await SET.lachesis.measure(SET.BaseTokens.regularToken1.address, true, false);
+    await SET.lachesis.measure(SET.BaseTokens.regularToken2.address, true, false);
+    
+    await SET.lachesis.measure(SET.BaseTokens.invalidToken1.address, false, false);
+    await SET.lachesis.measure(SET.BaseTokens.invalidToken2.address, true, true);
+    await SET.lachesis.measure(SET.BaseTokens.invalidToken3.address, false, true);
 
-    this.LiquidityReceiver = await ethers.getContractFactory(
+    SET.LiquidityReceiverFactory = await ethers.getContractFactory(
       "LiquidityReceiver"
-    );
-    this.liquidityReceiver = await this.LiquidityReceiver.deploy(
-      this.lachesis.address
-    );
+    ) as TypeChainTypes.LiquidityReceiver__factory;
+
+    SET.liquidityReceiver = await deploy<TypeChainTypes.LiquidityReceiver>(SET.LiquidityReceiverFactory, SET.lachesis.address);
 
     const BurnEYESnufferCap = await ethers.getContractFactory(
       "BurnEYESnufferCap"
     );
-    this.snufferCap = await BurnEYESnufferCap.deploy(
-      this.EYE.address,
-      this.liquidityReceiver.address
-    );
 
-    await this.liquidityReceiver.setSnufferCap(this.snufferCap.address);
+    SET.snufferCap = await deploy<TypeChainTypes.SnufferCap>(BurnEYESnufferCap, SET.BaseTokens.EYE.address, SET.liquidityReceiver.address);
+
+    await SET.liquidityReceiver.setSnufferCap(SET.snufferCap.address);
 
     const LoanOfficer = await ethers.getContractFactory("SimpleLoanOfficer");
-    this.loanOfficer = await LoanOfficer.deploy();
+    SET.loanOfficer = await deploy<TypeChainTypes.SimpleLoanOfficer>(LoanOfficer);
+    
+    await SET.liquidityReceiver.setDefaultLoanOfficer(SET.loanOfficer.address)
+    
   });
 
   it("CREATE2: Deployed PyroToken address matches predicted address", async function () {
     const expectedAddressOfPyroToken =
-      await this.liquidityReceiver.getPyroToken(this.regularToken.address);
-    await this.liquidityReceiver.registerPyroToken(
-      this.regularToken.address,
+      await SET.liquidityReceiver.getPyroToken(SET.BaseTokens.regularToken1.address);
+    await SET.liquidityReceiver.registerPyroToken(
+      SET.BaseTokens.regularToken1.address,
       "hello",
       "there"
     );
 
-    await this.liquidityReceiver.setPyroTokenLoanOfficer(
+    await SET.liquidityReceiver.setPyroTokenLoanOfficer(
       expectedAddressOfPyroToken,
-      this.loanOfficer.address
+      SET.loanOfficer.address
     );
   });
 
   it("SetFeeExempt on EOA fails", async function () {
     const pyrotoken = await getNewPyroToken(
-      this.liquidityReceiver,
-      this.regularToken
+      SET.BaseTokens.regularToken1
     );
-    await this.EYE.approve(this.snufferCap.address, "100000000000000000000000");
+
+    await SET.BaseTokens.EYE.approve(SET.snufferCap.address, "100000000000000000000000");
     //contract passes
-    await this.snufferCap.snuff(pyrotoken, this.loanOfficer.address, 3);
+    await SET.snufferCap.snuff(pyrotoken, SET.loanOfficer.address, 3);
 
     await expect(
-      this.snufferCap.snuff(pyrotoken, owner.address, 3)
+      SET.snufferCap.snuff(pyrotoken, owner.address, 3)
     ).to.be.revertedWith("LR: EOAs cannot be exempt.");
   });
   [0, 1].forEach((i) => {
     it("Non fee exempt contract charged all fees, EOA charged all fees", async function () {
       console.log("no fee run " + i);
       const pyrotokenAddress = await getNewPyroToken(
-        this.liquidityReceiver,
-        this.regularToken
+        SET.BaseTokens.regularToken1
       );
       const pyrotoken = await ethers.getContractAt(
         "PyroToken",
         pyrotokenAddress
       );
-      await this.regularToken.approve(pyrotokenAddress, "1000000000000");
+      await SET.BaseTokens.regularToken1.approve(pyrotokenAddress, "1000000000000");
       await pyrotoken.mint(owner.address, "1000000000000");
 
       //EOA
@@ -97,11 +140,11 @@ describe("LiquidityReceiver", async function () {
       const pyroSender = await PyroSender.deploy();
 
       if (i == 1) {
-        await this.EYE.approve(
-          this.snufferCap.address,
+        await SET.BaseTokens.EYE.approve(
+          SET.snufferCap.address,
           "10000000000000000000000"
         );
-        await this.snufferCap.snuff(pyrotokenAddress, pyroSender.address, 0);
+        await SET.snufferCap.snuff(pyrotokenAddress, pyroSender.address, 0);
       }
 
       //send from EOA to contract
@@ -114,7 +157,7 @@ describe("LiquidityReceiver", async function () {
       //send from contract to contract
       await pyroSender.send(
         pyrotoken.address,
-        this.regularToken.address,
+        SET.BaseTokens.regularToken1.address,
         "100000000"
       );
       expect(await pyrotoken.totalSupply()).to.equal("989998790000");
@@ -131,29 +174,28 @@ describe("LiquidityReceiver", async function () {
 
     //create pyrotoken and send some to sender contract
     const pyrotokenAddress = await getNewPyroToken(
-      this.liquidityReceiver,
-      this.regularToken
+      SET.BaseTokens.regularToken1
     );
     const pyrotoken = await ethers.getContractAt("PyroToken", pyrotokenAddress);
-    await this.regularToken.approve(pyrotokenAddress, "1000000000000");
+    await SET.BaseTokens.regularToken1.approve(pyrotokenAddress, "1000000000000");
     await pyrotoken.mint(owner.address, "1000000000000");
     await pyrotoken.transfer(pyroSender.address, "100000000");
 
     //prepare for snuffing
-    await this.EYE.approve(
-      this.snufferCap.address,
+    await SET.BaseTokens.EYE.approve(
+      SET.snufferCap.address,
       "1000000000000000000000000"
     );
 
     // SENDER_EXEMPT
-    await this.snufferCap.snuff(pyrotokenAddress, pyroSender.address, 1);
+    await SET.snufferCap.snuff(pyrotokenAddress, pyroSender.address, 1);
     let totalSupplyBefore = BigInt((await pyrotoken.totalSupply()).toString());
     await pyroSender.send(pyrotoken.address, owner.address, "100000");
     let totalSupplyAfter = BigInt((await pyrotoken.totalSupply()).toString());
     expect(totalSupplyBefore.toString()).to.equal(totalSupplyAfter.toString());
 
     // SENDER_AND_RECEIVER_EXEMPT
-    await this.snufferCap.snuff(pyrotokenAddress, pyroSender.address, 2);
+    await SET.snufferCap.snuff(pyrotokenAddress, pyroSender.address, 2);
     totalSupplyBefore = totalSupplyAfter;
     await pyroSender.send(pyrotoken.address, owner.address, "100000");
     await pyrotoken.transfer(pyroSender.address, "100000");
@@ -161,7 +203,7 @@ describe("LiquidityReceiver", async function () {
     expect(totalSupplyBefore.toString()).to.equal(totalSupplyAfter.toString());
 
     // REDEEM_EXEMPT_AND_SENDER_EXEMPT
-    await this.snufferCap.snuff(pyrotokenAddress, pyroSender.address, 3);
+    await SET.snufferCap.snuff(pyrotokenAddress, pyroSender.address, 3);
     totalSupplyBefore = totalSupplyAfter;
     await pyroSender.send(pyrotoken.address, owner.address, "100000");
     await pyroSender.redeem(pyrotoken.address, "100000");
@@ -171,7 +213,7 @@ describe("LiquidityReceiver", async function () {
     );
 
     // REDEEM_EXEMPT_AND_SENDER_AND_RECEIVER_EXEMPT
-    await this.snufferCap.snuff(pyrotokenAddress, pyroSender.address, 4);
+    await SET.snufferCap.snuff(pyrotokenAddress, pyroSender.address, 4);
     totalSupplyBefore = totalSupplyAfter;
     await pyroSender.send(pyrotoken.address, owner.address, "100000");
     await pyroSender.redeem(pyrotoken.address, "100000");
@@ -182,14 +224,14 @@ describe("LiquidityReceiver", async function () {
     );
 
     // RECEIVER_EXEMPT
-    await this.snufferCap.snuff(pyrotokenAddress, pyroSender.address, 5);
+    await SET.snufferCap.snuff(pyrotokenAddress, pyroSender.address, 5);
     totalSupplyBefore = totalSupplyAfter;
     await pyrotoken.transfer(pyroSender.address, "100000");
     totalSupplyAfter = BigInt((await pyrotoken.totalSupply()).toString());
     expect(totalSupplyBefore.toString()).to.equal(totalSupplyAfter.toString());
 
     // REDEEM_EXEMPT_AND_RECEIVER_EXEMPT
-    await this.snufferCap.snuff(pyrotokenAddress, pyroSender.address, 6);
+    await SET.snufferCap.snuff(pyrotokenAddress, pyroSender.address, 6);
     totalSupplyBefore = totalSupplyAfter;
     await pyroSender.redeem(pyrotoken.address, "100000");
     await pyrotoken.transfer(pyroSender.address, "100000");
@@ -199,7 +241,7 @@ describe("LiquidityReceiver", async function () {
     );
 
     // REDEEM_EXEMPT_ONLY
-    await this.snufferCap.snuff(pyrotokenAddress, pyroSender.address, 7);
+    await SET.snufferCap.snuff(pyrotokenAddress, pyroSender.address, 7);
     totalSupplyBefore = totalSupplyAfter;
     await pyroSender.redeem(pyrotoken.address, "100000");
     totalSupplyAfter = BigInt((await pyrotoken.totalSupply()).toString());
@@ -209,40 +251,58 @@ describe("LiquidityReceiver", async function () {
   });
 
   it("Redeploying existing PyroToken fails", async function () {
-    await this.liquidityReceiver.registerPyroToken(
-      this.regularToken.address,
+    await SET.liquidityReceiver.registerPyroToken(
+      SET.BaseTokens.regularToken1.address,
       "hello",
       "there"
     );
     await expect(
-      this.liquidityReceiver.registerPyroToken(
-        this.regularToken.address,
+      SET.liquidityReceiver.registerPyroToken(
+        SET.BaseTokens.regularToken1.address,
         "general",
         "kenobi"
       )
     ).to.be.revertedWith("PyroToken Address occupied");
   });
 
+  it("default loan officer (zero allowed)", async function (){
+   const newPTokenAddress1 = await getNewPyroToken(SET.BaseTokens.regularToken1)
+   const pyrotoken1 = await ethers.getContractAt("PyroToken", newPTokenAddress1) as TypeChainTypes.PyroToken;
+   let configuration1 = await pyrotoken1.config()
+   expect (configuration1[2]).to.equal(SET.loanOfficer.address)
+
+   await SET.liquidityReceiver.setDefaultLoanOfficer(SET.CONSTANTS.ZERO_ADDRESS)
+
+   const newPTokenAddress2 = await getNewPyroToken(SET.BaseTokens.regularToken2)
+   const pyrotoken2 = await ethers.getContractAt("PyroToken", newPTokenAddress2) as TypeChainTypes.PyroToken;
+  
+   configuration1= await pyrotoken1.config()
+   const configuration2 = await pyrotoken2.config()
+
+   expect (configuration1[2]).to.equal(SET.loanOfficer.address) //changing default doesn't affect existing
+   expect (configuration2[2]).to.equal(SET.CONSTANTS.ZERO_ADDRESS)
+  })
+
   it("Only valid nonburnable tokens can have pyroTokens", async function () {
     await expect(
-      this.liquidityReceiver.registerPyroToken(
-        this.invalidToken1.address,
+      SET.liquidityReceiver.registerPyroToken(
+        SET.BaseTokens.invalidToken1.address,
         "hello",
         "there"
       )
     ).to.be.revertedWith("PyroToken: invalid base token");
 
     await expect(
-      this.liquidityReceiver.registerPyroToken(
-        this.invalidToken2.address,
+      SET.liquidityReceiver.registerPyroToken(
+        SET.BaseTokens.invalidToken2.address,
         "hello",
         "there"
       )
     ).to.be.revertedWith("PyroToken: invalid base token");
 
     await expect(
-      this.liquidityReceiver.registerPyroToken(
-        this.invalidToken3.address,
+      SET.liquidityReceiver.registerPyroToken(
+        SET.BaseTokens.invalidToken3.address,
         "hello",
         "there"
       )
@@ -251,15 +311,14 @@ describe("LiquidityReceiver", async function () {
 
   it("Transfer of pyroToken to new liquidity receiver works fully", async function () {
     const pyrotokenAddress = await getNewPyroToken(
-      this.liquidityReceiver,
-      this.regularToken
+      SET.BaseTokens.regularToken1
     );
     const pyrotoken = await ethers.getContractAt("PyroToken", pyrotokenAddress);
-    const liquidityReceiver2 = await this.LiquidityReceiver.deploy(
-      this.lachesis.address
+    const liquidityReceiver2 = await SET.LiquidityReceiverFactory.deploy(
+      SET.lachesis.address
     );
 
-    await this.liquidityReceiver.transferPyroTokenToNewReceiver(
+    await SET.liquidityReceiver.transferPyroTokenToNewReceiver(
       pyrotoken.address,
       liquidityReceiver2.address
     );
@@ -267,10 +326,12 @@ describe("LiquidityReceiver", async function () {
     const receiverAddress = (await pyrotoken.config())[0];
     expect(receiverAddress).to.equal(liquidityReceiver2.address);
   });
+
+  async function getNewPyroToken(token: Contract, seed?:string) {
+    await SET.liquidityReceiver.registerPyroToken(token.address, "hello"+seed || "", "there"+ seed || "");
+    const pyrotoken = await SET.liquidityReceiver.getPyroToken(token.address);
+    return pyrotoken;
+  }
 });
 
-async function getNewPyroToken(liquidityReceiver: any, token: any) {
-  await liquidityReceiver.registerPyroToken(token.address, "hello", "there");
-  const pyrotoken = await liquidityReceiver.getPyroToken(token.address);
-  return pyrotoken;
-}
+

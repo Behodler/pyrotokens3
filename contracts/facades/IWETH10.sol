@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
-import "./IERC20.sol";
+pragma solidity ^0.8.9;
+import "../ERC20/IERC20.sol";
+
 interface IWETH10 is IERC20{
     /// @dev `msg.value` of ETH sent to this contract grants caller account a matching increase in WETH10 token balance.
     /// Emits {Transfer} event to reflect WETH10 token mint of `msg.value` from zero address to caller account.

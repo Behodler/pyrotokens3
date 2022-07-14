@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
-import "./IERC20.sol";
+pragma solidity ^0.8.9;
+import "../ERC20/IERC20.sol";
 
 abstract contract PyroTokenLike is IERC20 {
     address public baseToken;
