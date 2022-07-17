@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.13;
 import "./PyroToken.sol";
 import "./facades/SnufferCap.sol";
 import "./facades/Ownable.sol";
