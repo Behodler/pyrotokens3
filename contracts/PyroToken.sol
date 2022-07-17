@@ -202,7 +202,6 @@ contract PyroToken is ERC20, ReentrancyGuard {
         //=> pyroTokens minted = base_token_amount * 1/r
         minted = (changeInBalance * ONE) / _redeemRate;
         _mint(recipient, minted);
-        emit Transfer(address(0), recipient, uint128(amount), 0);
     }
 
     /**@notice reduce the gas impact of an additional transfer
@@ -415,6 +414,8 @@ contract PyroToken is ERC20, ReentrancyGuard {
         uint256 baseTokens = (_redeemRate * net) / ONE;
 
         _totalSupply -= amount;
+        
+        //pyro burn event
         emit Transfer(owner, address(0), uint128(amount), uint128(amount));
 
         config.baseToken.safeTransfer(recipient, baseTokens);
