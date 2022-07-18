@@ -93,8 +93,7 @@ interface IERC20 {
     event Transfer(
         address indexed from,
         address indexed to,
-        uint128 value,
-        uint128 burnt
+        uint value
     );
 
     /**

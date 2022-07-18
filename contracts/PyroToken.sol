@@ -7,9 +7,9 @@ import "./facades/LiquidityReceiverLike.sol";
 import "./facades/ReentrancyGuard.sol";
 
 /**
- *@title Pyrotoken
+ *@title PyroToken
  *@author Justin Goro
- *@notice PyroTokens are ERC20 tokens that wrap tokens traded on Behodler and add burn incentives. They can be redeemed for base tokens.
+ *@notice PyroTokens are ERC20 tokens that wrap and add burn incentives to standard ERC20 tokens traded on Behodler. They can be redeemed for base tokens.
  The mapping is 1:1 where each token has a corresponding PyroToken. For instance, Weth only has PyroWeth and PyroWeth only redeems for Weth.
  Not all tokens traded on Behodler can be wrapped as PyroTokens but that rule is beyond the scope of this repository.
  at an algorithmic redeem rate: r = R/T where R is the reserve of base tokens and T is the total supply of PyroTokens.
@@ -416,7 +416,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
         _totalSupply -= amount;
         
         //pyro burn event
-        emit Transfer(owner, address(0), uint128(amount), uint128(amount));
+        emit Transfer(owner, address(0), amount);
 
         config.baseToken.safeTransfer(recipient, baseTokens);
         return baseTokens;
@@ -440,6 +440,6 @@ contract PyroToken is ERC20, ReentrancyGuard {
         _balances[sender] = senderBalance - amount;
         _balances[recipient] += netReceived;
 
-        emit Transfer(sender, recipient, uint128(amount), uint128(fee)); //extra parameters don't throw off parsers when interpreted through JSON.
+        emit Transfer(sender, recipient, amount); //extra parameters don't throw off parsers when interpreted through JSON.
     }
 }

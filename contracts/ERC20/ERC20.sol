@@ -182,7 +182,7 @@ abstract contract ERC20 is IERC20 {
     function _mint(address account, uint256 amount) internal virtual {
         _totalSupply += amount;
         _balances[account] += amount;
-        emit Transfer(address(0), account, uint128(amount), 0);
+        emit Transfer(address(0), account, amount);
     }
 
     /**
@@ -207,7 +207,7 @@ abstract contract ERC20 is IERC20 {
         }
         _totalSupply -= amount;
 
-        emit Transfer(account, address(0), uint128(amount), 0);
+        emit Transfer(account, address(0), amount);
     }
 
     /**

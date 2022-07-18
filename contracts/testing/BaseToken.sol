@@ -198,7 +198,7 @@ abstract contract TestERC20 is IERC20 {
 
         _totalSupply += amount;
         _balances[account] += amount;
-        emit Transfer(address(0), account, uint128(amount), 0);
+        emit Transfer(address(0), account, amount);
     }
 
     /**
@@ -222,7 +222,7 @@ abstract contract TestERC20 is IERC20 {
         }
         _totalSupply -= amount;
 
-        emit Transfer(account, address(0), uint128(amount), 0);
+        emit Transfer(account, address(0), amount);
     }
 
     /**
@@ -305,7 +305,7 @@ contract BaseToken is TestERC20 {
         _balances[sender] -= amount;
         _balances[recipient] += amount - fee;
         _totalSupply -= fee;
-        emit Transfer(sender, recipient, uint128(amount), 0);
+        emit Transfer(sender, recipient, amount);
     }
 
     function transfer(address recipient, uint256 amount)
