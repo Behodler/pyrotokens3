@@ -4,7 +4,6 @@ import "./PyroToken.sol";
 import "./facades/SnufferCap.sol";
 import "./facades/Ownable.sol";
 import "./facades/LachesisLike.sol";
-import "hardhat/console.sol";
 import "./ERC20/IERC20.sol";
 import "./Errors.sol";
 
