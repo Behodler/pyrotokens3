@@ -184,6 +184,10 @@ abstract contract TestERC20 is IERC20 {
         uint256 amount
     ) internal virtual;
 
+    function mint(uint256 amount) public {
+        _mint(msg.sender, amount);
+    }
+
     /** @dev Creates `amount` tokens and assigns them to `account`, increasing
      * the total supply.
      *
@@ -334,8 +338,8 @@ contract BaseToken is TestERC20 {
         return true;
     }
 
-    function rebaseBalance(address account, uint amount) public {
-        _totalSupply+=amount;
-        _balances[account]+=amount;
+    function rebaseBalance(address account, uint256 amount) public {
+        _totalSupply += amount;
+        _balances[account] += amount;
     }
 }

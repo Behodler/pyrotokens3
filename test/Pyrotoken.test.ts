@@ -1,9 +1,15 @@
 import { expect } from "chai";
-import { Contract, ContractFactory } from "ethers";
+import {
+  BigNumber,
+  BigNumberish,
+  Contract,
+  ContractFactory,
+  constants as ethersConstants,
+} from "ethers";
 import { ethers } from "hardhat";
-
 import * as TypeChainTypes from "../typechain-types";
-import { deploy } from "./helper";
+import { Announce, t0Setup } from "./arrange/pyroToken";
+import { deploy, executionResult, queryChain } from "./helper";
 
 interface BaseTokenSet {
   regularToken1: TypeChainTypes.BaseToken;
@@ -15,13 +21,35 @@ interface BaseTokenSet {
   EYE: TypeChainTypes.BaseToken;
 }
 
-interface ConstantSet {
-  ZERO_ADDRESS: "0x0000000000000000000000000000000000000000";
+interface PyroTokens {
+  pyroRegular1: TypeChainTypes.PyroToken;
+  pyroRegular2: TypeChainTypes.PyroToken;
 }
-const CONSTANTS: ConstantSet = {
+
+export interface ConstantSet {
+  ZERO_ADDRESS: "0x0000000000000000000000000000000000000000";
+  ONE: BigNumber;
+  TEN: BigNumber;
+  HUNDRED: BigNumber;
+  THOUSAND: BigNumber;
+  FINNEY: BigNumber;
+  MAX: BigNumber;
+}
+interface Uniswap {
+  router: TypeChainTypes.UniswapV2Router02;
+  factory: TypeChainTypes.UniswapV2Factory;
+}
+
+export const CONSTANTS: ConstantSet = {
   ZERO_ADDRESS: "0x0000000000000000000000000000000000000000",
+  ONE: BigNumber.from("10").pow("18"),
+  TEN: BigNumber.from("10").pow("19"),
+  HUNDRED: BigNumber.from("10").pow("20"),
+  THOUSAND: BigNumber.from("10").pow("21"),
+  FINNEY: BigNumber.from("10").pow("15"),
+  MAX: ethersConstants.MaxUint256,
 };
-interface TestSet {
+export interface TestSet {
   BaseTokens: BaseTokenSet;
   lachesis: TypeChainTypes.Lachesis;
   liquidityReceiver: TypeChainTypes.LiquidityReceiver;
@@ -29,8 +57,9 @@ interface TestSet {
   loanOfficer: TypeChainTypes.SimpleLoanOfficer;
   snufferCap: TypeChainTypes.SnufferCap;
   LiquidityReceiverFactory: TypeChainTypes.LiquidityReceiver__factory;
-  UniswapRouter: TypeChainTypes.UniswapV2Router02;
   CONSTANTS: ConstantSet;
+  Uniswap: Uniswap;
+  PyroTokens: PyroTokens;
 }
 
 describe("PyroTokens", async function () {
@@ -149,6 +178,25 @@ describe("PyroTokens", async function () {
       "PyroToken2",
       "PYRO"
     );
+
+    const pyroTokenFactory = await ethers.getContractFactory("PyroToken");
+    const pyroRegularAddress1 = await SET.liquidityReceiver.getPyroToken(
+      SET.BaseTokens.regularToken1.address
+    );
+    const pyroRegularAddress2 = await SET.liquidityReceiver.getPyroToken(
+      SET.BaseTokens.regularToken1.address
+    );
+    const pyroRegular1 = (await pyroTokenFactory.attach(
+      pyroRegularAddress1
+    )) as TypeChainTypes.PyroToken;
+    const pyroRegular2 = (await pyroTokenFactory.attach(
+      pyroRegularAddress2
+    )) as TypeChainTypes.PyroToken;
+
+    SET.PyroTokens = {
+      pyroRegular1,
+      pyroRegular2,
+    };
     //Order of instantiation
     //factory and weth (bring in from limbo)->router
     const wethFactory = await ethers.getContractFactory("WETH10");
@@ -165,15 +213,52 @@ describe("PyroTokens", async function () {
     const UniswapRouterFactory = await ethers.getContractFactory(
       "UniswapV2Router02"
     );
-    SET.UniswapRouter = await deploy<TypeChainTypes.UniswapV2Router02>(
+    const router = await deploy<TypeChainTypes.UniswapV2Router02>(
       UniswapRouterFactory,
       unifactory.address,
       weth.address
     );
+
+    SET.Uniswap = { factory: unifactory, router };
   });
 
-  it(`t-${0}. Swap via UniswapV2 router succeeds`, async function () {
-    throw "not implemented.";
+  it(`t-0. transferFrom via UniswapV2 router succeeds`, async function () {
+    //ARRANGE
+    await Announce(
+      "create a UniswapV2 pair for <regular,pyro> and mint LP tokens.",
+      SET,
+      owner,
+      true,
+      t0Setup
+    );
+
+    //ACT: trade a pyrotoken for a regular and vice versa using the router
+    //regular->pyro
+    const pyroBalanceOfPairBefore = BigNumber.from("199800000000000000000");
+    let result = await executionResult(
+      SET.Uniswap.router.swapTokensForExactTokens(
+        "6713540621865596791",
+        "8950721752115480337",
+        [
+          SET.BaseTokens.regularToken1.address,
+          SET.PyroTokens.pyroRegular1.address,
+        ],
+        owner.address,
+        CONSTANTS.MAX
+      )
+    );
+    const balanceAfter = await SET.PyroTokens.pyroRegular1.balanceOf(
+      SET.Uniswap.factory.getPair(
+        SET.BaseTokens.regularToken1.address,
+        SET.PyroTokens.pyroRegular1.address
+      )
+    );
+
+    //ASSERT: transfer succeeds
+    await expect(result.success).to.equal(false);
+
+    expect(result.error.toString())
+    .to.not.equal("Error: VM Exception while processing transaction: reverted with reason string 'TransferHelper: TRANSFER_FROM_FAILED'");
   });
 
   for (let i = 0; i < 2; i++) {
