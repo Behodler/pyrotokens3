@@ -414,7 +414,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
         uint256 baseTokens = (_redeemRate * net) / ONE;
 
         _totalSupply -= amount;
-        
+
         //pyro burn event
         emit Transfer(owner, address(0), amount);
 

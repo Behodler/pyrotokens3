@@ -8,7 +8,7 @@ import {
 } from "ethers";
 import { ethers } from "hardhat";
 import * as TypeChainTypes from "../typechain-types";
-import { Announce, t0Setup } from "./arrange/pyroToken";
+import { Announce, t0Setup, t1Setup } from "./arrange/pyroToken";
 import { deploy, executionResult, queryChain } from "./helper";
 
 interface BaseTokenSet {
@@ -228,7 +228,7 @@ describe("PyroTokens", async function () {
       "create a UniswapV2 pair for <regular,pyro> and mint LP tokens.",
       SET,
       owner,
-      true,
+      false,
       t0Setup
     );
 
@@ -257,62 +257,86 @@ describe("PyroTokens", async function () {
     //ASSERT: transfer succeeds
     await expect(result.success).to.equal(false);
 
-    expect(result.error.toString())
-    .to.not.equal("Error: VM Exception while processing transaction: reverted with reason string 'TransferHelper: TRANSFER_FROM_FAILED'");
+    expect(result.error.toString()).to.not.equal(
+      "Error: VM Exception while processing transaction: reverted with reason string 'TransferHelper: TRANSFER_FROM_FAILED'"
+    );
   });
 
   for (let i = 0; i < 2; i++) {
     let toggleValue: boolean = i > 0;
     it(`t-${
       i + 1
-    }. toggle pull pending fee revenue behaves correctly [${toggleValue
+    } toggle pull pending fee revenue behaves correctly [${toggleValue
       .toString()
       .toUpperCase()}]`, async function () {
-      throw "not implemented.";
+      //ARRANGE
+      await Announce(
+        `set pull pending fee, tranfer base tokens to liquidity receiver and mint, observing redeem rate change`,
+        SET,
+        owner,
+        false,
+        t1Setup,
+        toggleValue
+      );
+
+      //ACT
+      // mint pyroToken
+      const redeemRateBefore = await SET.PyroTokens.pyroRegular1.redeemRate();
+      await SET.PyroTokens.pyroRegular1.mint(owner.address, CONSTANTS.HUNDRED);
+
+      //ASSERT
+      const redeemRateAfter = await SET.PyroTokens.pyroRegular1.redeemRate();
+      if (toggleValue) {
+        expect(redeemRateAfter.gt(redeemRateBefore)).to.be.true;
+      } else {
+        expect(redeemRateAfter.toString()).to.equal(
+          redeemRateBefore.toString()
+        );
+      }
     });
   }
 
-  it("t-4. New Liquidity Receiver", async function () {
+  it("t-3. New Liquidity Receiver", async function () {
     throw "not implemented.";
   });
 
-  it("t-5. mint leaves redeem rate unchanged", async function () {
+  it("t-4. mint leaves redeem rate unchanged", async function () {
     throw "not implemented.";
   });
 
-  it("t-6. redeem from adjusts approval and fails for not approved.", async function () {
+  it("t-5. redeem from adjusts approval and fails for not approved.", async function () {
     throw "not implemented.";
   });
 
-  it("t-7. Redeem adjusts redeem rate", async function () {
+  it("t-6. Redeem adjusts redeem rate", async function () {
     throw "not implemented.";
   });
 
-  it("t-8. set debt obligation fails when pyrostake too low.", async function () {
+  it("t-7. set debt obligation fails when pyrostake too low.", async function () {
     throw "not implemented.";
   });
 
-  it("t-9. set debt obligation transfers from holder when stake grows", async function () {
+  it("t-8. set debt obligation transfers from holder when stake grows", async function () {
     throw "not implemented.";
   });
 
-  it("t-10. set debt obligation transfers from pyro to holder stake shrinks", async function () {
+  it("t-9. set debt obligation transfers from pyro to holder stake shrinks", async function () {
     throw "not implemented.";
   });
 
-  it("t-11. set debt obligation fails if user has insufficient balance to meet stake", async function () {
+  it("t-10. set debt obligation fails if user has insufficient balance to meet stake", async function () {
     throw "not implemented.";
   });
 
-  it("t-12. Set debt obligation succeeds", async function () {
+  it("t-11. Set debt obligation succeeds", async function () {
     throw "not implemented.";
   });
 
-  it("t-13. calculate transfer fee", async function () {
+  it("t-12. calculate transfer fee", async function () {
     throw "not implemented.";
   });
 
-  it("t-14. calculate redemption fee", async function () {
+  it("t-13. calculate redemption fee", async function () {
     throw "not implemented.";
   });
 });

@@ -11,14 +11,20 @@ export async function Announce(
   SET: TestSet,
   owner: any,
   log: boolean,
-  f: (SET: TestSet, owner: any, logger: any) => Promise<void>
+  f: (
+    SET: TestSet,
+    owner: any,
+    logger: any,
+    ...args: Array<any>
+  ) => Promise<void>,
+  ...args: Array<any>
 ) {
   const logger = LogIf(log);
   const boundaryLogger = LogIf(log, true);
 
   console.log(chalk.cyan(chalk.bold(`SETUP summary n\t${summary}\n`)));
   boundaryLogger("\t\tSETUP LOG BEGIN");
-  await f(SET, owner, logger);
+  await f(SET, owner, logger, args);
   boundaryLogger("\t\tSETUP LOG END");
 }
 
@@ -124,5 +130,31 @@ export async function t0Setup(SET: TestSet, owner: any, logger: any) {
   await SET.PyroTokens.pyroRegular1.approve(
     SET.Uniswap.router.address,
     CONSTANTS.MAX
+  );
+}
+
+export async function t1Setup(
+  SET: TestSet,
+  owner: any,
+  logger: any,
+  ...args: Array<any>
+) {
+  let toggle = args[0].toString().trim()!=='false';
+
+  await SET.liquidityReceiver.togglePyroTokenPullFeeRevenue(
+    SET.PyroTokens.pyroRegular1.address,
+    toggle
+  );
+  await SET.BaseTokens.regularToken1.mint(CONSTANTS.THOUSAND);
+  await SET.BaseTokens.regularToken1.approve(
+    SET.PyroTokens.pyroRegular1.address,
+    CONSTANTS.MAX
+  );
+
+  await SET.PyroTokens.pyroRegular1.mint(owner.address, CONSTANTS.ONE);
+
+  await SET.BaseTokens.regularToken1.transfer(
+    SET.liquidityReceiver.address,
+    CONSTANTS.HUNDRED
   );
 }
