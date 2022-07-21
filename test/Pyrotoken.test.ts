@@ -297,7 +297,15 @@ describe("PyroTokens", async function () {
   }
 
   it("t-3. New Liquidity Receiver", async function () {
-    throw "not implemented.";
+    //Arrange
+    const newLiquidityReceiver = await deploy<TypeChainTypes.LiquidityReceiver>(SET.LiquidityReceiverFactory,SET.lachesis.address)
+
+    //ACT
+    await SET.liquidityReceiver.transferPyroTokenToNewReceiver(SET.PyroTokens.pyroRegular1.address, newLiquidityReceiver.address)
+    
+    //ASSERT
+    const config = await SET.PyroTokens.pyroRegular1.config()
+    expect (config[0]).to.equal(newLiquidityReceiver.address)
   });
 
   it("t-4. mint leaves redeem rate unchanged", async function () {
