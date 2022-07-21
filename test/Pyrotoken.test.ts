@@ -298,18 +298,39 @@ describe("PyroTokens", async function () {
 
   it("t-3. New Liquidity Receiver", async function () {
     //Arrange
-    const newLiquidityReceiver = await deploy<TypeChainTypes.LiquidityReceiver>(SET.LiquidityReceiverFactory,SET.lachesis.address)
+    const newLiquidityReceiver = await deploy<TypeChainTypes.LiquidityReceiver>(
+      SET.LiquidityReceiverFactory,
+      SET.lachesis.address
+    );
 
     //ACT
-    await SET.liquidityReceiver.transferPyroTokenToNewReceiver(SET.PyroTokens.pyroRegular1.address, newLiquidityReceiver.address)
-    
+    await SET.liquidityReceiver.transferPyroTokenToNewReceiver(
+      SET.PyroTokens.pyroRegular1.address,
+      newLiquidityReceiver.address
+    );
+
     //ASSERT
-    const config = await SET.PyroTokens.pyroRegular1.config()
-    expect (config[0]).to.equal(newLiquidityReceiver.address)
+    const config = await SET.PyroTokens.pyroRegular1.config();
+    expect(config[0]).to.equal(newLiquidityReceiver.address);
   });
 
   it("t-4. mint leaves redeem rate unchanged", async function () {
-    throw "not implemented.";
+    const redeemRateBefore = await SET.PyroTokens.pyroRegular1.redeemRate();
+
+    //ARRANGE
+    await SET.BaseTokens.regularToken1.mint(CONSTANTS.TEN);
+    await SET.BaseTokens.regularToken1.approve(
+      SET.PyroTokens.pyroRegular1.address,
+      CONSTANTS.MAX
+    );
+
+    //ACT
+    await SET.PyroTokens.pyroRegular1.mint(owner.address, CONSTANTS.TEN);
+    await SET.PyroTokens.pyroRegular1.mint(owner.address, CONSTANTS.TEN);
+
+    //ASSERT
+    const redeemRateAfter = await SET.PyroTokens.pyroRegular1.redeemRate();
+    expect(redeemRateAfter).to.equal(redeemRateBefore);
   });
 
   it("t-5. redeem from adjusts approval and fails for not approved.", async function () {
