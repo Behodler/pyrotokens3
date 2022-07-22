@@ -1,3 +1,4 @@
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import {
   BigNumber,
@@ -8,7 +9,7 @@ import {
 } from "ethers";
 import { ethers } from "hardhat";
 import * as TypeChainTypes from "../typechain-types";
-import { Announce, t0Setup, t1Setup } from "./arrange/pyroToken";
+import { Arrange, t0Setup, t1Setup, t7Setup } from "./arrange/pyroToken";
 import { deploy, executionResult, queryChain } from "./helper";
 
 interface BaseTokenSet {
@@ -63,7 +64,7 @@ export interface TestSet {
 }
 
 describe("PyroTokens", async function () {
-  let owner: any, secondPerson: any;
+  let owner: SignerWithAddress, secondPerson: SignerWithAddress;
   let SET = {} as TestSet;
   SET.CONSTANTS = CONSTANTS;
   beforeEach(async function () {
@@ -170,13 +171,15 @@ describe("PyroTokens", async function () {
     await SET.liquidityReceiver.registerPyroToken(
       SET.BaseTokens.regularToken1.address,
       "PyroToken1",
-      "PYRO"
+      "PYRO",
+      18
     );
 
     await SET.liquidityReceiver.registerPyroToken(
       SET.BaseTokens.regularToken2.address,
       "PyroToken2",
-      "PYRO"
+      "PYRO",
+      18
     );
 
     const pyroTokenFactory = await ethers.getContractFactory("PyroToken");
@@ -224,7 +227,7 @@ describe("PyroTokens", async function () {
 
   it(`t-0. transferFrom via UniswapV2 router succeeds`, async function () {
     //ARRANGE
-    await Announce(
+    await Arrange(
       "create a UniswapV2 pair for <regular,pyro> and mint LP tokens.",
       SET,
       owner,
@@ -270,7 +273,7 @@ describe("PyroTokens", async function () {
       .toString()
       .toUpperCase()}]`, async function () {
       //ARRANGE
-      await Announce(
+      await Arrange(
         `set pull pending fee, tranfer base tokens to liquidity receiver and mint, observing redeem rate change`,
         SET,
         owner,
@@ -334,19 +337,129 @@ describe("PyroTokens", async function () {
   });
 
   it("t-5. redeem from adjusts approval and fails for not approved.", async function () {
-    throw "not implemented.";
+    //ASSUMPTIONS
+    const approvalBefore = await SET.PyroTokens.pyroRegular1.allowance(
+      secondPerson.address,
+      owner.address
+    );
+    expect(approvalBefore.toNumber()).to.equal(0);
+
+    //ARRANGE
+    await SET.BaseTokens.regularToken1
+      .connect(secondPerson)
+      .mint(CONSTANTS.HUNDRED);
+
+    await SET.BaseTokens.regularToken1
+      .connect(secondPerson)
+      .approve(SET.PyroTokens.pyroRegular1.address, CONSTANTS.MAX);
+
+    await SET.PyroTokens.pyroRegular1
+      .connect(secondPerson)
+      .mint(secondPerson.address, CONSTANTS.TEN.mul(4).add(CONSTANTS.ONE));
+
+    await SET.PyroTokens.pyroRegular1
+      .connect(secondPerson)
+      .approve(owner.address, CONSTANTS.TEN.mul(4));
+
+    const balanceOfSecond = await SET.PyroTokens.pyroRegular1.balanceOf(
+      secondPerson.address
+    );
+    expect(balanceOfSecond.toString()).to.not.equal("0");
+
+    //ACT
+    await SET.PyroTokens.pyroRegular1.redeemFrom(
+      secondPerson.address,
+      owner.address,
+      balanceOfSecond.sub(CONSTANTS.ONE)
+    );
+
+    //ASSERT
+    await expect(
+      SET.PyroTokens.pyroRegular1.redeemFrom(
+        secondPerson.address,
+        owner.address,
+        CONSTANTS.ONE
+      )
+    ).to.be.revertedWith("AllowanceExceeded(0, 1000000000000000000)");
   });
 
   it("t-6. Redeem adjusts redeem rate", async function () {
-    throw "not implemented.";
+    //ARRANGE
+    await SET.BaseTokens.regularToken1.approve(
+      SET.PyroTokens.pyroRegular1.address,
+      CONSTANTS.MAX
+    );
+    await SET.PyroTokens.pyroRegular1.mint(owner.address, CONSTANTS.HUNDRED);
+    const redeemRateBefore = await SET.PyroTokens.pyroRegular1.redeemRate();
+
+    //ACT
+    await SET.PyroTokens.pyroRegular1.redeem(owner.address, CONSTANTS.ONE);
+
+    //ASSERT
+    const redeemRateAfter = await SET.PyroTokens.pyroRegular1.redeemRate();
+
+    expect(redeemRateAfter.gt(redeemRateBefore)).to.be.true;
   });
 
   it("t-7. set debt obligation fails when pyrostake too low.", async function () {
-    throw "not implemented.";
+    //ARRANGE
+    await Arrange(
+      "Mint pyrotokens for both owner and second Person. Push redeem rate above 1",
+      SET,
+      owner,
+      false,
+      t7Setup,
+      secondPerson
+    );
+
+    const redeemRate = await SET.PyroTokens.pyroRegular1.redeemRate();
+
+    const baseToken = SET.BaseTokens.regularToken1;
+    const pyroToken = SET.PyroTokens.pyroRegular1;
+    const loanOfficer = SET.loanOfficer;
+
+    const pyroBalance = await pyroToken.balanceOf(owner.address);
+    const maxBorrow = pyroBalance.mul(redeemRate).div(CONSTANTS.ONE);
+    //ACT
+    //setObligation to max passes
+    await loanOfficer.setObligationFor(pyroToken.address,maxBorrow,pyroBalance)
+    await loanOfficer.setObligationFor(pyroToken.address,maxBorrow.div(2),pyroBalance)
+    //ASSERT
+    //borrow more than max fails
+    // const overBorrow = maxBorrow.add(CONSTANTS.ONE)
+
+    let expectedMinPyroStake = ((maxBorrow.add(CONSTANTS.ONE)).mul(CONSTANTS.ONE)).div(redeemRate);
+     await expect(loanOfficer.setObligationFor(pyroToken.address,maxBorrow.add(CONSTANTS.ONE),pyroBalance))
+     .to.be.revertedWith (`UnsustainablePyroLoan(${pyroBalance}, ${expectedMinPyroStake})`)
+
   });
 
   it("t-8. set debt obligation transfers from holder when stake grows", async function () {
-    throw "not implemented.";
+       await Arrange(
+        "Mint pyrotokens for both owner and second Person. Push redeem rate above 1",
+        SET,
+        owner,
+        false,
+        t7Setup,
+        secondPerson
+      );
+  
+      const pyroBalanceBefore = await SET.PyroTokens.pyroRegular1.balanceOf(owner.address);
+      const baseBalanceBefore = await SET.BaseTokens.regularToken1.balanceOf(owner.address);
+
+      //ACT
+      //increase stake and borrow some
+      await SET.loanOfficer.setObligationFor(SET.PyroTokens.pyroRegular1.address,CONSTANTS.ONE.mul(5),CONSTANTS.TEN)
+
+      //ASSERT
+      const pyroBalanceAfter = await SET.PyroTokens.pyroRegular1.balanceOf(owner.address);
+      const baseBalanceAfter = await SET.BaseTokens.regularToken1.balanceOf(owner.address);
+      
+      const deltaPyro = pyroBalanceBefore.sub(pyroBalanceAfter).toString();
+      const deltaBase = baseBalanceAfter.sub(baseBalanceBefore).toString();
+
+      expect(deltaBase).to.equal(CONSTANTS.ONE.mul(5));
+      expect(deltaPyro).to.equal(CONSTANTS.TEN);
   });
 
   it("t-9. set debt obligation transfers from pyro to holder stake shrinks", async function () {
@@ -357,7 +470,7 @@ describe("PyroTokens", async function () {
     throw "not implemented.";
   });
 
-  it("t-11. Set debt obligation succeeds", async function () {
+  it("t-11. Set debt obligation succeeds, leaves redeem rate unchanged", async function () {
     throw "not implemented.";
   });
 

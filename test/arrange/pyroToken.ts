@@ -5,8 +5,9 @@ import { expect } from "chai";
 import { executionResult, queryChain, LogIf } from "../helper";
 
 import chalk from "chalk";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-export async function Announce(
+export async function Arrange(
   summary: string,
   SET: TestSet,
   owner: any,
@@ -139,7 +140,7 @@ export async function t1Setup(
   logger: any,
   ...args: Array<any>
 ) {
-  let toggle = args[0].toString().trim()!=='false';
+  let toggle = args[0].toString().trim() !== "false";
 
   await SET.liquidityReceiver.togglePyroTokenPullFeeRevenue(
     SET.PyroTokens.pyroRegular1.address,
@@ -157,4 +158,33 @@ export async function t1Setup(
     SET.liquidityReceiver.address,
     CONSTANTS.HUNDRED
   );
+}
+
+export async function t7Setup(
+  SET: TestSet,
+  owner: any,
+  logger: any,
+  ...args: Array<any>
+) {
+  const pyroToken = SET.PyroTokens.pyroRegular1;
+  const baseToken = SET.BaseTokens.regularToken1;
+  const secondPerson = args[0][0] as SignerWithAddress;
+  //mint pyrotokens
+  await baseToken.approve(pyroToken.address, CONSTANTS.MAX);
+  await baseToken
+    .connect(secondPerson)
+    .approve(pyroToken.address, CONSTANTS.MAX);
+
+  //mint 30
+  await pyroToken.mint(owner.address, CONSTANTS.TEN);
+
+  //increase redeem rate
+  await baseToken.transfer(SET.liquidityReceiver.address, CONSTANTS.TEN);
+
+  await baseToken.connect(secondPerson).mint(CONSTANTS.HUNDRED);
+
+  await pyroToken
+    .connect(secondPerson)
+    .mint(secondPerson.address, CONSTANTS.TEN.mul(3));
+  // logger(`redeem rate: ${await (await pyroToken.redeemRate()).toString()}`);
 }

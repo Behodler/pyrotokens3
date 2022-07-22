@@ -5,6 +5,7 @@ import "./ERC20/ERC20.sol";
 import "./ERC20/SafeERC20.sol";
 import "./facades/LiquidityReceiverLike.sol";
 import "./facades/ReentrancyGuard.sol";
+import "hardhat/console.sol";
 
 /**
  *@title PyroToken
@@ -45,12 +46,18 @@ contract PyroToken is ERC20, ReentrancyGuard {
         IERC20 baseToken;
         address loanOfficer;
         bool pullPendingFeeRevenue;
+        /*
+        decimals is not used in calculations. If we wrap one WBTC, we get back 1 pyroWBTC with 8 zeroes. 
+        But if the decimals isn't set to 8 then reporting UIs will display strange values for the PyroWTBC. 
+        */
+        uint8 decimals;
     }
     struct DebtObligation {
         uint256 base;
         uint256 pyro;
         uint256 redeemRate;
     }
+    uint256 aggregateBaseCredit;
     Configuration public config;
     uint256 private constant ONE = 1 ether;
 
@@ -99,11 +106,13 @@ contract PyroToken is ERC20, ReentrancyGuard {
     function initialize(
         address baseToken,
         string memory name_,
-        string memory symbol_
+        string memory symbol_,
+        uint8 decimals
     ) external onlyReceiver {
         config.baseToken = IERC20(baseToken);
         _name = name_;
         _symbol = symbol_;
+        config.decimals = decimals;
     }
 
     modifier onlyReceiver() {
@@ -216,9 +225,12 @@ contract PyroToken is ERC20, ReentrancyGuard {
     ) external returns (uint256) {
         uint256 currentAllowance = _allowances[owner][msg.sender];
         if (currentAllowance != type(uint256).max) {
+            if (amount > currentAllowance) {
+                revert AllowanceExceeded(currentAllowance, amount);
+            }
             _approve(owner, msg.sender, currentAllowance - amount);
         }
-        return _redeem(owner, recipient, amount);
+        return _redeem(recipient, owner, amount);
     }
 
     /**@notice redeems base tokens for a given pyrotoken amount at the current redeem rate
@@ -234,12 +246,16 @@ contract PyroToken is ERC20, ReentrancyGuard {
 
     /**
      * @notice Current rate at which 1 pyrotoken can redeem for (return value) base tokens.
-     *@dev adding 1 to numerator and denominator gives a default redeem rate of ONE and eliminates division by zero.
+     * Until a pyroloan is defaulted on, the lent out baseToken isn't considered lost. The redeem rate takes it into account.
+     * If the loan defaults, the corresponding staked pyro is burnt so that the redeem rate isn't left unbalanced because the staked pyrotoken is burnt,
+     * matching credit and debit.
+     *@dev adding 1 to numerator and denominator gives a default redeem rate of ONE and eliminates division by zero. ONE is 10^18
      */
     function redeemRate() public view returns (uint256) {
         return
-            ((config.baseToken.balanceOf(address(this)) + 1) * ONE) /
-            (_totalSupply + 1);
+            ((config.baseToken.balanceOf(address(this)) +
+                aggregateBaseCredit +
+                1) * ONE) / (_totalSupply + 1);
     }
 
     /**@notice Standard ERC20 transfer
@@ -341,8 +357,10 @@ contract PyroToken is ERC20, ReentrancyGuard {
         int256 netBorrowing = int256(baseTokenBorrowed) -
             int256(currentDebt.base);
         if (netBorrowing > 0) {
+            aggregateBaseCredit += uint256(netBorrowing);
             config.baseToken.safeTransfer(borrower, uint256(netBorrowing));
         } else if (netBorrowing < 0) {
+            aggregateBaseCredit -= uint256(-netBorrowing);
             config.baseToken.safeTransferFrom(
                 borrower,
                 address(this),
