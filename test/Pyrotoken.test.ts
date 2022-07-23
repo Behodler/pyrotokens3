@@ -9,7 +9,15 @@ import {
 } from "ethers";
 import { ethers } from "hardhat";
 import * as TypeChainTypes from "../typechain-types";
-import { Arrange, t0Setup, t1Setup, t7Setup } from "./arrange/pyroToken";
+import { burnEyeSnufferCapSol } from "../typechain-types/snufferCaps";
+import {
+  Arrange,
+  t0Setup,
+  t10Setup,
+  t1Setup,
+  t7Setup,
+  t9Setup,
+} from "./arrange/pyroToken";
 import { deploy, executionResult, queryChain } from "./helper";
 
 interface BaseTokenSet {
@@ -33,6 +41,7 @@ export interface ConstantSet {
   TEN: BigNumber;
   HUNDRED: BigNumber;
   THOUSAND: BigNumber;
+  MILLION: BigNumber;
   FINNEY: BigNumber;
   MAX: BigNumber;
 }
@@ -47,6 +56,7 @@ export const CONSTANTS: ConstantSet = {
   TEN: BigNumber.from("10").pow("19"),
   HUNDRED: BigNumber.from("10").pow("20"),
   THOUSAND: BigNumber.from("10").pow("21"),
+  MILLION: BigNumber.from("10").pow("24"),
   FINNEY: BigNumber.from("10").pow("15"),
   MAX: ethersConstants.MaxUint256,
 };
@@ -223,6 +233,16 @@ describe("PyroTokens", async function () {
     );
 
     SET.Uniswap = { factory: unifactory, router };
+
+    const snufferCapFactory = await ethers.getContractFactory(
+      "BurnEYESnufferCap"
+    );
+    SET.snufferCap = await deploy<TypeChainTypes.BurnEYESnufferCap>(
+      snufferCapFactory,
+      SET.BaseTokens.EYE.address,
+      SET.liquidityReceiver.address
+    );
+    await SET.liquidityReceiver.setSnufferCap(SET.snufferCap.address);
   });
 
   it(`t-0. transferFrom via UniswapV2 router succeeds`, async function () {
@@ -422,63 +442,179 @@ describe("PyroTokens", async function () {
     const maxBorrow = pyroBalance.mul(redeemRate).div(CONSTANTS.ONE);
     //ACT
     //setObligation to max passes
-    await loanOfficer.setObligationFor(pyroToken.address,maxBorrow,pyroBalance)
-    await loanOfficer.setObligationFor(pyroToken.address,maxBorrow.div(2),pyroBalance)
+    await loanOfficer.setObligationFor(
+      pyroToken.address,
+      maxBorrow,
+      pyroBalance
+    );
+    await loanOfficer.setObligationFor(
+      pyroToken.address,
+      maxBorrow.div(2),
+      pyroBalance
+    );
     //ASSERT
     //borrow more than max fails
     // const overBorrow = maxBorrow.add(CONSTANTS.ONE)
 
-    let expectedMinPyroStake = ((maxBorrow.add(CONSTANTS.ONE)).mul(CONSTANTS.ONE)).div(redeemRate);
-     await expect(loanOfficer.setObligationFor(pyroToken.address,maxBorrow.add(CONSTANTS.ONE),pyroBalance))
-     .to.be.revertedWith (`UnsustainablePyroLoan(${pyroBalance}, ${expectedMinPyroStake})`)
-
+    let expectedMinPyroStake = maxBorrow
+      .add(CONSTANTS.ONE)
+      .mul(CONSTANTS.ONE)
+      .div(redeemRate);
+    await expect(
+      loanOfficer.setObligationFor(
+        pyroToken.address,
+        maxBorrow.add(CONSTANTS.ONE),
+        pyroBalance
+      )
+    ).to.be.revertedWith(
+      `UnsustainablePyroLoan(${pyroBalance}, ${expectedMinPyroStake})`
+    );
   });
 
   it("t-8. set debt obligation transfers from holder when stake grows", async function () {
-       await Arrange(
-        "Mint pyrotokens for both owner and second Person. Push redeem rate above 1",
-        SET,
-        owner,
-        false,
-        t7Setup,
-        secondPerson
-      );
-  
-      const pyroBalanceBefore = await SET.PyroTokens.pyroRegular1.balanceOf(owner.address);
-      const baseBalanceBefore = await SET.BaseTokens.regularToken1.balanceOf(owner.address);
+    await Arrange(
+      "Mint pyrotokens for both owner and second Person. Push redeem rate above 1",
+      SET,
+      owner,
+      false,
+      t7Setup,
+      secondPerson
+    );
 
-      //ACT
-      //increase stake and borrow some
-      await SET.loanOfficer.setObligationFor(SET.PyroTokens.pyroRegular1.address,CONSTANTS.ONE.mul(5),CONSTANTS.TEN)
+    const pyroBalanceBefore = await SET.PyroTokens.pyroRegular1.balanceOf(
+      owner.address
+    );
+    const baseBalanceBefore = await SET.BaseTokens.regularToken1.balanceOf(
+      owner.address
+    );
 
-      //ASSERT
-      const pyroBalanceAfter = await SET.PyroTokens.pyroRegular1.balanceOf(owner.address);
-      const baseBalanceAfter = await SET.BaseTokens.regularToken1.balanceOf(owner.address);
-      
-      const deltaPyro = pyroBalanceBefore.sub(pyroBalanceAfter).toString();
-      const deltaBase = baseBalanceAfter.sub(baseBalanceBefore).toString();
+    //ACT
+    //increase stake and borrow some
+    await SET.loanOfficer.setObligationFor(
+      SET.PyroTokens.pyroRegular1.address,
+      CONSTANTS.ONE.mul(5),
+      CONSTANTS.TEN
+    );
 
-      expect(deltaBase).to.equal(CONSTANTS.ONE.mul(5));
-      expect(deltaPyro).to.equal(CONSTANTS.TEN);
+    //ASSERT
+    const pyroBalanceAfter = await SET.PyroTokens.pyroRegular1.balanceOf(
+      owner.address
+    );
+    const baseBalanceAfter = await SET.BaseTokens.regularToken1.balanceOf(
+      owner.address
+    );
+
+    const deltaPyro = pyroBalanceBefore.sub(pyroBalanceAfter).toString();
+    const deltaBase = baseBalanceAfter.sub(baseBalanceBefore).toString();
+
+    expect(deltaBase).to.equal(CONSTANTS.ONE.mul(5));
+    expect(deltaPyro).to.equal(CONSTANTS.TEN);
   });
 
   it("t-9. set debt obligation transfers from pyro to holder stake shrinks", async function () {
-    throw "not implemented.";
+    await Arrange(
+      "Mint pyrotokens for both owner and second Person. Borrow some base token",
+      SET,
+      owner,
+      false,
+      t9Setup,
+      secondPerson
+    );
+
+    const pyroBalanceBefore = await SET.PyroTokens.pyroRegular1.balanceOf(
+      owner.address
+    );
+    const baseBalanceBefore = await SET.BaseTokens.regularToken1.balanceOf(
+      owner.address
+    );
+
+    //ACT
+    //increase stake and borrow some
+    await SET.loanOfficer.setObligationFor(
+      SET.PyroTokens.pyroRegular1.address,
+      CONSTANTS.ONE,
+      CONSTANTS.ONE
+    );
+
+    //ASSERT
+    const pyroBalanceAfter = await SET.PyroTokens.pyroRegular1.balanceOf(
+      owner.address
+    );
+    const baseBalanceAfter = await SET.BaseTokens.regularToken1.balanceOf(
+      owner.address
+    );
+
+    const deltaPyro = pyroBalanceAfter.sub(pyroBalanceBefore).toString(); //expect an increase
+    const deltaBase = baseBalanceBefore.sub(baseBalanceAfter).toString(); //expect a decrease
+
+    expect(deltaBase).to.equal(CONSTANTS.ONE.mul(9));
+    expect(deltaPyro).to.equal(CONSTANTS.ONE.mul(9));
   });
 
   it("t-10. set debt obligation fails if user has insufficient balance to meet stake", async function () {
-    throw "not implemented.";
+    await Arrange(
+      "Mint 10 pyrotokens and stake them all",
+      SET,
+      owner,
+      false,
+      t10Setup,
+      secondPerson
+    );
+
+    //ASSERT
+    console.log(await SET.PyroTokens.pyroRegular1.balanceOf(owner.address));
+    const tooMuch = CONSTANTS.TEN.add(CONSTANTS.ONE);
+    await expect(
+      SET.loanOfficer.setObligationFor(
+        SET.PyroTokens.pyroRegular1.address,
+        CONSTANTS.TEN,
+        tooMuch
+      )
+    ).to.be.revertedWith(`StakeFailedInsufficientBalance(0, ${CONSTANTS.ONE})`);
   });
 
   it("t-11. Set debt obligation succeeds, leaves redeem rate unchanged", async function () {
-    throw "not implemented.";
-  });
+    await Arrange(
+      "Mint 30 pyrotokens, 10 for owner and 20 for someone else, stake none",
+      SET,
+      owner,
+      false,
+      t10Setup,
+      secondPerson
+    );
 
-  it("t-12. calculate transfer fee", async function () {
-    throw "not implemented.";
-  });
+    const redeemRateInitial = await SET.PyroTokens.pyroRegular1.redeemRate();
 
-  it("t-13. calculate redemption fee", async function () {
-    throw "not implemented.";
+    //ACT
+    //STAKE MULTIPLE TIMES
+
+    await SET.loanOfficer.setObligationFor(
+      SET.PyroTokens.pyroRegular1.address,
+      CONSTANTS.ONE,
+      CONSTANTS.ONE
+    );
+    const redeemRate1 = await SET.PyroTokens.pyroRegular1.redeemRate();
+
+    await SET.loanOfficer.setObligationFor(
+      SET.PyroTokens.pyroRegular1.address,
+      CONSTANTS.ONE.mul(2),
+      CONSTANTS.ONE.mul(2)
+    );
+
+    const redeemRate2 = await SET.PyroTokens.pyroRegular1.redeemRate();
+
+    await SET.loanOfficer.setObligationFor(
+      SET.PyroTokens.pyroRegular1.address,
+      "0",
+      CONSTANTS.ONE.mul(3)
+    );
+
+    const redeemRate3 = await SET.PyroTokens.pyroRegular1.redeemRate();
+
+    //ASSERT
+    expect(redeemRateInitial.toString()).to.equal(CONSTANTS.ONE);
+    expect(redeemRateInitial).to.equal(redeemRate1);
+    expect(redeemRate1).to.equal(redeemRate2);
+    expect(redeemRate2).to.equal(redeemRate3);
   });
 });

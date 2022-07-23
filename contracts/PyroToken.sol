@@ -46,11 +46,6 @@ contract PyroToken is ERC20, ReentrancyGuard {
         IERC20 baseToken;
         address loanOfficer;
         bool pullPendingFeeRevenue;
-        /*
-        decimals is not used in calculations. If we wrap one WBTC, we get back 1 pyroWBTC with 8 zeroes. 
-        But if the decimals isn't set to 8 then reporting UIs will display strange values for the PyroWTBC. 
-        */
-        uint8 decimals;
     }
     struct DebtObligation {
         uint256 base;
@@ -112,7 +107,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
         config.baseToken = IERC20(baseToken);
         _name = name_;
         _symbol = symbol_;
-        config.decimals = decimals;
+        _decimals= decimals;
     }
 
     modifier onlyReceiver() {

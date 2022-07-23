@@ -25,7 +25,7 @@ export async function Arrange(
 
   console.log(chalk.cyan(chalk.bold(`SETUP summary n\t${summary}\n`)));
   boundaryLogger("\t\tSETUP LOG BEGIN");
-  await f(SET, owner, logger, args);
+  await f(SET, owner, logger, ...args);
   boundaryLogger("\t\tSETUP LOG END");
 }
 
@@ -168,7 +168,7 @@ export async function t7Setup(
 ) {
   const pyroToken = SET.PyroTokens.pyroRegular1;
   const baseToken = SET.BaseTokens.regularToken1;
-  const secondPerson = args[0][0] as SignerWithAddress;
+  const secondPerson = args[0] as SignerWithAddress;
   //mint pyrotokens
   await baseToken.approve(pyroToken.address, CONSTANTS.MAX);
   await baseToken
@@ -187,4 +187,87 @@ export async function t7Setup(
     .connect(secondPerson)
     .mint(secondPerson.address, CONSTANTS.TEN.mul(3));
   // logger(`redeem rate: ${await (await pyroToken.redeemRate()).toString()}`);
+}
+
+export async function t9Setup(
+  SET: TestSet,
+  owner: any,
+  logger: any,
+  ...args: Array<any>
+) {
+  const pyroToken = SET.PyroTokens.pyroRegular1;
+  const baseToken = SET.BaseTokens.regularToken1;
+  const secondPerson = args[0] as SignerWithAddress;
+  //mint pyrotokens
+  await baseToken.approve(pyroToken.address, CONSTANTS.MAX);
+  await baseToken
+    .connect(secondPerson)
+    .approve(pyroToken.address, CONSTANTS.MAX);
+
+  //mint 30
+  await pyroToken.mint(owner.address, CONSTANTS.TEN);
+
+  await baseToken.connect(secondPerson).mint(CONSTANTS.HUNDRED);
+
+  await pyroToken
+    .connect(secondPerson)
+    .mint(secondPerson.address, CONSTANTS.TEN.mul(3));
+
+  //BORROW
+  await SET.loanOfficer.setObligationFor(SET.PyroTokens.pyroRegular1.address,CONSTANTS.TEN,CONSTANTS.TEN)
+}
+
+export async function t10Setup(
+  SET: TestSet,
+  owner: any,
+  logger: any,
+  ...args: Array<any>
+) {
+  const pyroToken = SET.PyroTokens.pyroRegular1;
+  const baseToken = SET.BaseTokens.regularToken1;
+  const secondPerson = args[0] as SignerWithAddress;
+  //mint pyrotokens
+  await baseToken.approve(pyroToken.address, CONSTANTS.MAX);
+  await baseToken
+    .connect(secondPerson)
+    .approve(pyroToken.address, CONSTANTS.MAX);
+
+  //mint 30
+  await pyroToken.mint(owner.address, CONSTANTS.TEN);
+
+  await baseToken.connect(secondPerson).mint(CONSTANTS.HUNDRED);
+
+  await pyroToken
+    .connect(secondPerson)
+    .mint(secondPerson.address, CONSTANTS.TEN.mul(3));
+
+
+  //BORROW and stake 30 Pyro
+  await SET.loanOfficer.setObligationFor(SET.PyroTokens.pyroRegular1.address,CONSTANTS.TEN,CONSTANTS.TEN)
+}
+
+
+export async function t11Setup(
+  SET: TestSet,
+  owner: any,
+  logger: any,
+  ...args: Array<any>
+) {
+  const pyroToken = SET.PyroTokens.pyroRegular1;
+  const baseToken = SET.BaseTokens.regularToken1;
+  const secondPerson = args[0] as SignerWithAddress;
+  //mint pyrotokens
+  await baseToken.approve(pyroToken.address, CONSTANTS.MAX);
+  await baseToken
+    .connect(secondPerson)
+    .approve(pyroToken.address, CONSTANTS.MAX);
+
+  //mint 30
+  await pyroToken.mint(owner.address, CONSTANTS.TEN);
+
+  await baseToken.connect(secondPerson).mint(CONSTANTS.HUNDRED);
+
+  await pyroToken
+    .connect(secondPerson)
+    .mint(secondPerson.address, CONSTANTS.TEN.mul(3));
 }
