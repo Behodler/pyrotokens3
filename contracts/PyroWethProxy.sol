@@ -17,7 +17,8 @@ contract PyroWethProxy is Ownable, ReentrancyGuard {
 
     constructor(address _pyroWeth) {
         pyroWeth = PyroTokenLike(_pyroWeth);
-        weth10 = IWETH10(pyroWeth.baseToken());
+        (, IERC20 baseToken, , ) = pyroWeth.config();
+        weth10 = IWETH10(address(baseToken));
         weth10.approve(_pyroWeth, type(uint256).max);
     }
 

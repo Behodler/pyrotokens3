@@ -107,7 +107,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
         config.baseToken = IERC20(baseToken);
         _name = name_;
         _symbol = symbol_;
-        _decimals= decimals;
+        _decimals = decimals;
     }
 
     modifier onlyReceiver() {
@@ -419,7 +419,6 @@ contract PyroToken is ERC20, ReentrancyGuard {
         uint256 fee = calculateRedemptionFee(amount, owner);
 
         uint256 net = amount - fee;
-
         //r = R/T where r is the redeem rate, R is the base token reserve and T is the PyroToken supply.
         // This says that 1 unit of this PyroToken is worth r units of base token.
         //
