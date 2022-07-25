@@ -6,28 +6,9 @@ import { executionResult, queryChain, LogIf } from "../helper";
 
 import chalk from "chalk";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { ArrangeFactory } from "./Common";
 
-export async function Arrange(
-  summary: string,
-  SET: TestSet,
-  owner: any,
-  log: boolean,
-  f: (
-    SET: TestSet,
-    owner: any,
-    logger: any,
-    ...args: Array<any>
-  ) => Promise<void>,
-  ...args: Array<any>
-) {
-  const logger = LogIf(log);
-  const boundaryLogger = LogIf(log, true);
-
-  console.log(chalk.cyan(chalk.bold(`SETUP summary n\t${summary}\n`)));
-  boundaryLogger("\t\tSETUP LOG BEGIN");
-  await f(SET, owner, logger, ...args);
-  boundaryLogger("\t\tSETUP LOG END");
-}
+export const Arrange = ArrangeFactory<TestSet>()
 
 export async function t0Setup(SET: TestSet, owner: any, logger: any) {
   await SET.Uniswap.factory.createPair(

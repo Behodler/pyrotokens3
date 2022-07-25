@@ -105,5 +105,18 @@ describe("PyroWeth Proxy", async function () {
     expect(numberClose(changeInActualEth, expectedChange)).to.be.true;
   });
 
-  it("minting with incorrect forwarded value fails ", async function () {});
+  it("minting with incorrect forwarded value fails ", async function () {
+    const tooHigh = CONSTANTS.TEN.add(1);
+    const tooLow = CONSTANTS.TEN.sub(1);
+
+    await expect(SET.PyroWethProxy.mint(CONSTANTS.TEN, { value: tooHigh }))
+    .to
+    .be
+    .revertedWith("EthForwardingFailed");
+
+    await expect(SET.PyroWethProxy.mint(CONSTANTS.TEN, { value: tooLow }))
+    .to
+    .be
+    .revertedWith("EthForwardingFailed");
+  });
 });
