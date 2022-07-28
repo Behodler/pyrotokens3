@@ -6,6 +6,7 @@ import "./Errors.sol";
 import "./ERC20/SafeERC20.sol";
 import "./facades/LachesisLike.sol";
 import "./testing/PyroToken2.sol";
+import "hardhat/console.sol";
 
 ///@notice interface for V3 Liquidity Receiver.
 abstract contract LRNew {
@@ -22,6 +23,7 @@ abstract contract LRNew {
  */
 contract V2Migrator {
     using SafeERC20 for PyroToken2;
+    using SafeERC20 for IERC20;
     /**
      *@param pyroToken2 contract that needs to be migratid
      *@param pyroToken2 destination token
@@ -120,10 +122,14 @@ contract V2Migrator {
         if (vars.expectedPyroToken3 != ptoken3) {
             revert AddressPredictionInvariant(ptoken3, vars.expectedPyroToken3);
         }
-        (vars.valid,vars.burnable) = config.lachesis.cut(vars.commonBaseToken);
+        (vars.valid, vars.burnable) = config.lachesis.cut(vars.commonBaseToken);
 
         if (!vars.valid) {
-            revert LachesisValidationFailed(vars.commonBaseToken, vars.valid, vars.burnable);
+            revert LachesisValidationFailed(
+                vars.commonBaseToken,
+                vars.valid,
+                vars.burnable
+            );
         }
 
         //REDEEM OLD PYROTOKENS
@@ -137,9 +143,11 @@ contract V2Migrator {
         //MINT NEW PYROTOKENS
         PyroTokenLike pyroToken3 = PyroTokenLike(vars.expectedPyroToken3);
         uint256 p3BalanceBefore = pyroToken3.balanceOf(sender);
+        IERC20(vars.commonBaseToken).safeApprove(ptoken3, commonBaseBalance);
         pyroToken3.mint(sender, commonBaseBalance);
         uint256 p3BalanceAfter = pyroToken3.balanceOf(sender);
 
+        console.log("pyro3 redeem rate after mint %d", pyroToken3.redeemRate());
         //CHECK MINTING SUCCEEDED
         // >= instead of == prevents malicious griefing
         if (p3BalanceAfter < p3BalanceBefore + p3tokenExpectedAmount) {

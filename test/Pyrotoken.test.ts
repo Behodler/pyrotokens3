@@ -2,14 +2,11 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import {
   BigNumber,
-  BigNumberish,
-  Contract,
-  ContractFactory,
-  constants as ethersConstants,
 } from "ethers";
 import { ethers } from "hardhat";
 import * as TypeChainTypes from "../typechain-types";
 import { burnEyeSnufferCapSol } from "../typechain-types/snufferCaps";
+import { CONSTANTS, ConstantSet } from "./arrange/Common";
 import {
   Arrange,
   t0Setup,
@@ -34,32 +31,12 @@ interface PyroTokens {
   pyroRegular1: TypeChainTypes.PyroToken;
   pyroRegular2: TypeChainTypes.PyroToken;
 }
-
-export interface ConstantSet {
-  ZERO_ADDRESS: "0x0000000000000000000000000000000000000000";
-  ONE: BigNumber;
-  TEN: BigNumber;
-  HUNDRED: BigNumber;
-  THOUSAND: BigNumber;
-  MILLION: BigNumber;
-  FINNEY: BigNumber;
-  MAX: BigNumber;
-}
 interface Uniswap {
   router: TypeChainTypes.UniswapV2Router02;
   factory: TypeChainTypes.UniswapV2Factory;
 }
 
-export const CONSTANTS: ConstantSet = {
-  ZERO_ADDRESS: "0x0000000000000000000000000000000000000000",
-  ONE: BigNumber.from("10").pow("18"),
-  TEN: BigNumber.from("10").pow("19"),
-  HUNDRED: BigNumber.from("10").pow("20"),
-  THOUSAND: BigNumber.from("10").pow("21"),
-  MILLION: BigNumber.from("10").pow("24"),
-  FINNEY: BigNumber.from("10").pow("15"),
-  MAX: ethersConstants.MaxUint256,
-};
+
 export interface TestSet {
   BaseTokens: BaseTokenSet;
   lachesis: TypeChainTypes.Lachesis;

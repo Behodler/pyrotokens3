@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 import "../ERC20/ERC20.sol";
+import "hardhat/console.sol";
 
+///@dev There is no liquidity receiver in this version as it isn't necessary for testing.
 contract PyroToken2 is ERC20 {
     address _baseToken;
 
@@ -27,6 +29,12 @@ contract PyroToken2 is ERC20 {
         return pyroTokensToMint;
     }
 
+    /**
+    @dev The redeem rate should be calculated before balances are updated
+    This bug from pyroV2 doesn't cause unexpected reverts but it does lead to a minor distortion in the value paid out
+    that grows in magnitude as fewer holders exist. In other words the last person to redeem will notice
+    the impact the most. Even so, the effect isn't extreme.
+    */
     function redeem(uint256 pyroTokenAmount) external returns (uint256) {
         //no approval necessary
         _balances[msg.sender] = _balances[msg.sender] - pyroTokenAmount;
@@ -43,7 +51,7 @@ contract PyroToken2 is ERC20 {
         uint256 balanceOfBase = IERC20(_baseToken).balanceOf(address(this));
         if (_totalSupply == 0 || balanceOfBase == 0) return ONE;
 
-        return (balanceOfBase - ONE) - (_totalSupply);
+        return (balanceOfBase * ONE) / (_totalSupply);
     }
 
     function baseToken() public view returns (address) {

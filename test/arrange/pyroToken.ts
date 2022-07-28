@@ -1,12 +1,12 @@
 import { ethers } from "hardhat";
-import { CONSTANTS, TestSet } from "../Pyrotoken.test";
+import { TestSet } from "../Pyrotoken.test";
 import * as TypeChainTypes from "../../typechain-types";
 import { expect } from "chai";
 import { executionResult, queryChain, LogIf } from "../helper";
 
 import chalk from "chalk";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { ArrangeFactory } from "./Common";
+import { ArrangeFactory, CONSTANTS } from "./Common";
 
 export const Arrange = ArrangeFactory<TestSet>()
 

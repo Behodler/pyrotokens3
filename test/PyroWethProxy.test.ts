@@ -10,30 +10,10 @@ import {
 import { ethers } from "hardhat";
 import * as TypeChainTypes from "../typechain-types";
 import { burnEyeSnufferCapSol } from "../typechain-types/snufferCaps";
+import { CONSTANTS, ConstantSet } from "./arrange/Common";
 
 import { deploy, executionResult, numberClose, queryChain } from "./helper";
 
-export interface ConstantSet {
-  ZERO_ADDRESS: "0x0000000000000000000000000000000000000000";
-  ONE: BigNumber;
-  TEN: BigNumber;
-  HUNDRED: BigNumber;
-  THOUSAND: BigNumber;
-  MILLION: BigNumber;
-  FINNEY: BigNumber;
-  MAX: BigNumber;
-}
-
-export const CONSTANTS: ConstantSet = {
-  ZERO_ADDRESS: "0x0000000000000000000000000000000000000000",
-  ONE: BigNumber.from("10").pow("18"),
-  TEN: BigNumber.from("10").pow("19"),
-  HUNDRED: BigNumber.from("10").pow("20"),
-  THOUSAND: BigNumber.from("10").pow("21"),
-  MILLION: BigNumber.from("10").pow("24"),
-  FINNEY: BigNumber.from("10").pow("15"),
-  MAX: ethersConstants.MaxUint256,
-};
 export interface TestSet {
   WETH: TypeChainTypes.WETH10;
   PyroWETH: TypeChainTypes.PyroToken;
