@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 import "../ERC20/ERC20.sol";
-import "hardhat/console.sol";
 
 ///@dev There is no liquidity receiver in this version as it isn't necessary for testing.
 contract PyroToken2 is ERC20 {

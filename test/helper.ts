@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { Contract, ContractFactory } from "ethers";
+import { BigNumber, Contract, ContractFactory } from "ethers";
 
 export async function deploy<T extends Contract>(
   contractFactory: ContractFactory,
@@ -44,6 +44,23 @@ export const numberClose = (actual, expected) => {
   }
 
   return condition;
+};
+
+export const almostEqual = (
+  actual,
+  expected,
+  precision: number = 10000
+): boolean => {
+  const actualBig = BigNumber.from(actual.toString());
+  const expectedBig = BigNumber.from(expected.toString());
+
+  if (actualBig.gt(expectedBig)) {
+    const difference = actualBig.sub(expectedBig);
+    return difference.mul(precision).div(actualBig).lte(1);
+  } else {
+    const difference = expectedBig.sub(actualBig);
+    return difference.mul(precision).div(expectedBig).lte(1);
+  }
 };
 
 export const LogIf =

@@ -5,7 +5,6 @@ import "./ERC20/ERC20.sol";
 import "./ERC20/SafeERC20.sol";
 import "./facades/LiquidityReceiverLike.sol";
 import "./facades/ReentrancyGuard.sol";
-import "hardhat/console.sol";
 
 /**
  *@title PyroToken

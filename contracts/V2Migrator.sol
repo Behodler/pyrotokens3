@@ -6,7 +6,6 @@ import "./Errors.sol";
 import "./ERC20/SafeERC20.sol";
 import "./facades/LachesisLike.sol";
 import "./testing/PyroToken2.sol";
-import "hardhat/console.sol";
 
 ///@notice interface for V3 Liquidity Receiver.
 abstract contract LRNew {
@@ -147,10 +146,11 @@ contract V2Migrator {
         pyroToken3.mint(sender, commonBaseBalance);
         uint256 p3BalanceAfter = pyroToken3.balanceOf(sender);
 
-        console.log("pyro3 redeem rate after mint %d", pyroToken3.redeemRate());
         //CHECK MINTING SUCCEEDED
         // >= instead of == prevents malicious griefing
-        if (p3BalanceAfter < p3BalanceBefore + p3tokenExpectedAmount) {
+        //-1000 is for precision loss
+
+        if (p3BalanceAfter < p3BalanceBefore + p3tokenExpectedAmount - 1000) {
             revert P3AmountInvariant(
                 p3BalanceAfter,
                 p3BalanceBefore,

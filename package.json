@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test:all": "docker-compose up test",
-    "test": "npx hardhat test test/*.test.ts",
+    "test": "yarn build && npx hardhat test test/*.test.ts",
     "test:fresh": "yarn build && yarn test",
     "build": "sudo touch hardhat.config.ts && rm -rf cache/ && rm -rf artifacts/ && rm -rf typechain/* && npx hardhat compile",
     "docker:install": "rm -rf node_modules/* && touch yarn.lock && rm yarn.lock && docker-compose up install"
