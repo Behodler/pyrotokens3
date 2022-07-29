@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.13;
 import "./IERC20.sol";
 import "../Errors.sol";
 
@@ -12,6 +12,7 @@ abstract contract ERC20 is IERC20 {
 
     string internal _name;
     string internal _symbol;
+    uint8 internal _decimals;
 
     /**
      * @dev Returns the name of the token.
@@ -42,7 +43,7 @@ abstract contract ERC20 is IERC20 {
      * {IERC20-balanceOf} and {IERC20-transfer}.
      */
     function decimals() public view virtual override returns (uint8) {
-        return 18;
+        return _decimals == 0 ? 18 : _decimals;
     }
 
     /**
@@ -140,7 +141,7 @@ abstract contract ERC20 is IERC20 {
         returns (bool)
     {
         uint256 currentAllowance = _allowances[msg.sender][spender];
-        if(currentAllowance<subtractedValue){
+        if (currentAllowance < subtractedValue) {
             revert AllowanceUnderflow(currentAllowance, subtractedValue);
         }
         unchecked {
@@ -182,7 +183,7 @@ abstract contract ERC20 is IERC20 {
     function _mint(address account, uint256 amount) internal virtual {
         _totalSupply += amount;
         _balances[account] += amount;
-        emit Transfer(address(0), account, uint128(amount), 0);
+        emit Transfer(address(0), account, amount);
     }
 
     /**
@@ -197,9 +198,8 @@ abstract contract ERC20 is IERC20 {
      * - `account` must have at least `amount` tokens.
      */
     function _burn(address account, uint256 amount) internal virtual {
-
         uint256 accountBalance = _balances[account];
-        if(accountBalance<amount){
+        if (accountBalance < amount) {
             revert InsufficinetFunds(accountBalance, amount);
         }
         unchecked {
@@ -207,7 +207,7 @@ abstract contract ERC20 is IERC20 {
         }
         _totalSupply -= amount;
 
-        emit Transfer(account, address(0), uint128(amount), 0);
+        emit Transfer(account, address(0), amount);
     }
 
     /**
@@ -228,7 +228,6 @@ abstract contract ERC20 is IERC20 {
         address spender,
         uint256 amount
     ) internal virtual {
-
         _allowances[owner][spender] = amount;
         emit Approval(owner, spender, amount);
     }
@@ -255,8 +254,8 @@ abstract contract ERC20 is IERC20 {
      */
     function burnFrom(address account, uint256 amount) public virtual {
         uint256 currentAllowance = allowance(account, msg.sender);
-        if(amount>currentAllowance){
-            revert AllowanceExceeded(currentAllowance,amount);
+        if (amount > currentAllowance) {
+            revert AllowanceExceeded(currentAllowance, amount);
         }
         unchecked {
             _approve(account, msg.sender, currentAllowance - amount);

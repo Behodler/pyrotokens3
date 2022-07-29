@@ -5,92 +5,149 @@ import { ethers } from "hardhat";
 import * as TypeChainTypes from "../typechain-types";
 import { deploy } from "./helper";
 
-interface BaseTokenSet{
-  regularToken1:TypeChainTypes.BaseToken
-  regularToken2:TypeChainTypes.BaseToken
-  
-  invalidToken1:TypeChainTypes.BaseToken
-  invalidToken2:TypeChainTypes.BaseToken
-  invalidToken3:TypeChainTypes.BaseToken
-  EYE:TypeChainTypes.BaseToken
+interface BaseTokenSet {
+  regularToken1: TypeChainTypes.BaseToken;
+  regularToken2: TypeChainTypes.BaseToken;
+
+  invalidToken1: TypeChainTypes.BaseToken;
+  invalidToken2: TypeChainTypes.BaseToken;
+  invalidToken3: TypeChainTypes.BaseToken;
+  EYE: TypeChainTypes.BaseToken;
 }
 
-interface ConstantSet{
-  ZERO_ADDRESS:"0x0000000000000000000000000000000000000000"
+interface ConstantSet {
+  ZERO_ADDRESS: "0x0000000000000000000000000000000000000000";
 }
-const CONSTANTS:ConstantSet ={
-  ZERO_ADDRESS:"0x0000000000000000000000000000000000000000"
+const CONSTANTS: ConstantSet = {
+  ZERO_ADDRESS: "0x0000000000000000000000000000000000000000",
+};
+interface TestSet {
+  BaseTokens: BaseTokenSet;
+  lachesis: TypeChainTypes.Lachesis;
+  liquidityReceiver: TypeChainTypes.LiquidityReceiver;
+  burnEYESnufferCap: TypeChainTypes.SnufferCap;
+  loanOfficer: TypeChainTypes.SimpleLoanOfficer;
+  snufferCap: TypeChainTypes.SnufferCap;
+  LiquidityReceiverFactory: TypeChainTypes.LiquidityReceiver__factory;
+  CONSTANTS: ConstantSet;
 }
-interface TestSet{
-  BaseTokens:BaseTokenSet
-  lachesis:TypeChainTypes.Lachesis
-  liquidityReceiver:TypeChainTypes.LiquidityReceiver
-  burnEYESnufferCap:TypeChainTypes.SnufferCap
-  loanOfficer:TypeChainTypes.SimpleLoanOfficer
-  snufferCap:TypeChainTypes.SnufferCap
-  LiquidityReceiverFactory:TypeChainTypes.LiquidityReceiver__factory
-  CONSTANTS:ConstantSet
-}
-
-
 
 describe("LiquidityReceiver", async function () {
   let owner: any, secondPerson: any;
-  let SET = {} as TestSet
-  SET.CONSTANTS = CONSTANTS
+  let SET = {} as TestSet;
+  SET.CONSTANTS = CONSTANTS;
   beforeEach(async function () {
     [owner, secondPerson] = await ethers.getSigners();
 
-   
-    let BaseTokens = {} as BaseTokenSet
+    let BaseTokens = {} as BaseTokenSet;
     var BaseToken = await ethers.getContractFactory("BaseToken");
-    BaseTokens.regularToken1 = await deploy<TypeChainTypes.BaseToken>(BaseToken,"Base1", "BASE", 0);
-    BaseTokens.regularToken2 = await deploy<TypeChainTypes.BaseToken>(BaseToken,"Base2", "BASE", 0);
+    BaseTokens.regularToken1 = await deploy<TypeChainTypes.BaseToken>(
+      BaseToken,
+      "Base1",
+      "BASE",
+      0
+    );
+    BaseTokens.regularToken2 = await deploy<TypeChainTypes.BaseToken>(
+      BaseToken,
+      "Base2",
+      "BASE",
+      0
+    );
 
-    BaseTokens.invalidToken1 = await deploy<TypeChainTypes.BaseToken>(BaseToken,"Base2", "BASE", 0);
-    BaseTokens.invalidToken2  = await deploy<TypeChainTypes.BaseToken>(BaseToken,"Base3", "BASE", 10);
-    BaseTokens.invalidToken3  = await deploy<TypeChainTypes.BaseToken>(BaseToken,"Base3", "BASE", 0);
-    BaseTokens.EYE  = await deploy<TypeChainTypes.BaseToken>(BaseToken,"EYE", "EYE", 0);
-    
-    SET.BaseTokens = BaseTokens
+    BaseTokens.invalidToken1 = await deploy<TypeChainTypes.BaseToken>(
+      BaseToken,
+      "Base2",
+      "BASE",
+      0
+    );
+    BaseTokens.invalidToken2 = await deploy<TypeChainTypes.BaseToken>(
+      BaseToken,
+      "Base3",
+      "BASE",
+      10
+    );
+    BaseTokens.invalidToken3 = await deploy<TypeChainTypes.BaseToken>(
+      BaseToken,
+      "Base3",
+      "BASE",
+      0
+    );
+    BaseTokens.EYE = await deploy<TypeChainTypes.BaseToken>(
+      BaseToken,
+      "EYE",
+      "EYE",
+      0
+    );
+
+    SET.BaseTokens = BaseTokens;
 
     var Lachesis = await ethers.getContractFactory("Lachesis");
     SET.lachesis = await deploy<TypeChainTypes.Lachesis>(Lachesis);
-    await SET.lachesis.measure(SET.BaseTokens.regularToken1.address, true, false);
-    await SET.lachesis.measure(SET.BaseTokens.regularToken2.address, true, false);
-    
-    await SET.lachesis.measure(SET.BaseTokens.invalidToken1.address, false, false);
-    await SET.lachesis.measure(SET.BaseTokens.invalidToken2.address, true, true);
-    await SET.lachesis.measure(SET.BaseTokens.invalidToken3.address, false, true);
+    await SET.lachesis.measure(
+      SET.BaseTokens.regularToken1.address,
+      true,
+      false
+    );
+    await SET.lachesis.measure(
+      SET.BaseTokens.regularToken2.address,
+      true,
+      false
+    );
 
-    SET.LiquidityReceiverFactory = await ethers.getContractFactory(
+    await SET.lachesis.measure(
+      SET.BaseTokens.invalidToken1.address,
+      false,
+      false
+    );
+    await SET.lachesis.measure(
+      SET.BaseTokens.invalidToken2.address,
+      true,
+      true
+    );
+    await SET.lachesis.measure(
+      SET.BaseTokens.invalidToken3.address,
+      false,
+      true
+    );
+
+    SET.LiquidityReceiverFactory = (await ethers.getContractFactory(
       "LiquidityReceiver"
-    ) as TypeChainTypes.LiquidityReceiver__factory;
+    )) as TypeChainTypes.LiquidityReceiver__factory;
 
-    SET.liquidityReceiver = await deploy<TypeChainTypes.LiquidityReceiver>(SET.LiquidityReceiverFactory, SET.lachesis.address);
+    SET.liquidityReceiver = await deploy<TypeChainTypes.LiquidityReceiver>(
+      SET.LiquidityReceiverFactory,
+      SET.lachesis.address
+    );
 
     const BurnEYESnufferCap = await ethers.getContractFactory(
       "BurnEYESnufferCap"
     );
 
-    SET.snufferCap = await deploy<TypeChainTypes.SnufferCap>(BurnEYESnufferCap, SET.BaseTokens.EYE.address, SET.liquidityReceiver.address);
+    SET.snufferCap = await deploy<TypeChainTypes.SnufferCap>(
+      BurnEYESnufferCap,
+      SET.BaseTokens.EYE.address,
+      SET.liquidityReceiver.address
+    );
 
     await SET.liquidityReceiver.setSnufferCap(SET.snufferCap.address);
 
     const LoanOfficer = await ethers.getContractFactory("SimpleLoanOfficer");
-    SET.loanOfficer = await deploy<TypeChainTypes.SimpleLoanOfficer>(LoanOfficer);
-    
-    await SET.liquidityReceiver.setDefaultLoanOfficer(SET.loanOfficer.address)
-    
+    SET.loanOfficer = await deploy<TypeChainTypes.SimpleLoanOfficer>(
+      LoanOfficer
+    );
+
+    await SET.liquidityReceiver.setDefaultLoanOfficer(SET.loanOfficer.address);
   });
 
   it("CREATE2: Deployed PyroToken address matches predicted address", async function () {
-    const expectedAddressOfPyroToken =
-      await SET.liquidityReceiver.getPyroToken(SET.BaseTokens.regularToken1.address);
+    const expectedAddressOfPyroToken = await SET.liquidityReceiver.getPyroToken(
+      SET.BaseTokens.regularToken1.address
+    );
     await SET.liquidityReceiver.registerPyroToken(
       SET.BaseTokens.regularToken1.address,
       "hello",
-      "there"
+      "there",
+      18
     );
 
     await SET.liquidityReceiver.setPyroTokenLoanOfficer(
@@ -100,17 +157,18 @@ describe("LiquidityReceiver", async function () {
   });
 
   it("SetFeeExempt on EOA fails", async function () {
-    const pyrotoken = await getNewPyroToken(
-      SET.BaseTokens.regularToken1
-    );
+    const pyrotoken = await getNewPyroToken(SET.BaseTokens.regularToken1);
 
-    await SET.BaseTokens.EYE.approve(SET.snufferCap.address, "100000000000000000000000");
+    await SET.BaseTokens.EYE.approve(
+      SET.snufferCap.address,
+      "100000000000000000000000"
+    );
     //contract passes
     await SET.snufferCap.snuff(pyrotoken, SET.loanOfficer.address, 3);
 
     await expect(
       SET.snufferCap.snuff(pyrotoken, owner.address, 3)
-    ).to.be.revertedWith("LR: EOAs cannot be exempt.");
+    ).to.be.revertedWith(`OnlyContracts("${owner.address}")`);
   });
   [0, 1].forEach((i) => {
     it("Non fee exempt contract charged all fees, EOA charged all fees", async function () {
@@ -122,7 +180,10 @@ describe("LiquidityReceiver", async function () {
         "PyroToken",
         pyrotokenAddress
       );
-      await SET.BaseTokens.regularToken1.approve(pyrotokenAddress, "1000000000000");
+      await SET.BaseTokens.regularToken1.approve(
+        pyrotokenAddress,
+        "1000000000000"
+      );
       await pyrotoken.mint(owner.address, "1000000000000");
 
       //EOA
@@ -177,7 +238,10 @@ describe("LiquidityReceiver", async function () {
       SET.BaseTokens.regularToken1
     );
     const pyrotoken = await ethers.getContractAt("PyroToken", pyrotokenAddress);
-    await SET.BaseTokens.regularToken1.approve(pyrotokenAddress, "1000000000000");
+    await SET.BaseTokens.regularToken1.approve(
+      pyrotokenAddress,
+      "1000000000000"
+    );
     await pyrotoken.mint(owner.address, "1000000000000");
     await pyrotoken.transfer(pyroSender.address, "100000000");
 
@@ -254,59 +318,79 @@ describe("LiquidityReceiver", async function () {
     await SET.liquidityReceiver.registerPyroToken(
       SET.BaseTokens.regularToken1.address,
       "hello",
-      "there"
+      "there",
+      18
+    );
+    const pyroTokenAddress = await SET.liquidityReceiver.getPyroToken(
+      SET.BaseTokens.regularToken1.address
     );
     await expect(
       SET.liquidityReceiver.registerPyroToken(
         SET.BaseTokens.regularToken1.address,
         "general",
-        "kenobi"
+        "kenobi",
+        18
       )
-    ).to.be.revertedWith("PyroToken Address occupied");
+    ).to.be.revertedWith(`AddressOccupied("${pyroTokenAddress}")`);
   });
 
-  it("default loan officer (zero allowed)", async function (){
-   const newPTokenAddress1 = await getNewPyroToken(SET.BaseTokens.regularToken1)
-   const pyrotoken1 = await ethers.getContractAt("PyroToken", newPTokenAddress1) as TypeChainTypes.PyroToken;
-   let configuration1 = await pyrotoken1.config()
-   expect (configuration1[2]).to.equal(SET.loanOfficer.address)
+  it("default loan officer (zero allowed)", async function () {
+    const newPTokenAddress1 = await getNewPyroToken(
+      SET.BaseTokens.regularToken1
+    );
+    const pyrotoken1 = (await ethers.getContractAt(
+      "PyroToken",
+      newPTokenAddress1
+    )) as TypeChainTypes.PyroToken;
+    let configuration1 = await pyrotoken1.config();
+    expect(configuration1[2]).to.equal(SET.loanOfficer.address);
 
-   await SET.liquidityReceiver.setDefaultLoanOfficer(SET.CONSTANTS.ZERO_ADDRESS)
+    await SET.liquidityReceiver.setDefaultLoanOfficer(
+      SET.CONSTANTS.ZERO_ADDRESS
+    );
 
-   const newPTokenAddress2 = await getNewPyroToken(SET.BaseTokens.regularToken2)
-   const pyrotoken2 = await ethers.getContractAt("PyroToken", newPTokenAddress2) as TypeChainTypes.PyroToken;
-  
-   configuration1= await pyrotoken1.config()
-   const configuration2 = await pyrotoken2.config()
+    const newPTokenAddress2 = await getNewPyroToken(
+      SET.BaseTokens.regularToken2
+    );
+    const pyrotoken2 = (await ethers.getContractAt(
+      "PyroToken",
+      newPTokenAddress2
+    )) as TypeChainTypes.PyroToken;
 
-   expect (configuration1[2]).to.equal(SET.loanOfficer.address) //changing default doesn't affect existing
-   expect (configuration2[2]).to.equal(SET.CONSTANTS.ZERO_ADDRESS)
-  })
+    configuration1 = await pyrotoken1.config();
+    const configuration2 = await pyrotoken2.config();
+
+    expect(configuration1[2]).to.equal(SET.loanOfficer.address); //changing default doesn't affect existing
+    expect(configuration2[2]).to.equal(SET.CONSTANTS.ZERO_ADDRESS);
+  });
 
   it("Only valid nonburnable tokens can have pyroTokens", async function () {
     await expect(
       SET.liquidityReceiver.registerPyroToken(
         SET.BaseTokens.invalidToken1.address,
         "hello",
-        "there"
+        "there",
+        18
       )
-    ).to.be.revertedWith("PyroToken: invalid base token");
+    ).to.be.revertedWith("LachesisValidationFailed");
 
     await expect(
       SET.liquidityReceiver.registerPyroToken(
         SET.BaseTokens.invalidToken2.address,
         "hello",
-        "there"
+        "there",
+        18
       )
-    ).to.be.revertedWith("PyroToken: invalid base token");
+    ).to.be.revertedWith("LachesisValidationFailed");
 
     await expect(
       SET.liquidityReceiver.registerPyroToken(
         SET.BaseTokens.invalidToken3.address,
         "hello",
-        "there"
+        "there",
+        18
       )
-    ).to.be.revertedWith("PyroToken: invalid base token");
+    ).to.be.revertedWith("LachesisValidationFailed");
   });
 
   it("Transfer of pyroToken to new liquidity receiver works fully", async function () {
@@ -327,11 +411,31 @@ describe("LiquidityReceiver", async function () {
     expect(receiverAddress).to.equal(liquidityReceiver2.address);
   });
 
-  async function getNewPyroToken(token: Contract, seed?:string) {
-    await SET.liquidityReceiver.registerPyroToken(token.address, "hello"+seed || "", "there"+ seed || "");
+  it("register pyrotoken reflects correct ERC20 metadata", async function () {
+    const pyrotokenAddress = await SET.liquidityReceiver.getPyroToken(
+      SET.BaseTokens.regularToken1.address
+    );
+    await SET.liquidityReceiver.registerPyroToken(
+      SET.BaseTokens.regularToken1.address,
+      "name",
+      "symbol",
+      7
+    );
+
+    const pyrotoken = await ethers.getContractAt("PyroToken", pyrotokenAddress);
+    expect(await pyrotoken.name()).to.equal("name");
+    expect(await pyrotoken.symbol()).to.equal("symbol");
+    expect(await pyrotoken.decimals()).to.equal(7);
+  });
+
+  async function getNewPyroToken(token: Contract, seed?: string) {
+    await SET.liquidityReceiver.registerPyroToken(
+      token.address,
+      "hello" + seed || "",
+      "there" + seed || "",
+      18
+    );
     const pyrotoken = await SET.liquidityReceiver.getPyroToken(token.address);
     return pyrotoken;
   }
 });
-
-

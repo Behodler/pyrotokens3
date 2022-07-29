@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.13;
 import "./PyroToken.sol";
 import "./facades/SnufferCap.sol";
 import "./facades/Ownable.sol";
 import "./facades/LachesisLike.sol";
-import "hardhat/console.sol";
 import "./ERC20/IERC20.sol";
 import "./Errors.sol";
 
@@ -185,7 +184,8 @@ contract LiquidityReceiver is Ownable {
     function registerPyroToken(
         address baseToken,
         string memory name,
-        string memory symbol
+        string memory symbol,
+        uint8 decimals
     ) public onlyOwner {
         address expectedAddress = getPyroToken(baseToken);
 
@@ -204,7 +204,7 @@ contract LiquidityReceiver is Ownable {
             keccak256(abi.encode(baseToken)),
             PYROTOKEN_BYTECODE
         );
-        PyroToken(p).initialize(baseToken, name, symbol);
+        PyroToken(p).initialize(baseToken, name, symbol, decimals);
         PyroToken(p).setLoanOfficer(config.defaultLoanOfficer);
 
         if (p != expectedAddress) {

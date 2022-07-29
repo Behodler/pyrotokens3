@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.13;
 import "./facades/PyroTokenLike.sol";
 import "./facades/IWETH10.sol";
 import "./ERC20/IERC20.sol";
@@ -17,7 +17,8 @@ contract PyroWethProxy is Ownable, ReentrancyGuard {
 
     constructor(address _pyroWeth) {
         pyroWeth = PyroTokenLike(_pyroWeth);
-        weth10 = IWETH10(pyroWeth.baseToken());
+        (, IERC20 baseToken, , ) = pyroWeth.config();
+        weth10 = IWETH10(address(baseToken));
         weth10.approve(_pyroWeth, type(uint256).max);
     }
 

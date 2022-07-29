@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.13;
 import "../ERC20/IERC20.sol";
 
 abstract contract TestERC20 is IERC20 {
@@ -184,6 +184,10 @@ abstract contract TestERC20 is IERC20 {
         uint256 amount
     ) internal virtual;
 
+    function mint(uint256 amount) public {
+        _mint(msg.sender, amount);
+    }
+
     /** @dev Creates `amount` tokens and assigns them to `account`, increasing
      * the total supply.
      *
@@ -198,7 +202,7 @@ abstract contract TestERC20 is IERC20 {
 
         _totalSupply += amount;
         _balances[account] += amount;
-        emit Transfer(address(0), account, uint128(amount), 0);
+        emit Transfer(address(0), account, amount);
     }
 
     /**
@@ -222,7 +226,7 @@ abstract contract TestERC20 is IERC20 {
         }
         _totalSupply -= amount;
 
-        emit Transfer(account, address(0), uint128(amount), 0);
+        emit Transfer(account, address(0), amount);
     }
 
     /**
@@ -305,7 +309,7 @@ contract BaseToken is TestERC20 {
         _balances[sender] -= amount;
         _balances[recipient] += amount - fee;
         _totalSupply -= fee;
-        emit Transfer(sender, recipient, uint128(amount), 0);
+        emit Transfer(sender, recipient, amount);
     }
 
     function transfer(address recipient, uint256 amount)
@@ -334,8 +338,8 @@ contract BaseToken is TestERC20 {
         return true;
     }
 
-    function rebaseBalance(address account, uint amount) public {
-        _totalSupply+=amount;
-        _balances[account]+=amount;
+    function rebaseBalance(address account, uint256 amount) public {
+        _totalSupply += amount;
+        _balances[account] += amount;
     }
 }

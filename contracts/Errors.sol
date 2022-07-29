@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.13;
 
 //LOW LEVEL
 error InvocationFailure(address recipient);
@@ -22,7 +22,6 @@ error BaseTokenNotSet(address pyroToken);
 error OnlyReceiver(address receiver, address msgSender);
 error OnlyLoanOfficer(address officer, address msgSender);
 error UnsustainablePyroLoan(uint256 stake, uint256 minStake);
-
 //LIQUIDITYRECEIVER
 error SnufferCapExpected(address expected, address actual);
 error OnlyContracts(address target);

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.13;
 import "./facades/Enums.sol";
 import "./ERC20/ERC20.sol";
 import "./ERC20/SafeERC20.sol";
@@ -7,9 +7,9 @@ import "./facades/LiquidityReceiverLike.sol";
 import "./facades/ReentrancyGuard.sol";
 
 /**
- *@title Pyrotoken
+ *@title PyroToken
  *@author Justin Goro
- *@notice PyroTokens are ERC20 tokens that wrap tokens traded on Behodler and add burn incentives. They can be redeemed for base tokens.
+ *@notice PyroTokens are ERC20 tokens that wrap and add burn incentives to standard ERC20 tokens traded on Behodler. They can be redeemed for base tokens.
  The mapping is 1:1 where each token has a corresponding PyroToken. For instance, Weth only has PyroWeth and PyroWeth only redeems for Weth.
  Not all tokens traded on Behodler can be wrapped as PyroTokens but that rule is beyond the scope of this repository.
  at an algorithmic redeem rate: r = R/T where R is the reserve of base tokens and T is the total supply of PyroTokens.
@@ -51,6 +51,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
         uint256 pyro;
         uint256 redeemRate;
     }
+    uint256 aggregateBaseCredit;
     Configuration public config;
     uint256 private constant ONE = 1 ether;
 
@@ -99,11 +100,13 @@ contract PyroToken is ERC20, ReentrancyGuard {
     function initialize(
         address baseToken,
         string memory name_,
-        string memory symbol_
+        string memory symbol_,
+        uint8 decimals
     ) external onlyReceiver {
         config.baseToken = IERC20(baseToken);
         _name = name_;
         _symbol = symbol_;
+        _decimals = decimals;
     }
 
     modifier onlyReceiver() {
@@ -202,7 +205,6 @@ contract PyroToken is ERC20, ReentrancyGuard {
         //=> pyroTokens minted = base_token_amount * 1/r
         minted = (changeInBalance * ONE) / _redeemRate;
         _mint(recipient, minted);
-        emit Transfer(address(0), recipient, uint128(amount), 0);
     }
 
     /**@notice reduce the gas impact of an additional transfer
@@ -217,9 +219,12 @@ contract PyroToken is ERC20, ReentrancyGuard {
     ) external returns (uint256) {
         uint256 currentAllowance = _allowances[owner][msg.sender];
         if (currentAllowance != type(uint256).max) {
+            if (amount > currentAllowance) {
+                revert AllowanceExceeded(currentAllowance, amount);
+            }
             _approve(owner, msg.sender, currentAllowance - amount);
         }
-        return _redeem(owner, recipient, amount);
+        return _redeem(recipient, owner, amount);
     }
 
     /**@notice redeems base tokens for a given pyrotoken amount at the current redeem rate
@@ -235,12 +240,16 @@ contract PyroToken is ERC20, ReentrancyGuard {
 
     /**
      * @notice Current rate at which 1 pyrotoken can redeem for (return value) base tokens.
-     *@dev adding 1 to numerator and denominator gives a default redeem rate of ONE and eliminates division by zero.
+     * Until a pyroloan is defaulted on, the lent out baseToken isn't considered lost. The redeem rate takes it into account.
+     * If the loan defaults, the corresponding staked pyro is burnt so that the redeem rate isn't left unbalanced because the staked pyrotoken is burnt,
+     * matching credit and debit.
+     *@dev adding 1 to numerator and denominator gives a default redeem rate of ONE and eliminates division by zero. ONE is 10^18
      */
     function redeemRate() public view returns (uint256) {
         return
-            ((config.baseToken.balanceOf(address(this)) + 1) * ONE) /
-            (_totalSupply + 1);
+            ((config.baseToken.balanceOf(address(this)) +
+                aggregateBaseCredit +
+                1) * ONE) / (_totalSupply + 1);
     }
 
     /**@notice Standard ERC20 transfer
@@ -342,8 +351,10 @@ contract PyroToken is ERC20, ReentrancyGuard {
         int256 netBorrowing = int256(baseTokenBorrowed) -
             int256(currentDebt.base);
         if (netBorrowing > 0) {
+            aggregateBaseCredit += uint256(netBorrowing);
             config.baseToken.safeTransfer(borrower, uint256(netBorrowing));
         } else if (netBorrowing < 0) {
+            aggregateBaseCredit -= uint256(-netBorrowing);
             config.baseToken.safeTransferFrom(
                 borrower,
                 address(this),
@@ -407,7 +418,6 @@ contract PyroToken is ERC20, ReentrancyGuard {
         uint256 fee = calculateRedemptionFee(amount, owner);
 
         uint256 net = amount - fee;
-
         //r = R/T where r is the redeem rate, R is the base token reserve and T is the PyroToken supply.
         // This says that 1 unit of this PyroToken is worth r units of base token.
         //
@@ -415,7 +425,9 @@ contract PyroToken is ERC20, ReentrancyGuard {
         uint256 baseTokens = (_redeemRate * net) / ONE;
 
         _totalSupply -= amount;
-        emit Transfer(owner, address(0), uint128(amount), uint128(amount));
+
+        //pyro burn event
+        emit Transfer(owner, address(0), amount);
 
         config.baseToken.safeTransfer(recipient, baseTokens);
         return baseTokens;
@@ -439,6 +451,6 @@ contract PyroToken is ERC20, ReentrancyGuard {
         _balances[sender] = senderBalance - amount;
         _balances[recipient] += netReceived;
 
-        emit Transfer(sender, recipient, uint128(amount), uint128(fee)); //extra parameters don't throw off parsers when interpreted through JSON.
+        emit Transfer(sender, recipient, amount); //extra parameters don't throw off parsers when interpreted through JSON.
     }
 }

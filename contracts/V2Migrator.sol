@@ -1,14 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.13;
 import "./ERC20/IERC20.sol";
 import "./facades/PyroTokenLike.sol";
 import "./Errors.sol";
-
-abstract contract PyroToken2 is IERC20 {
-    function redeem(uint256 pyroTokenAmount) external virtual returns (uint256);
-
-    function baseToken() public view virtual returns (address);
-}
+import "./ERC20/SafeERC20.sol";
+import "./facades/LachesisLike.sol";
+import "./testing/PyroToken2.sol";
 
 ///@notice interface for V3 Liquidity Receiver.
 abstract contract LRNew {
@@ -24,6 +21,8 @@ abstract contract LRNew {
  *@author Justin Goro
  */
 contract V2Migrator {
+    using SafeERC20 for PyroToken2;
+    using SafeERC20 for IERC20;
     /**
      *@param pyroToken2 contract that needs to be migratid
      *@param pyroToken2 destination token
@@ -36,10 +35,15 @@ contract V2Migrator {
         uint256 pyroToken2Amount,
         uint256 pyroToken3Amount
     );
-    LRNew public LR_new;
+    struct Configuration {
+        LRNew LR_new;
+        LachesisLike lachesis;
+    }
+    Configuration public config;
 
-    constructor(address lr_new) {
-        LR_new = LRNew(lr_new);
+    constructor(address lr_new, address lachesis) {
+        config.LR_new = LRNew(lr_new);
+        config.lachesis = LachesisLike(lachesis);
     }
 
     /**
@@ -88,6 +92,16 @@ contract V2Migrator {
         }
     }
 
+    struct Variables {
+        address commonBaseToken;
+        address expectedPyroToken3;
+        bool valid;
+        bool burnable;
+        uint256 commonBaseBalance;
+        uint256 p3BalanceBefore;
+        uint256 p3BalanceAfter;
+    }
+
     function _migrate(
         address sender,
         address ptoken2,
@@ -95,38 +109,57 @@ contract V2Migrator {
         uint256 p2tokenAmount,
         uint256 p3tokenExpectedAmount
     ) internal {
+        Variables memory vars;
         //GET NEW PYROTOKEN CONTRACT
         PyroToken2 pyroToken2 = PyroToken2(ptoken2);
-        address commonBaseToken = pyroToken2.baseToken();
-        address expectedPyroToken3 = LR_new.getPyroToken(commonBaseToken);
+        vars.commonBaseToken = pyroToken2.baseToken();
+        vars.expectedPyroToken3 = config.LR_new.getPyroToken(
+            vars.commonBaseToken
+        );
 
         //Extra safety required in migration contracts
-        if(expectedPyroToken3!= ptoken3){
-            revert AddressPredictionInvariant(ptoken3, expectedPyroToken3);
+        if (vars.expectedPyroToken3 != ptoken3) {
+            revert AddressPredictionInvariant(ptoken3, vars.expectedPyroToken3);
+        }
+        (vars.valid, vars.burnable) = config.lachesis.cut(vars.commonBaseToken);
+
+        if (!vars.valid) {
+            revert LachesisValidationFailed(
+                vars.commonBaseToken,
+                vars.valid,
+                vars.burnable
+            );
         }
 
         //REDEEM OLD PYROTOKENS
-        pyroToken2.transferFrom(sender, address(this), p2tokenAmount);
+        pyroToken2.safeTransferFrom(sender, address(this), p2tokenAmount);
         uint256 ptoken2Balance = pyroToken2.balanceOf(address(this));
         pyroToken2.redeem(ptoken2Balance);
-        uint256 commonBaseBalance = IERC20(commonBaseToken).balanceOf(
+        uint256 commonBaseBalance = IERC20(vars.commonBaseToken).balanceOf(
             address(this)
         );
 
         //MINT NEW PYROTOKENS
-        PyroTokenLike pyroToken3 = PyroTokenLike(expectedPyroToken3);
+        PyroTokenLike pyroToken3 = PyroTokenLike(vars.expectedPyroToken3);
         uint256 p3BalanceBefore = pyroToken3.balanceOf(sender);
+        IERC20(vars.commonBaseToken).safeApprove(ptoken3, commonBaseBalance);
         pyroToken3.mint(sender, commonBaseBalance);
         uint256 p3BalanceAfter = pyroToken3.balanceOf(sender);
 
         //CHECK MINTING SUCCEEDED
         // >= instead of == prevents malicious griefing
-        if(p3BalanceAfter<p3BalanceBefore+p3tokenExpectedAmount){
-            revert P3AmountInvariant (p3BalanceAfter, p3BalanceBefore, p3tokenExpectedAmount);
+        //-1000 is for precision loss
+
+        if (p3BalanceAfter < p3BalanceBefore + p3tokenExpectedAmount - 1000) {
+            revert P3AmountInvariant(
+                p3BalanceAfter,
+                p3BalanceBefore,
+                p3tokenExpectedAmount
+            );
         }
         emit SuccessfulMigration(
             ptoken2,
-            expectedPyroToken3,
+            vars.expectedPyroToken3,
             p2tokenAmount,
             p3tokenExpectedAmount
         );
