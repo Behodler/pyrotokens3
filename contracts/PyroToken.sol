@@ -37,7 +37,8 @@ contract PyroToken is ERC20, ReentrancyGuard {
         address borrower,
         uint256 baseTokenBorrowed,
         uint256 pyroTokenStaked,
-        uint256 rate
+        uint256 rate,
+        uint256 slashBasisPointss
     );
 
     struct Configuration {
@@ -301,12 +302,17 @@ contract PyroToken is ERC20, ReentrancyGuard {
      *@param borrower EOA or contract that is borrowing base token from reserve of address(this)
      *@param baseTokenBorrowed Final borrowed position of base tokens for borrower.
      *@param pyroTokenStaked Final staked balance for borrower.
+     *@param slashBasisPoints for liquidations, staked pyro can be burnt.
      */
     function setObligationFor(
         address borrower,
         uint256 baseTokenBorrowed,
-        uint256 pyroTokenStaked
+        uint256 pyroTokenStaked,
+        uint256 slashBasisPoints
     ) external onlyLoanOfficer nonReentrant returns (bool success) {
+        if (slashBasisPoints > 10000) {
+            revert SlashPercentageTooHigh(slashBasisPoints);
+        }
         DebtObligation memory currentDebt = debtObligations[borrower];
         uint256 rate = redeemRate();
 
@@ -343,7 +349,13 @@ contract PyroToken is ERC20, ReentrancyGuard {
             _balances[address(this)] += stake;
         } else if (netStake < 0) {
             stake = uint256(-netStake);
-            _balances[borrower] += stake;
+            uint256 netReceipt = ((10000 - slashBasisPoints) * stake) / 10000;
+
+            if (slashBasisPoints > 0) {
+                //burn pyrotoken
+                _totalSupply -= stake - netReceipt;
+            }
+            _balances[borrower] += netReceipt;
             _balances[address(this)] -= stake;
         }
 
@@ -365,7 +377,8 @@ contract PyroToken is ERC20, ReentrancyGuard {
             borrower,
             baseTokenBorrowed,
             pyroTokenStaked,
-            rate
+            rate,
+            slashBasisPoints
         );
         success = true;
     }

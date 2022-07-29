@@ -22,6 +22,8 @@ error BaseTokenNotSet(address pyroToken);
 error OnlyReceiver(address receiver, address msgSender);
 error OnlyLoanOfficer(address officer, address msgSender);
 error UnsustainablePyroLoan(uint256 stake, uint256 minStake);
+error SlashPercentageTooHigh(uint256 slashPercentage);
+
 //LIQUIDITYRECEIVER
 error SnufferCapExpected(address expected, address actual);
 error OnlyContracts(address target);

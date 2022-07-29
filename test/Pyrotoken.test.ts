@@ -1,8 +1,6 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
-import {
-  BigNumber,
-} from "ethers";
+import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
 import * as TypeChainTypes from "../typechain-types";
 import { burnEyeSnufferCapSol } from "../typechain-types/snufferCaps";
@@ -35,7 +33,6 @@ interface Uniswap {
   router: TypeChainTypes.UniswapV2Router02;
   factory: TypeChainTypes.UniswapV2Factory;
 }
-
 
 export interface TestSet {
   BaseTokens: BaseTokenSet;
@@ -422,12 +419,14 @@ describe("PyroTokens", async function () {
     await loanOfficer.setObligationFor(
       pyroToken.address,
       maxBorrow,
-      pyroBalance
+      pyroBalance,
+      0
     );
     await loanOfficer.setObligationFor(
       pyroToken.address,
       maxBorrow.div(2),
-      pyroBalance
+      pyroBalance,
+      0
     );
     //ASSERT
     //borrow more than max fails
@@ -441,7 +440,8 @@ describe("PyroTokens", async function () {
       loanOfficer.setObligationFor(
         pyroToken.address,
         maxBorrow.add(CONSTANTS.ONE),
-        pyroBalance
+        pyroBalance,
+        0
       )
     ).to.be.revertedWith(
       `UnsustainablePyroLoan(${pyroBalance}, ${expectedMinPyroStake})`
@@ -470,7 +470,8 @@ describe("PyroTokens", async function () {
     await SET.loanOfficer.setObligationFor(
       SET.PyroTokens.pyroRegular1.address,
       CONSTANTS.ONE.mul(5),
-      CONSTANTS.TEN
+      CONSTANTS.TEN,
+      0
     );
 
     //ASSERT
@@ -510,7 +511,8 @@ describe("PyroTokens", async function () {
     await SET.loanOfficer.setObligationFor(
       SET.PyroTokens.pyroRegular1.address,
       CONSTANTS.ONE,
-      CONSTANTS.ONE
+      CONSTANTS.ONE,
+      0
     );
 
     //ASSERT
@@ -545,7 +547,8 @@ describe("PyroTokens", async function () {
       SET.loanOfficer.setObligationFor(
         SET.PyroTokens.pyroRegular1.address,
         CONSTANTS.TEN,
-        tooMuch
+        tooMuch,
+        0
       )
     ).to.be.revertedWith(`StakeFailedInsufficientBalance(0, ${CONSTANTS.ONE})`);
   });
@@ -568,14 +571,16 @@ describe("PyroTokens", async function () {
     await SET.loanOfficer.setObligationFor(
       SET.PyroTokens.pyroRegular1.address,
       CONSTANTS.ONE,
-      CONSTANTS.ONE
+      CONSTANTS.ONE,
+      0
     );
     const redeemRate1 = await SET.PyroTokens.pyroRegular1.redeemRate();
 
     await SET.loanOfficer.setObligationFor(
       SET.PyroTokens.pyroRegular1.address,
       CONSTANTS.ONE.mul(2),
-      CONSTANTS.ONE.mul(2)
+      CONSTANTS.ONE.mul(2),
+      0
     );
 
     const redeemRate2 = await SET.PyroTokens.pyroRegular1.redeemRate();
@@ -583,7 +588,8 @@ describe("PyroTokens", async function () {
     await SET.loanOfficer.setObligationFor(
       SET.PyroTokens.pyroRegular1.address,
       "0",
-      CONSTANTS.ONE.mul(3)
+      CONSTANTS.ONE.mul(3),
+      0
     );
 
     const redeemRate3 = await SET.PyroTokens.pyroRegular1.redeemRate();
@@ -593,5 +599,85 @@ describe("PyroTokens", async function () {
     expect(redeemRateInitial).to.equal(redeemRate1);
     expect(redeemRate1).to.equal(redeemRate2);
     expect(redeemRate2).to.equal(redeemRate3);
+  });
+
+  it(`t-12. set debt obligation to lower stake with slash parameter > 0 burns pyrotokens,
+   reduces debt, keeps books balanced`, async function () {
+    await Arrange(
+      "Stake 10 pyrotokens, borrow 10 base tokens",
+      SET,
+      owner,
+      false,
+      t10Setup,
+      secondPerson
+    );
+
+    const pyroBalanceBefore = await SET.PyroTokens.pyroRegular1.balanceOf(
+      owner.address
+    );
+    const redeemRateBefore = await SET.PyroTokens.pyroRegular1.redeemRate();
+    const totalSupplyBefore = await SET.PyroTokens.pyroRegular1.totalSupply();
+    //ACT
+    //Debt is halved, 75% of pyro withdrawal is slashed
+    await SET.loanOfficer.setObligationFor(
+      SET.PyroTokens.pyroRegular1.address,
+      CONSTANTS.TEN.div(2), //baseBorrow
+      CONSTANTS.TEN.div(2), //pyroStake
+      7500
+    );
+
+    //ASSERT
+
+    const pyroBalanceAfter = await SET.PyroTokens.pyroRegular1.balanceOf(
+      owner.address
+    );
+    const expectedPyroBalanceAfter = pyroBalanceBefore.add(
+      CONSTANTS.TEN.div(2).mul(25).div(100)
+    );
+    expect(pyroBalanceAfter.toString()).to.equal(
+      expectedPyroBalanceAfter.toString()
+    );
+
+    const redeemRateAfter = await SET.PyroTokens.pyroRegular1.redeemRate();
+    const redeemRateAfterSmall = redeemRateAfter
+      .div(CONSTANTS.FINNEY)
+      .toNumber();
+    const redeemRateBeforeSmall = redeemRateBefore
+      .div(CONSTANTS.FINNEY)
+      .toNumber();
+
+    expect(redeemRateBeforeSmall).to.equal(1000);
+    expect(redeemRateAfterSmall).to.equal(1103);
+
+    const expectedTotalSupplyAfter = totalSupplyBefore.sub(
+      CONSTANTS.TEN.div(2).mul(75).div(100)
+    );
+
+    const totalSupplyAfter = await SET.PyroTokens.pyroRegular1.totalSupply();
+    expect(totalSupplyAfter.toString()).to.equal(
+      expectedTotalSupplyAfter.toString()
+    );
+  });
+
+  it("t-13. slash above 10000 fails", async function () {
+    await Arrange(
+      "Stake 10 pyrotokens, borrow 10 base tokens",
+      SET,
+      owner,
+      false,
+      t10Setup,
+      secondPerson
+    );
+
+    //ACT
+    //Debt is halved, 75% of pyro withdrawal is slashed
+    await expect(
+      SET.loanOfficer.setObligationFor(
+        SET.PyroTokens.pyroRegular1.address,
+        CONSTANTS.TEN.div(2), //baseBorrow
+        CONSTANTS.TEN.div(2), //pyroStake
+        10001
+      )
+    ).to.be.revertedWith(`SlashPercentageTooHigh(10001)`);
   });
 });

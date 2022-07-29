@@ -42,7 +42,8 @@ abstract contract PyroTokenLike is IERC20 {
     function setObligationFor(
         address borrower,
         uint256 baseTokenBorrowed,
-        uint256 pyroTokenStaked
+        uint256 pyroTokenStaked,
+        uint256 slashBasisPoints
     ) external virtual returns (bool);
 
      function calculateRedemptionFee(uint256 amount, address redeemer)
