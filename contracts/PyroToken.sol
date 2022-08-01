@@ -38,7 +38,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
         uint256 baseTokenBorrowed,
         uint256 pyroTokenStaked,
         uint256 rate,
-        uint256 slashBasisPointss
+        uint256 slashBasisPoints
     );
 
     struct Configuration {
