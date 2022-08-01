@@ -149,7 +149,7 @@ It's worth repeating and emphasising: PyroLoans will allow the borrower to profi
 
 ## A natural oracle
 
-Since it is only rational to borrow to the point where rates match redeem rate growth, successful repayments can be used as an onchain approximation of the growth in the redeem rate. Specifically the highest rates successfully paid off by borrowers can be used as an estimate for the redeem rate growth rate. Having an onchain, tamper resistant oracle for PyroToken APY will undoubtedly create downstream composability opportunities for smart contract which wish to perform decisions based on interest rates in the span of a transaction without requiring offchain oracle feeds.
+Since it is only rational to borrow to the point where rates match redeem rate growth, successful repayments can be used as an onchain approximation of the growth in the redeem rate. Specifically the highest rates successfully paid off by borrowers can be used as an estimate for the redeem rate growth rate. Having an onchain, tamper resistant oracle for PyroToken APY will undoubtedly create downstream composability opportunities for smart contracts which wish to perform decisions based on interest rates in the span of a transaction without requiring offchain oracle feeds.
 
 ## Economic impact on systemic fragility
 
@@ -196,7 +196,7 @@ The following table contrasts some important differences between PyroLoans and t
          Individual debt increases risk to protocol
       </td>
       <td>
-         Individual debt increases risk is to borrower
+         Individual debt increases risk to borrower
       </td>
 </tr>
 <tr>
@@ -280,12 +280,12 @@ It should be noted also that each PyroToken can have its own loan officer so we 
 
 # Summary of the changes in version 3
 
-1. mint and redeem have recipient addresses to improve DeFi composability and reduce the cost of minting and redeeming PyroWEth in particular.
+1. Mint and redeem have recipient addresses to improve DeFi composability and reduce the cost of minting and redeeming PyroWEth in particular.
 2. TransferFrom is correctly specified to support indirect routing such as with Uniswap's V2 Router contract.
 3. PyroLoans (disabled by default): PyroToken collateral, base token loan.
 4. Flexible name generation to allow for tight ERC20 compliant tokens to be made into PyroTokens.
 5. Governance controlled whitelisted removal of fees on contracts to assist with DeFi composability.
-6. PyroToken contracts will be deployed via CREATE2, using the address of the base token as the salt. This will allow future contracts built on PyroTokens to determined the address of the PyroToken contract without consulting a mapping, reducing the need for a gas expensive SSLOAD operation or an external contract call.
+6. PyroToken contracts will be deployed via CREATE2, using the address of the base token as the salt. This will allow future contracts built on PyroTokens to determine the address of the PyroToken contract without consulting a mapping, reducing the need for a gas expensive SSLOAD operation or an external contract call.
 7. Pulling pending fees on mint and redeem can be turned off through governance so that if coupled with a potential future Behodler 3, feature 6 can be taken advantage of, reducing the gas cost further.
 8. Tailored to be amenable to registration on Etherscan.
 
