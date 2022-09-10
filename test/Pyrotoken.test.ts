@@ -771,10 +771,6 @@ describe("PyroTokens", async function () {
     pyroBalance = await pyro.balanceOf(owner.address)
     expect(pyroBalance.toString()).to.equal(CONSTANTS.ONE.mul(27).toString())
 
-
-    await assertRedeemRate();
-    //TODO: see if it's possible to set leverage in one go and not require multiple calls to set obligation. 
-    //Or at least not multiple calls to transfer
-
+    await assertRedeemRate(); 
   });
 });

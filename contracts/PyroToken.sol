@@ -52,6 +52,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
         uint256 base;
         uint256 pyro;
         uint256 redeemRate;
+        uint lastUpdated;
     }
     uint256 aggregateBaseCredit;
     Configuration public config;
@@ -325,7 +326,8 @@ contract PyroToken is ERC20, ReentrancyGuard {
         debtObligations[borrower] = DebtObligation(
             baseTokenBorrowed,
             pyroTokenStaked,
-            rate
+            rate,
+            block.timestamp
         );
 
         //netStake > 0 is deposit and < 0 is withdraw
