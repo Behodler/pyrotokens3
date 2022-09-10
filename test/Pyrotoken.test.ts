@@ -9,6 +9,7 @@ import {
   Arrange,
   t0Setup,
   t10Setup,
+  t14Setup,
   t1Setup,
   t7Setup,
   t9Setup,
@@ -261,36 +262,35 @@ describe("PyroTokens", async function () {
 
   for (let i = 0; i < 2; i++) {
     let toggleValue: boolean = i > 0;
-    it(`t-${
-      i + 1
-    } toggle pull pending fee revenue behaves correctly [${toggleValue
-      .toString()
-      .toUpperCase()}]`, async function () {
-      //ARRANGE
-      await Arrange(
-        `set pull pending fee, tranfer base tokens to liquidity receiver and mint, observing redeem rate change`,
-        SET,
-        owner,
-        false,
-        t1Setup,
-        toggleValue
-      );
+    it(`t-${i + 1
+      } toggle pull pending fee revenue behaves correctly [${toggleValue
+        .toString()
+        .toUpperCase()}]`, async function () {
+          //ARRANGE
+          await Arrange(
+            `set pull pending fee, tranfer base tokens to liquidity receiver and mint, observing redeem rate change`,
+            SET,
+            owner,
+            false,
+            t1Setup,
+            toggleValue
+          );
 
-      //ACT
-      // mint pyroToken
-      const redeemRateBefore = await SET.PyroTokens.pyroRegular1.redeemRate();
-      await SET.PyroTokens.pyroRegular1.mint(owner.address, CONSTANTS.HUNDRED);
+          //ACT
+          // mint pyroToken
+          const redeemRateBefore = await SET.PyroTokens.pyroRegular1.redeemRate();
+          await SET.PyroTokens.pyroRegular1.mint(owner.address, CONSTANTS.HUNDRED);
 
-      //ASSERT
-      const redeemRateAfter = await SET.PyroTokens.pyroRegular1.redeemRate();
-      if (toggleValue) {
-        expect(redeemRateAfter.gt(redeemRateBefore)).to.be.true;
-      } else {
-        expect(redeemRateAfter.toString()).to.equal(
-          redeemRateBefore.toString()
-        );
-      }
-    });
+          //ASSERT
+          const redeemRateAfter = await SET.PyroTokens.pyroRegular1.redeemRate();
+          if (toggleValue) {
+            expect(redeemRateAfter.gt(redeemRateBefore)).to.be.true;
+          } else {
+            expect(redeemRateAfter.toString()).to.equal(
+              redeemRateBefore.toString()
+            );
+          }
+        });
   }
 
   it("t-3. New Liquidity Receiver", async function () {
@@ -413,7 +413,7 @@ describe("PyroTokens", async function () {
     const loanOfficer = SET.loanOfficer;
 
     const pyroBalance = await pyroToken.balanceOf(owner.address);
-    const maxBorrow = pyroBalance.mul(redeemRate).div(CONSTANTS.ONE);
+    const maxBorrow = pyroBalance.mul(redeemRate).div(CONSTANTS.ONE).sub(1);
     //ACT
     //setObligation to max passes
     await loanOfficer.setObligationFor(
@@ -437,7 +437,7 @@ describe("PyroTokens", async function () {
       .mul(CONSTANTS.ONE)
       .div(redeemRate);
     await expect(
-      loanOfficer.setObligationFor(
+      loanOfficer.unsafeSetObligationFor(
         pyroToken.address,
         maxBorrow.add(CONSTANTS.ONE),
         pyroBalance,
@@ -510,7 +510,7 @@ describe("PyroTokens", async function () {
     //increase stake and borrow some
     await SET.loanOfficer.setObligationFor(
       SET.PyroTokens.pyroRegular1.address,
-      CONSTANTS.ONE,
+      CONSTANTS.ONE.sub(1),
       CONSTANTS.ONE,
       0
     );
@@ -546,7 +546,7 @@ describe("PyroTokens", async function () {
     await expect(
       SET.loanOfficer.setObligationFor(
         SET.PyroTokens.pyroRegular1.address,
-        CONSTANTS.TEN,
+        CONSTANTS.TEN.sub(1),
         tooMuch,
         0
       )
@@ -570,7 +570,7 @@ describe("PyroTokens", async function () {
 
     await SET.loanOfficer.setObligationFor(
       SET.PyroTokens.pyroRegular1.address,
-      CONSTANTS.ONE,
+      CONSTANTS.ONE.sub(1),
       CONSTANTS.ONE,
       0
     );
@@ -578,7 +578,7 @@ describe("PyroTokens", async function () {
 
     await SET.loanOfficer.setObligationFor(
       SET.PyroTokens.pyroRegular1.address,
-      CONSTANTS.ONE.mul(2),
+      CONSTANTS.ONE.mul(2).sub(1),
       CONSTANTS.ONE.mul(2),
       0
     );
@@ -621,7 +621,7 @@ describe("PyroTokens", async function () {
     //Debt is halved, 75% of pyro withdrawal is slashed
     await SET.loanOfficer.setObligationFor(
       SET.PyroTokens.pyroRegular1.address,
-      CONSTANTS.TEN.div(2), //baseBorrow
+      CONSTANTS.TEN.div(2).sub(1), //baseBorrow
       CONSTANTS.TEN.div(2), //pyroStake
       7500
     );
@@ -674,10 +674,107 @@ describe("PyroTokens", async function () {
     await expect(
       SET.loanOfficer.setObligationFor(
         SET.PyroTokens.pyroRegular1.address,
-        CONSTANTS.TEN.div(2), //baseBorrow
+        CONSTANTS.TEN.div(2).sub(1), //baseBorrow
         CONSTANTS.TEN.div(2), //pyroStake
         10001
       )
     ).to.be.revertedWith(`SlashPercentageTooHigh(10001)`);
+  });
+
+  it("t-14. Manual Leveraged borrowing preserves redeem rate. Payback preserves redeem rate", async function () {
+
+    await Arrange(
+      "Stake 10 pyrotokens, borrow 10 base tokens",
+      SET,
+      owner,
+      false,
+      t14Setup,
+      secondPerson
+    );
+
+    const pyro = SET.PyroTokens.pyroRegular1
+    const redeemRate = async () => await pyro.redeemRate()
+    const initialRedeemRate = await redeemRate()
+
+
+    //HELPER ASSERT FUNCTIONS
+    const redeemRateAsserter = (initial: BigNumber) => async () => {
+      const current = await redeemRate()
+      expect(current.eq(initial)).to.equal(true, `initial ${initial.toString()}, current ${current.toString()}`)
+    }
+
+    const assertNewBalancesAfterLoan = async (newBase: BigNumber) => {
+      const pyroBalanceAfterFirstLoan = await pyro.balanceOf(owner.address)
+      expect(pyroBalanceAfterFirstLoan.toString()).to.equal("0")
+
+      const baseBalanceAfterFirstLoan = await SET.BaseTokens.regularToken1.balanceOf(owner.address)
+      expect(baseBalanceAfterFirstLoan.toString()).to.equal(newBase.toString())
+    }
+
+    const assertRedeemRate = redeemRateAsserter(initialRedeemRate)
+
+    //END HELPER ASSERT FUNCTIONS
+
+    await SET.loanOfficer.setObligationFor(
+      pyro.address,
+      CONSTANTS.TEN.sub(CONSTANTS.ONE), //baseBorrow
+      CONSTANTS.TEN, //pyroStake
+      0
+    )
+
+    //assert balances to prepare for testing leverage
+    await assertRedeemRate()
+
+    await assertNewBalancesAfterLoan(CONSTANTS.ONE.mul(9))
+
+    //mint pyroTokens 
+    await pyro.mint(owner.address, CONSTANTS.ONE.mul(9))
+
+    let pyroBalance = await pyro.balanceOf(owner.address)
+    expect(pyroBalance.toString()).to.equal(CONSTANTS.ONE.mul(9).toString())
+
+    await assertRedeemRate()
+    //First stacked loan.
+    await SET.loanOfficer.setObligationFor(pyro.address, CONSTANTS.ONE.mul(17), CONSTANTS.ONE.mul(19), 0)
+
+    await assertRedeemRate();
+
+    await assertNewBalancesAfterLoan(CONSTANTS.ONE.mul(8))
+
+    await pyro.mint(owner.address, CONSTANTS.ONE.mul(8))
+
+    pyroBalance = await pyro.balanceOf(owner.address)
+    expect(pyroBalance.toString()).to.equal(CONSTANTS.ONE.mul(8).toString())
+
+    //Second stacked loan.
+    await SET.loanOfficer.setObligationFor(pyro.address, CONSTANTS.ONE.mul(24), CONSTANTS.ONE.mul(27), 0)
+
+    await assertRedeemRate();
+
+    await assertNewBalancesAfterLoan(CONSTANTS.ONE.mul(7))
+
+    //PAY BACK all base tokens and get 27 pyrotokens
+
+    await SET.BaseTokens.regularToken1.mint(SET.CONSTANTS.ONE.mul(17))
+
+    await assertNewBalancesAfterLoan(CONSTANTS.ONE.mul(24))
+
+    await SET.loanOfficer.setObligationFor(pyro.address, SET.CONSTANTS.TEN, SET.CONSTANTS.TEN.add(SET.CONSTANTS.ONE), 0)
+
+    pyroBalance = await pyro.balanceOf(owner.address)
+    expect(pyroBalance.toString()).to.equal(CONSTANTS.ONE.mul(16).toString())
+  
+    await assertRedeemRate();
+
+    await SET.loanOfficer.setObligationFor(pyro.address, "0", "0", 0)
+
+    pyroBalance = await pyro.balanceOf(owner.address)
+    expect(pyroBalance.toString()).to.equal(CONSTANTS.ONE.mul(27).toString())
+
+
+    await assertRedeemRate();
+    //TODO: see if it's possible to set leverage in one go and not require multiple calls to set obligation. 
+    //Or at least not multiple calls to transfer
+
   });
 });

@@ -5,6 +5,7 @@ import "./ERC20/ERC20.sol";
 import "./ERC20/SafeERC20.sol";
 import "./facades/LiquidityReceiverLike.sol";
 import "./facades/ReentrancyGuard.sol";
+// import "hardhat/console.sol";
 
 /**
  *@title PyroToken
@@ -366,11 +367,12 @@ contract PyroToken is ERC20, ReentrancyGuard {
             aggregateBaseCredit += uint256(netBorrowing);
             config.baseToken.safeTransfer(borrower, uint256(netBorrowing));
         } else if (netBorrowing < 0) {
-            aggregateBaseCredit -= uint256(-netBorrowing);
+            uint256 absoluteBorrowing = uint256(-netBorrowing);
+            aggregateBaseCredit -= absoluteBorrowing;
             config.baseToken.safeTransferFrom(
                 borrower,
                 address(this),
-                uint256(-netBorrowing)
+                absoluteBorrowing
             );
         }
         emit LoanObligationSet(

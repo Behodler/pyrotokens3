@@ -195,7 +195,7 @@ export async function t9Setup(
     .mint(secondPerson.address, CONSTANTS.TEN.mul(3));
 
   //BORROW
-  await SET.loanOfficer.setObligationFor(SET.PyroTokens.pyroRegular1.address,CONSTANTS.TEN,CONSTANTS.TEN,0)
+  await SET.loanOfficer.setObligationFor(SET.PyroTokens.pyroRegular1.address, CONSTANTS.TEN.sub(1), CONSTANTS.TEN, 0)
 }
 
 export async function t10Setup(
@@ -224,7 +224,7 @@ export async function t10Setup(
 
 
   //BORROW and stake 30 Pyro
-  await SET.loanOfficer.setObligationFor(SET.PyroTokens.pyroRegular1.address,CONSTANTS.TEN,CONSTANTS.TEN,0)
+  await SET.loanOfficer.setObligationFor(SET.PyroTokens.pyroRegular1.address, CONSTANTS.TEN.sub(1), CONSTANTS.TEN, 0)
 }
 
 
@@ -281,7 +281,30 @@ export async function t12Setup(
   //BORROW and stake 30 Pyro
   await SET.loanOfficer.setObligationFor(
     pyroToken.address,
-    CONSTANTS.TEN, //baseBorrow
+    CONSTANTS.TEN.sub(1), //baseBorrow
     CONSTANTS.TEN, //pyroStake
     0)
+}
+
+export async function t14Setup(
+  SET: TestSet,
+  owner: any,
+  logger: any,
+  ...args: Array<any>
+) {
+  const pyroToken = SET.PyroTokens.pyroRegular1;
+  const baseToken = SET.BaseTokens.regularToken1;
+  const secondPerson = args[0] as SignerWithAddress;
+
+  //mint pyrotokens
+  await baseToken.approve(pyroToken.address, CONSTANTS.MAX);
+  //mint 10
+  await pyroToken.mint(owner.address, CONSTANTS.TEN);
+
+  //dispose of surplus base token
+  const surplus = await SET.BaseTokens.regularToken1.balanceOf(owner.address)
+  await SET.BaseTokens.regularToken1.transfer(secondPerson.address,surplus)
+
+  //assert zero
+  expect(await SET.BaseTokens.regularToken1.balanceOf(owner.address)).to.equal(0)
 }

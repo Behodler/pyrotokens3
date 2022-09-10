@@ -36,3 +36,6 @@ error EthForwardingFailed(uint256 msgvalue, uint256 baseTokenAmount);
 
 //V2MIGRATOR
 error P3AmountInvariant(uint256 balanceAfter, uint balanceBefore,  uint expectedAmount);
+
+//TESTING
+error InfiniteLeverageForbidden(uint pyroEquivalent, uint pyroStaked);
