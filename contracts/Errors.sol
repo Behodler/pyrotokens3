@@ -23,6 +23,7 @@ error OnlyReceiver(address receiver, address msgSender);
 error OnlyLoanOfficer(address officer, address msgSender);
 error UnsustainablePyroLoan(uint256 stake, uint256 minStake);
 error SlashPercentageTooHigh(uint256 slashPercentage);
+error FunctionNoLongerAvailable();
 
 //LIQUIDITYRECEIVER
 error SnufferCapExpected(address expected, address actual);
@@ -36,6 +37,9 @@ error EthForwardingFailed(uint256 msgvalue, uint256 baseTokenAmount);
 
 //V2MIGRATOR
 error P3AmountInvariant(uint256 balanceAfter, uint balanceBefore,  uint expectedAmount);
+
+//REBASE
+error InvalidPyroToken();
 
 //TESTING
 error InfiniteLeverageForbidden(uint pyroEquivalent, uint pyroStaked);

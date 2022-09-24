@@ -5,6 +5,8 @@ import "./ERC20/ERC20.sol";
 import "./ERC20/SafeERC20.sol";
 import "./facades/LiquidityReceiverLike.sol";
 import "./facades/ReentrancyGuard.sol";
+import "./facades/BigConstantsLike.sol";
+
 // import "hardhat/console.sol";
 
 /**
@@ -52,9 +54,10 @@ contract PyroToken is ERC20, ReentrancyGuard {
         uint256 base;
         uint256 pyro;
         uint256 redeemRate;
-        uint lastUpdated;
+        uint256 lastUpdated;
     }
-    uint256 aggregateBaseCredit;
+    address public rebaseWrapper;
+    uint256 public aggregateBaseCredit;
     Configuration public config;
     uint256 private constant ONE = 1 ether;
 
@@ -93,23 +96,11 @@ contract PyroToken is ERC20, ReentrancyGuard {
         _;
     }
 
-    /**
-     * @dev since the constructor is invoked in a low level setting with no static typing, the initialization logic
-     * has been separated out into the initalize function to benefit from static typing.
-     * @param baseToken for this pyrotoken
-     * @param name_ the ERC20 name of the Pyrotoken
-     * @param symbol_ the ERC20 symbol of the Pyrotoken
-     */
-    function initialize(
-        address baseToken,
-        string memory name_,
-        string memory symbol_,
-        uint8 decimals
-    ) external onlyReceiver {
-        config.baseToken = IERC20(baseToken);
-        _name = name_;
-        _symbol = symbol_;
-        _decimals = decimals;
+    modifier uninitialized() {
+        if (address(config.baseToken) != address(0)) {
+            revert FunctionNoLongerAvailable();
+        }
+        _;
     }
 
     modifier onlyReceiver() {
@@ -133,6 +124,32 @@ contract PyroToken is ERC20, ReentrancyGuard {
             revert OnlyLoanOfficer(config.loanOfficer, msg.sender);
         }
         _;
+    }
+
+    /**
+     * @dev since the constructor is invoked in a low level setting with no static typing, the initialization logic
+     * has been separated out into the initalize function to benefit from static typing.
+     * @param baseToken for this pyrotoken
+     * @param name_ the ERC20 name of the Pyrotoken
+     * @param symbol_ the ERC20 symbol of the Pyrotoken
+     */
+    function initialize(
+        address baseToken,
+        string memory name_,
+        string memory symbol_,
+        uint8 decimals,
+        address bigConstantsAddress
+    ) external onlyReceiver uninitialized {
+        config.baseToken = IERC20(baseToken);
+        _name = name_;
+        _symbol = symbol_;
+        _decimals = decimals;
+        rebaseWrapper = BigConstantsLike(bigConstantsAddress)
+            .deployRebaseWrapper(address(this));
+
+        //disable all fees so that holders can toggle back and forth without penalty
+        feeExemptionStatus[rebaseWrapper] = FeeExemption
+            .REDEEM_EXEMPT_AND_SENDER_EXEMPT_AND_RECEIVER_EXEMPT;
     }
 
     /**
@@ -285,7 +302,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
 
         uint256 currentAllowance = _allowances[sender][msg.sender];
 
-        if (currentAllowance != type(uint256).max) {
+        if (currentAllowance != type(uint256).max && msg.sender != rebaseWrapper) {
             if (currentAllowance < amount) {
                 revert AllowanceExceeded(currentAllowance, amount);
             }
@@ -468,6 +485,6 @@ contract PyroToken is ERC20, ReentrancyGuard {
         _balances[sender] = senderBalance - amount;
         _balances[recipient] += netReceived;
 
-        emit Transfer(sender, recipient, amount); //extra parameters don't throw off parsers when interpreted through JSON.
+        emit Transfer(sender, recipient, amount);
     }
 }

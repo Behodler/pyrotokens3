@@ -125,13 +125,18 @@ describe("PyroTokens", async function () {
       true
     );
 
+    const BigConstantsFactory = await ethers.getContractFactory("BigConstants")
+    const bigConstants = await deploy<TypeChainTypes.BigConstants>(BigConstantsFactory)
+
+
     SET.LiquidityReceiverFactory = (await ethers.getContractFactory(
       "LiquidityReceiver"
     )) as TypeChainTypes.LiquidityReceiver__factory;
 
     SET.liquidityReceiver = await deploy<TypeChainTypes.LiquidityReceiver>(
       SET.LiquidityReceiverFactory,
-      SET.lachesis.address
+      SET.lachesis.address,
+      bigConstants.address
     );
 
     const BurnEYESnufferCap = await ethers.getContractFactory(
@@ -295,9 +300,13 @@ describe("PyroTokens", async function () {
 
   it("t-3. New Liquidity Receiver", async function () {
     //Arrange
+    const BigConstantsFactory = await ethers.getContractFactory("BigConstants")
+    const bigConstants = await deploy<TypeChainTypes.BigConstants>(BigConstantsFactory)
+   
     const newLiquidityReceiver = await deploy<TypeChainTypes.LiquidityReceiver>(
       SET.LiquidityReceiverFactory,
-      SET.lachesis.address
+      SET.lachesis.address,
+      bigConstants.address
     );
 
     //ACT

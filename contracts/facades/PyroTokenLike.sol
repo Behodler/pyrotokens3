@@ -46,9 +46,17 @@ abstract contract PyroTokenLike is IERC20 {
         uint256 slashBasisPoints
     ) external virtual returns (bool);
 
-     function calculateRedemptionFee(uint256 amount, address redeemer)
+    function calculateRedemptionFee(uint256 amount, address redeemer)
         public
-        virtual
         view
+        virtual
         returns (uint256);
+
+    function calculateTransferFee(
+        uint256 amount,
+        address sender,
+        address receiver
+    ) public view virtual returns (uint256);
+
+    function burn(uint256 amount) public virtual;
 }

@@ -33,13 +33,18 @@ describe("V2 Migrator test", async function () {
 
     var Lachesis = await ethers.getContractFactory("Lachesis");
     SET.lachesis = await deploy<TypeChainTypes.Lachesis>(Lachesis);
+
+    const BigConstantsFactory = await ethers.getContractFactory("BigConstants")
+    const bigConstants = await deploy<TypeChainTypes.BigConstants>(BigConstantsFactory)
+
     const liquidityReceiverFactory = (await ethers.getContractFactory(
       "LiquidityReceiver"
     )) as TypeChainTypes.LiquidityReceiver__factory;
 
     SET.LiquidityReceiver = await deploy<TypeChainTypes.LiquidityReceiver>(
       liquidityReceiverFactory,
-      SET.lachesis.address
+      SET.lachesis.address,
+      bigConstants.address
     );
     SET.BaseTokens = [];
     SET.PyroTokens2 = [];
@@ -287,7 +292,7 @@ describe("V2 Migrator test", async function () {
       await SET.PyroTokens2[i].approve(SET.V2Migrator.address, CONSTANTS.MAX);
     }
     console.log('expectedBalanceOfPyro 3', expectedBalanceOfPyro3Set[6].toString());
-    expectedBalanceOfPyro3Set[6]= expectedBalanceOfPyro3Set[6].add(CONSTANTS.ONE)
+    expectedBalanceOfPyro3Set[6] = expectedBalanceOfPyro3Set[6].add(CONSTANTS.ONE)
     await expect(SET.V2Migrator.migrateMany(
       pyro2AddressSet,
       pyro3AddressSet,
@@ -344,7 +349,7 @@ describe("V2 Migrator test", async function () {
 
     //ACT
     await SET.PyroTokens2[0].approve(SET.V2Migrator.address, CONSTANTS.MAX);
-    
+
     //Unvalidate base token
     await SET.lachesis.measure(SET.BaseTokens[0].address, false, false);
     await expect(SET.V2Migrator.migrate(
@@ -353,6 +358,6 @@ describe("V2 Migrator test", async function () {
       balanceOfPyro2,
       expectedBalanceOfPyro3
     ))
-    .to.be.revertedWith("LachesisValidationFailed");
+      .to.be.revertedWith("LachesisValidationFailed");
   });
 });

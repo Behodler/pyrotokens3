@@ -26,4 +26,6 @@ abstract contract LiquidityReceiverLike {
     ) public virtual;
 
     function drain(address baseToken) external virtual returns (uint);
+
+    function bigConstants() public virtual view returns (address);
 }
