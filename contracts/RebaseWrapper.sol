@@ -218,6 +218,6 @@ contract RebaseWrapper is IERC20 {
     }
 
     function nativeToPyro(uint256 amount) internal view returns (uint256) {
-        return (amount / pyroToken.redeemRate()) * ONE;
+        return ((amount*ONE) / pyroToken.redeemRate());
     }
 }

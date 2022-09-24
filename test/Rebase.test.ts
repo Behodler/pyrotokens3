@@ -7,6 +7,8 @@ import { CONSTANTS, ConstantSet } from "./arrange/Common";
 import {
     Arrange,
     t2Setup,
+    t4Setup,
+    t6Setup,
 } from "./arrange/rebase";
 import { deploy, executionResult, queryChain } from "./helper";
 
@@ -237,10 +239,119 @@ describe("PyroTokens", async function () {
     })
 
     it("t3. Increasing redeem rate shows up as higher balance", async function () {
-        throw "not implemented"
+        await Arrange(
+            "Mint 10 PyroTokens",
+            SET,
+            owner,
+            false,
+            t2Setup
+        );
+
+        let balanceOfBaseOnPyro = await SET.BaseTokens.regularToken1.balanceOf(SET.PyroTokens.pyroRegular1.address)
+        expect(balanceOfBaseOnPyro).to.equal(CONSTANTS.TEN)
+
+        //ACT
+        await SET.RebaseWrapper.convertFromPyro(owner.address, CONSTANTS.ONE.mul(3))
+        const balanceOfRebaseBeforeBurn = await SET.RebaseWrapper.balanceOf(owner.address)
+
+        await SET.PyroTokens.pyroRegular1.burn(CONSTANTS.ONE.mul(6))
+
+        balanceOfBaseOnPyro = await SET.BaseTokens.regularToken1.balanceOf(SET.PyroTokens.pyroRegular1.address)
+        expect(balanceOfBaseOnPyro).to.equal(CONSTANTS.TEN)
+
+        const balanceOfRebaseAfterBurn = await SET.RebaseWrapper.balanceOf(owner.address)
+
+        //ASSERT
+        const expectedNewRedeemRate = CONSTANTS.ONE.mul(BigNumber.from("25")).div(10)
+        const newRedeemRate = await SET.PyroTokens.pyroRegular1.redeemRate()
+
+        expect(newRedeemRate).to.equal(expectedNewRedeemRate)
+        expect(balanceOfRebaseBeforeBurn).to.equal(CONSTANTS.ONE.mul(3))
+        expect(balanceOfRebaseAfterBurn).to.equal(CONSTANTS.ONE.mul(BigNumber.from("75")).div(10))
     })
 
     it("t4. Transfer of rebase wrapper reduces balance AND increases redeem rate", async function () {
+        await Arrange(
+            "Mint 7 RebaseTokens",
+            SET,
+            owner,
+            false,
+            t4Setup
+        );
+
+        //ACT
+        //transfer to any address
+        await SET.RebaseWrapper.transfer(SET.lachesis.address, CONSTANTS.ONE.mul(5))
+
+        //ASSERT
+        const totalSupplyOfRebaseAfterTransfer = await SET.RebaseWrapper.totalSupply()
+        const totalSupplyOfPyroAfterTransfer = await SET.PyroTokens.pyroRegular1.totalSupply()
+
+        //balance goes down but also up because of increased redeem rate
+        const balanceOnRebaseAfterTransfer = await SET.RebaseWrapper.balanceOf(owner.address)
+
+
+        //9.995
+        const expectedTotalSupplyOfRebaseAfterTransfer = "6998499249624812404"
+        expect(totalSupplyOfRebaseAfterTransfer).to.equal(expectedTotalSupplyOfRebaseAfterTransfer)
+
+        const expectedPyroTotalSupply = CONSTANTS.ONE.mul(9995).div(1000)
+        expect(totalSupplyOfPyroAfterTransfer).to.equal(expectedPyroTotalSupply)
+
+        const expectedNewRedeemRate = BigNumber.from('1000500250125062531')
+        const redeemRate = await SET.PyroTokens.pyroRegular1.redeemRate()
+        expect(redeemRate).to.equal(expectedNewRedeemRate)
+
+        const expectedRebaseBalanceAfterTransfer = expectedNewRedeemRate.mul(2)
+
+        expect(balanceOnRebaseAfterTransfer).to.equal(expectedRebaseBalanceAfterTransfer)
+    })
+
+    it("t5. Minting on a high redeem rate gives a larger initial balance", async function () {
+        await Arrange(
+            "Mint 10 PyroTokens",
+            SET,
+            owner,
+            false,
+            t2Setup
+        );
+
+        //ACT
+        await SET.PyroTokens.pyroRegular1.burn(CONSTANTS.ONE.mul(5))
+
+        const newRedeemRate = await SET.PyroTokens.pyroRegular1.redeemRate()
+
+        await SET.RebaseWrapper.convertFromPyro(owner.address, CONSTANTS.ONE.mul(3).div(2))
+
+        const initialRebaseBalance = await SET.RebaseWrapper.balanceOf(owner.address)
+
+        //ASSERT
+        expect(newRedeemRate).to.equal(CONSTANTS.ONE.mul(2))
+
+        expect(initialRebaseBalance).to.equal(CONSTANTS.ONE.mul(3))
+    })
+
+    it("t6. converting back to pyro and then to base gives original balance minus fee", async function () {
+        await Arrange(
+            "Mint 3 Rebase from 1.5 Pyro",
+            SET,
+            owner,
+            false,
+            t6Setup
+        );
+
+        await SET.RebaseWrapper.convertToPyro(owner.address, CONSTANTS.ONE.mul(3))
+
+        const pyroBalance = await SET.PyroTokens.pyroRegular1.balanceOf(owner.address)
+        expect(pyroBalance).to.equal(CONSTANTS.ONE.mul(3).div(2))
+
+        const balanceOfBaseBefore = await SET.BaseTokens.regularToken1.balanceOf(owner.address)
+        await SET.PyroTokens.pyroRegular1.redeem(owner.address, CONSTANTS.ONE.mul(3).div(2))
+        const balanceOfBaseAfter = await SET.BaseTokens.regularToken1.balanceOf(owner.address)
+
+        const change = balanceOfBaseAfter.sub(balanceOfBaseBefore)
+
+        expect(change).to.equal(CONSTANTS.ONE.mul("294").div(100))
 
     })
 

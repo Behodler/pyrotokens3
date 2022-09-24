@@ -263,13 +263,14 @@ contract PyroToken is ERC20, ReentrancyGuard {
      * Until a pyroloan is defaulted on, the lent out baseToken isn't considered lost. The redeem rate takes it into account.
      * If the loan defaults, the corresponding staked pyro is burnt so that the redeem rate isn't left unbalanced because the staked pyrotoken is burnt,
      * matching credit and debit.
-     *@dev adding 1 to numerator and denominator gives a default redeem rate of ONE and eliminates division by zero. ONE is 10^18
      */
     function redeemRate() public view returns (uint256) {
+        uint256 ts = _totalSupply;
+        if (ts == 0) return ONE;
+       
         return
-            ((config.baseToken.balanceOf(address(this)) +
-                aggregateBaseCredit +
-                1) * ONE) / (_totalSupply + 1);
+            ((config.baseToken.balanceOf(address(this)) + aggregateBaseCredit) *
+                ONE) / (ts);
     }
 
     /**@notice Standard ERC20 transfer
@@ -302,7 +303,9 @@ contract PyroToken is ERC20, ReentrancyGuard {
 
         uint256 currentAllowance = _allowances[sender][msg.sender];
 
-        if (currentAllowance != type(uint256).max && msg.sender != rebaseWrapper) {
+        if (
+            currentAllowance != type(uint256).max && msg.sender != rebaseWrapper
+        ) {
             if (currentAllowance < amount) {
                 revert AllowanceExceeded(currentAllowance, amount);
             }
