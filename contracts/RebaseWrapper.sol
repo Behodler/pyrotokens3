@@ -6,6 +6,14 @@ import "./ERC20/SafeERC20.sol";
 import "./facades/PyroTokenLike.sol";
 import "./facades/LiquidityReceiverLike.sol";
 
+/**
+ *@title PyroToken
+ *@author Justin Goro
+ *@notice RebaseWrappers are tokens that accompany PyroTokens. The price of the rebase token is always 1:1 equal to the baseToken price.
+ When the redeem rate rises, this reflects as a higher account balance. RebaseTokens can be converted from their corresponding PyroToken and vice versa.
+ There is no fee on transfer for conversion. Transferring a RebaseWrapper reduces incurs a transfer fee which reflects as a burn on the underlying pyroToken.
+ *@dev RebaseTokens do not need to ERC20.approve their corresponding pyroToken.
+ */
 contract RebaseWrapper is IERC20 {
     PyroTokenLike public immutable pyroToken;
     string private _name;
@@ -59,6 +67,10 @@ contract RebaseWrapper is IERC20 {
         return pyroToNative(pyroToken.balanceOf(address(this)));
     }
 
+    /**
+    *@param recipient receives the wrapped rebase balance 
+    *@param pyroAmount pyroTokens to convert from msg.sender
+    */
     function convertFromPyro(address recipient, uint256 pyroAmount)
         public
         returns (bool)
@@ -71,6 +83,10 @@ contract RebaseWrapper is IERC20 {
         return true;
     }
 
+   /**
+    *@param recipient receives the unwrapped pyro balance 
+    *@param amount rebaseTokens to convert from msg.sender
+    */
     function convertToPyro(address recipient, uint256 amount)
         public
         returns (bool)
@@ -154,6 +170,10 @@ contract RebaseWrapper is IERC20 {
         emit Approval(owner, spender, amount);
     }
 
+    /**
+    *@param amount rebase tokens to burn
+    *@dev underlying pyroTokens are burnt so that redeem rate rises.
+     */
     function burn(uint256 amount) public returns (bool) {
         uint256 pyroAmount = nativeToPyro(amount);
         pyroBalances[msg.sender] -= pyroAmount;
