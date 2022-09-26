@@ -97,61 +97,6 @@ abstract contract ERC20 is IERC20 {
     }
 
     /**
-     * @dev Atomically increases the allowance granted to `spender` by the caller.
-     *
-     * This is an alternative to {approve} that can be used as a mitigation for
-     * problems described in {IERC20-approve}.
-     *
-     * Emits an {Approval} event indicating the updated allowance.
-     *
-     * Requirements:
-     *
-     * - `spender` cannot be the zero address.
-     */
-    function increaseAllowance(address spender, uint256 addedValue)
-        public
-        virtual
-        returns (bool)
-    {
-        _approve(
-            msg.sender,
-            spender,
-            _allowances[msg.sender][spender] + addedValue
-        );
-        return true;
-    }
-
-    /**
-     * @dev Atomically decreases the allowance granted to `spender` by the caller.
-     *
-     * This is an alternative to {approve} that can be used as a mitigation for
-     * problems described in {IERC20-approve}.
-     *
-     * Emits an {Approval} event indicating the updated allowance.
-     *
-     * Requirements:
-     *
-     * - `spender` cannot be the zero address.
-     * - `spender` must have allowance for the caller of at least
-     * `subtractedValue`.
-     */
-    function decreaseAllowance(address spender, uint256 subtractedValue)
-        public
-        virtual
-        returns (bool)
-    {
-        uint256 currentAllowance = _allowances[msg.sender][spender];
-        if (currentAllowance < subtractedValue) {
-            revert AllowanceUnderflow(currentAllowance, subtractedValue);
-        }
-        unchecked {
-            _approve(msg.sender, spender, currentAllowance - subtractedValue);
-        }
-
-        return true;
-    }
-
-    /**
      * @dev Moves `amount` of tokens from `sender` to `recipient`.
      *
      * This internal function is equivalent to {transfer}, and can be used to
@@ -239,27 +184,5 @@ abstract contract ERC20 is IERC20 {
      */
     function burn(uint256 amount) public virtual {
         _burn(msg.sender, amount);
-    }
-
-    /**
-     * @dev Destroys `amount` tokens from `account`, deducting from the caller's
-     * allowance.
-     *
-     * See {ERC20-_burn} and {ERC20-allowance}.
-     *
-     * Requirements:
-     *
-     * - the caller must have allowance for ``accounts``'s tokens of at least
-     * `amount`.
-     */
-    function burnFrom(address account, uint256 amount) public virtual {
-        uint256 currentAllowance = allowance(account, msg.sender);
-        if (amount > currentAllowance) {
-            revert AllowanceExceeded(currentAllowance, amount);
-        }
-        unchecked {
-            _approve(account, msg.sender, currentAllowance - amount);
-        }
-        _burn(account, amount);
     }
 }

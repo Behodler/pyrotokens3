@@ -6,6 +6,8 @@ import "./facades/Ownable.sol";
 import "./facades/LachesisLike.sol";
 import "./ERC20/IERC20.sol";
 import "./Errors.sol";
+import "./facades/BigConstantsLike.sol";
+import "./ProxyHandler.sol";
 
 library Create2 {
     /**
@@ -82,11 +84,12 @@ contract LiquidityReceiver is Ownable {
         LachesisLike lachesis; //Token approval contract on Behodler AMM
         SnufferCap snufferCap;
         address defaultLoanOfficer;
+        address proxyHandler;
     }
 
     Configuration public config;
 
-    bytes internal constant PYROTOKEN_BYTECODE = type(PyroToken).creationCode;
+    BigConstantsLike public immutable bigConstants;
     modifier onlySnufferCap() {
         if (msg.sender != address(config.snufferCap)) {
             revert SnufferCapExpected(address(config.snufferCap), msg.sender);
@@ -94,8 +97,10 @@ contract LiquidityReceiver is Ownable {
         _;
     }
 
-    constructor(address _lachesis) {
+    constructor(address _lachesis, address bigConstantsAddress) {
         config.lachesis = LachesisLike(_lachesis);
+        config.proxyHandler = address(new ProxyHandler());
+        bigConstants = BigConstantsLike(bigConstantsAddress);
     }
 
     /**
@@ -202,9 +207,16 @@ contract LiquidityReceiver is Ownable {
         //Using a salted address let's us predict where each PyroToken will be deployed.
         address p = Create2.deploy(
             keccak256(abi.encode(baseToken)),
-            PYROTOKEN_BYTECODE
+            bigConstants.PYROTOKEN_BYTECODE()
         );
-        PyroToken(p).initialize(baseToken, name, symbol, decimals);
+        PyroToken(p).initialize(
+            baseToken,
+            name,
+            symbol,
+            decimals,
+            address(bigConstants),
+            config.proxyHandler
+        );
         PyroToken(p).setLoanOfficer(config.defaultLoanOfficer);
 
         if (p != expectedAddress) {
@@ -227,7 +239,7 @@ contract LiquidityReceiver is Ownable {
     //by using salted deployments (CREATE2), we get a cheaper version of mapping by not having to hit an SLOAD op
     function getPyroToken(address baseToken) public view returns (address) {
         bytes32 salt = keccak256(abi.encode(baseToken));
-        return Create2.computeAddress(salt, PYROTOKEN_BYTECODE);
+        return Create2.computeAddress(salt, bigConstants.PYROTOKEN_BYTECODE());
     }
 
     function isContract(address addr) private view returns (bool) {

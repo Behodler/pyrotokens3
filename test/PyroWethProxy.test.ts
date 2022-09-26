@@ -36,13 +36,17 @@ describe("PyroWeth Proxy", async function () {
     SET.lachesis = await deploy<TypeChainTypes.Lachesis>(Lachesis);
     await SET.lachesis.measure(SET.WETH.address, true, false);
 
+    const BigConstantsFactory = await ethers.getContractFactory("BigConstants")
+    const bigConstants = await deploy<TypeChainTypes.BigConstants>(BigConstantsFactory)
+
     const liquidityReceiverFactory = (await ethers.getContractFactory(
       "LiquidityReceiver"
     )) as TypeChainTypes.LiquidityReceiver__factory;
 
     SET.LiquidityReceiver = await deploy<TypeChainTypes.LiquidityReceiver>(
       liquidityReceiverFactory,
-      SET.lachesis.address
+      SET.lachesis.address,
+      bigConstants.address
     );
 
     await SET.LiquidityReceiver.registerPyroToken(

@@ -5,6 +5,9 @@ import "./ERC20/ERC20.sol";
 import "./ERC20/SafeERC20.sol";
 import "./facades/LiquidityReceiverLike.sol";
 import "./facades/ReentrancyGuard.sol";
+import "./facades/BigConstantsLike.sol";
+
+// import "hardhat/console.sol";
 
 /**
  *@title PyroToken
@@ -51,8 +54,10 @@ contract PyroToken is ERC20, ReentrancyGuard {
         uint256 base;
         uint256 pyro;
         uint256 redeemRate;
+        uint256 lastUpdated;
     }
-    uint256 aggregateBaseCredit;
+    address public rebaseWrapper;
+    uint256 public aggregateBaseCredit;
     Configuration public config;
     uint256 private constant ONE = 1 ether;
 
@@ -91,6 +96,44 @@ contract PyroToken is ERC20, ReentrancyGuard {
         _;
     }
 
+    modifier uninitialized() {
+        if (address(config.baseToken) != address(0)) {
+            revert FunctionNoLongerAvailable();
+        }
+        _;
+    }
+
+    modifier onlyReceiver() {
+        _onlyReceiver();
+        _;
+    }
+
+    function _onlyReceiver() internal view {
+        if (msg.sender != config.liquidityReceiver) {
+            revert OnlyReceiver(config.liquidityReceiver, msg.sender);
+        }
+    }
+
+    function _updateReserve() internal {
+        if (config.pullPendingFeeRevenue) {
+            LiquidityReceiverLike(config.liquidityReceiver).drain(
+                address(config.baseToken)
+            );
+        }
+    }
+
+    modifier updateReserve() {
+        _updateReserve();
+        _;
+    }
+
+    modifier onlyLoanOfficer() {
+        if (msg.sender != config.loanOfficer) {
+            revert OnlyLoanOfficer(config.loanOfficer, msg.sender);
+        }
+        _;
+    }
+
     /**
      * @dev since the constructor is invoked in a low level setting with no static typing, the initialization logic
      * has been separated out into the initalize function to benefit from static typing.
@@ -102,35 +145,24 @@ contract PyroToken is ERC20, ReentrancyGuard {
         address baseToken,
         string memory name_,
         string memory symbol_,
-        uint8 decimals
-    ) external onlyReceiver {
+        uint8 decimals,
+        address bigConstantsAddress,
+        address proxyHandler
+    ) external onlyReceiver uninitialized {
         config.baseToken = IERC20(baseToken);
         _name = name_;
         _symbol = symbol_;
         _decimals = decimals;
-    }
+        rebaseWrapper = BigConstantsLike(bigConstantsAddress)
+            .deployRebaseWrapper(address(this));
 
-    modifier onlyReceiver() {
-        if (msg.sender != config.liquidityReceiver) {
-            revert OnlyReceiver(config.liquidityReceiver, msg.sender);
-        }
-        _;
-    }
+        //disable all fees so that holders can toggle back and forth without penalty
+        feeExemptionStatus[rebaseWrapper] = FeeExemption
+            .REDEEM_EXEMPT_AND_SENDER_EXEMPT_AND_RECEIVER_EXEMPT;
 
-    modifier updateReserve() {
-        if (config.pullPendingFeeRevenue) {
-            LiquidityReceiverLike(config.liquidityReceiver).drain(
-                address(config.baseToken)
-            );
-        }
-        _;
-    }
-
-    modifier onlyLoanOfficer() {
-        if (msg.sender != config.loanOfficer) {
-            revert OnlyLoanOfficer(config.loanOfficer, msg.sender);
-        }
-        _;
+        //disable all fees for the proxyHandler
+        feeExemptionStatus[proxyHandler] = FeeExemption
+            .SENDER_EXEMPT_AND_RECEIVER_EXEMPT;
     }
 
     /**
@@ -244,13 +276,14 @@ contract PyroToken is ERC20, ReentrancyGuard {
      * Until a pyroloan is defaulted on, the lent out baseToken isn't considered lost. The redeem rate takes it into account.
      * If the loan defaults, the corresponding staked pyro is burnt so that the redeem rate isn't left unbalanced because the staked pyrotoken is burnt,
      * matching credit and debit.
-     *@dev adding 1 to numerator and denominator gives a default redeem rate of ONE and eliminates division by zero. ONE is 10^18
      */
     function redeemRate() public view returns (uint256) {
+        uint256 ts = _totalSupply;
+        if (ts == 0) return ONE;
+
         return
-            ((config.baseToken.balanceOf(address(this)) +
-                aggregateBaseCredit +
-                1) * ONE) / (_totalSupply + 1);
+            ((config.baseToken.balanceOf(address(this)) + aggregateBaseCredit) *
+                ONE) / (ts);
     }
 
     /**@notice Standard ERC20 transfer
@@ -283,7 +316,9 @@ contract PyroToken is ERC20, ReentrancyGuard {
 
         uint256 currentAllowance = _allowances[sender][msg.sender];
 
-        if (currentAllowance != type(uint256).max) {
+        if (
+            currentAllowance != type(uint256).max && msg.sender != rebaseWrapper
+        ) {
             if (currentAllowance < amount) {
                 revert AllowanceExceeded(currentAllowance, amount);
             }
@@ -324,7 +359,8 @@ contract PyroToken is ERC20, ReentrancyGuard {
         debtObligations[borrower] = DebtObligation(
             baseTokenBorrowed,
             pyroTokenStaked,
-            rate
+            rate,
+            block.timestamp
         );
 
         //netStake > 0 is deposit and < 0 is withdraw
@@ -366,11 +402,12 @@ contract PyroToken is ERC20, ReentrancyGuard {
             aggregateBaseCredit += uint256(netBorrowing);
             config.baseToken.safeTransfer(borrower, uint256(netBorrowing));
         } else if (netBorrowing < 0) {
-            aggregateBaseCredit -= uint256(-netBorrowing);
+            uint256 absoluteBorrowing = uint256(-netBorrowing);
+            aggregateBaseCredit -= absoluteBorrowing;
             config.baseToken.safeTransferFrom(
                 borrower,
                 address(this),
-                uint256(-netBorrowing)
+                absoluteBorrowing
             );
         }
         emit LoanObligationSet(
@@ -464,6 +501,6 @@ contract PyroToken is ERC20, ReentrancyGuard {
         _balances[sender] = senderBalance - amount;
         _balances[recipient] += netReceived;
 
-        emit Transfer(sender, recipient, amount); //extra parameters don't throw off parsers when interpreted through JSON.
+        emit Transfer(sender, recipient, amount);
     }
 }
