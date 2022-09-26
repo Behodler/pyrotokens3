@@ -41,7 +41,7 @@ export interface TestSet {
 }
 
 
-describe("PyroTokens", async function () {
+describe("Rebase Wrapper", async function () {
     let owner: SignerWithAddress, secondPerson: SignerWithAddress;
     let SET = {} as TestSet;
     SET.CONSTANTS = CONSTANTS;

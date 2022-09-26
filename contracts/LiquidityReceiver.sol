@@ -7,6 +7,7 @@ import "./facades/LachesisLike.sol";
 import "./ERC20/IERC20.sol";
 import "./Errors.sol";
 import "./facades/BigConstantsLike.sol";
+import "./ProxyHandler.sol";
 
 library Create2 {
     /**
@@ -83,6 +84,7 @@ contract LiquidityReceiver is Ownable {
         LachesisLike lachesis; //Token approval contract on Behodler AMM
         SnufferCap snufferCap;
         address defaultLoanOfficer;
+        address proxyHandler;
     }
 
     Configuration public config;
@@ -97,6 +99,7 @@ contract LiquidityReceiver is Ownable {
 
     constructor(address _lachesis, address bigConstantsAddress) {
         config.lachesis = LachesisLike(_lachesis);
+        config.proxyHandler = address(new ProxyHandler());
         bigConstants = BigConstantsLike(bigConstantsAddress);
     }
 
@@ -206,7 +209,14 @@ contract LiquidityReceiver is Ownable {
             keccak256(abi.encode(baseToken)),
             bigConstants.PYROTOKEN_BYTECODE()
         );
-        PyroToken(p).initialize(baseToken, name, symbol, decimals,address(bigConstants));
+        PyroToken(p).initialize(
+            baseToken,
+            name,
+            symbol,
+            decimals,
+            address(bigConstants),
+            config.proxyHandler
+        );
         PyroToken(p).setLoanOfficer(config.defaultLoanOfficer);
 
         if (p != expectedAddress) {

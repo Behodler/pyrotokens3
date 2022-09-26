@@ -104,18 +104,26 @@ contract PyroToken is ERC20, ReentrancyGuard {
     }
 
     modifier onlyReceiver() {
-        if (msg.sender != config.liquidityReceiver) {
-            revert OnlyReceiver(config.liquidityReceiver, msg.sender);
-        }
+        _onlyReceiver();
         _;
     }
 
-    modifier updateReserve() {
+    function _onlyReceiver() internal view {
+        if (msg.sender != config.liquidityReceiver) {
+            revert OnlyReceiver(config.liquidityReceiver, msg.sender);
+        }
+    }
+
+    function _updateReserve() internal {
         if (config.pullPendingFeeRevenue) {
             LiquidityReceiverLike(config.liquidityReceiver).drain(
                 address(config.baseToken)
             );
         }
+    }
+
+    modifier updateReserve() {
+        _updateReserve();
         _;
     }
 
@@ -138,7 +146,8 @@ contract PyroToken is ERC20, ReentrancyGuard {
         string memory name_,
         string memory symbol_,
         uint8 decimals,
-        address bigConstantsAddress
+        address bigConstantsAddress,
+        address proxyHandler
     ) external onlyReceiver uninitialized {
         config.baseToken = IERC20(baseToken);
         _name = name_;
@@ -150,6 +159,10 @@ contract PyroToken is ERC20, ReentrancyGuard {
         //disable all fees so that holders can toggle back and forth without penalty
         feeExemptionStatus[rebaseWrapper] = FeeExemption
             .REDEEM_EXEMPT_AND_SENDER_EXEMPT_AND_RECEIVER_EXEMPT;
+
+        //disable all fees for the proxyHandler
+        feeExemptionStatus[proxyHandler] = FeeExemption
+            .SENDER_EXEMPT_AND_RECEIVER_EXEMPT;
     }
 
     /**
@@ -267,7 +280,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
     function redeemRate() public view returns (uint256) {
         uint256 ts = _totalSupply;
         if (ts == 0) return ONE;
-       
+
         return
             ((config.baseToken.balanceOf(address(this)) + aggregateBaseCredit) *
                 ONE) / (ts);
