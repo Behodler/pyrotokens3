@@ -1,0 +1,5 @@
+[
+  "function cut(address) view returns (bool, bool)",
+  "function measure(address,bool,bool)",
+  "function status(address,uint256) view returns (bool)"
+]

@@ -1,0 +1,5 @@
+[
+  "error InfiniteLeverageForbidden(uint256,uint256)",
+  "function setObligationFor(address,uint256,uint256,uint256) returns (bool)",
+  "function unsafeSetObligationFor(address,uint256,uint256,uint256) returns (bool)"
+]

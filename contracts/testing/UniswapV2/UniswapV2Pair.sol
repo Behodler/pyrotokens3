@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity 0.8.13;
+pragma solidity 0.8.16;
 
 import "./interfaces/IUniswapV2Pair.sol";
 import "./UniswapV2ERC20.sol";
 import "./libraries/Math.sol";
 import "./libraries/UQ112x112.sol";
-import "./interfaces/IERC20.sol";
+import "./interfaces/UniTestIERC20.sol";
 import "./interfaces/IUniswapV2Factory.sol";
 import "./interfaces/IUniswapV2Callee.sol";
 import "hardhat/console.sol";
@@ -150,8 +150,8 @@ contract UniswapV2Pair is UniswapV2ERC20 {
     function mint(address to) external lock returns (uint256 liquidity) {
         //    console.log("mint start");
         (uint112 _reserve0, uint112 _reserve1, ) = getReserves(); // gas savings
-        uint256 balance0 = IERC20(token0).balanceOf(address(this));
-        uint256 balance1 = IERC20(token1).balanceOf(address(this));
+        uint256 balance0 = UniTestIERC20(token0).balanceOf(address(this));
+        uint256 balance1 = UniTestIERC20(token1).balanceOf(address(this));
 
         uint256 amount0 = balance0.sub(_reserve0);
         uint256 amount1 = balance1.sub(_reserve1);
@@ -194,8 +194,8 @@ contract UniswapV2Pair is UniswapV2ERC20 {
         (uint112 _reserve0, uint112 _reserve1, ) = getReserves(); // gas savings
         address _token0 = token0; // gas savings
         address _token1 = token1; // gas savings
-        uint256 balance0 = IERC20(_token0).balanceOf(address(this));
-        uint256 balance1 = IERC20(_token1).balanceOf(address(this));
+        uint256 balance0 = UniTestIERC20(_token0).balanceOf(address(this));
+        uint256 balance1 = UniTestIERC20(_token1).balanceOf(address(this));
         uint256 liquidity = balanceOf[address(this)];
 
         bool feeOn = _mintFee(_reserve0, _reserve1);
@@ -209,8 +209,8 @@ contract UniswapV2Pair is UniswapV2ERC20 {
         _burn(address(this), liquidity);
         _safeTransfer(_token0, to, amount0);
         _safeTransfer(_token1, to, amount1);
-        balance0 = IERC20(_token0).balanceOf(address(this));
-        balance1 = IERC20(_token1).balanceOf(address(this));
+        balance0 = UniTestIERC20(_token0).balanceOf(address(this));
+        balance1 = UniTestIERC20(_token1).balanceOf(address(this));
 
         _update(balance0, balance1, _reserve0, _reserve1);
         if (feeOn) kLast = uint256(reserve0).mul(reserve1); // reserve0 and reserve1 are up-to-date
@@ -250,8 +250,8 @@ contract UniswapV2Pair is UniswapV2ERC20 {
                     amount1Out,
                     data
                 );
-            balance0 = IERC20(_token0).balanceOf(address(this));
-            balance1 = IERC20(_token1).balanceOf(address(this));
+            balance0 = UniTestIERC20(_token0).balanceOf(address(this));
+            balance1 = UniTestIERC20(_token1).balanceOf(address(this));
             console.log("balance0 %d balance1 %d", balance0, balance1);
         }
 
@@ -303,20 +303,20 @@ contract UniswapV2Pair is UniswapV2ERC20 {
         _safeTransfer(
             _token0,
             to,
-            IERC20(_token0).balanceOf(address(this)).sub(reserve0)
+            UniTestIERC20(_token0).balanceOf(address(this)).sub(reserve0)
         );
         _safeTransfer(
             _token1,
             to,
-            IERC20(_token1).balanceOf(address(this)).sub(reserve1)
+            UniTestIERC20(_token1).balanceOf(address(this)).sub(reserve1)
         );
     }
 
     // force reserves to match balances
     function sync() external lock {
         _update(
-            IERC20(token0).balanceOf(address(this)),
-            IERC20(token1).balanceOf(address(this)),
+            UniTestIERC20(token0).balanceOf(address(this)),
+            UniTestIERC20(token1).balanceOf(address(this)),
             reserve0,
             reserve1
         );

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity 0.8.16;
 import "./facades/Enums.sol";
 import "./ERC20/ERC20.sol";
 import "./ERC20/SafeERC20.sol";
@@ -96,13 +96,6 @@ contract PyroToken is ERC20, ReentrancyGuard {
         _;
     }
 
-    modifier uninitialized() {
-        if (address(config.baseToken) != address(0)) {
-            revert FunctionNoLongerAvailable();
-        }
-        _;
-    }
-
     modifier onlyReceiver() {
         _onlyReceiver();
         _;
@@ -148,7 +141,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
         uint8 decimals,
         address bigConstantsAddress,
         address proxyHandler
-    ) external onlyReceiver uninitialized {
+    ) external onlyReceiver {
         config.baseToken = IERC20(baseToken);
         _name = name_;
         _symbol = symbol_;
@@ -228,7 +221,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
 
         //fee on transfer token safe
         uint256 balanceBefore = baseToken.balanceOf(address(this));
-        config.baseToken.safeTransferFrom(msg.sender, address(this), amount);
+        baseToken.safeTransferFrom(msg.sender, address(this), amount);
         uint256 changeInBalance = baseToken.balanceOf(address(this)) -
             balanceBefore;
 
@@ -238,26 +231,6 @@ contract PyroToken is ERC20, ReentrancyGuard {
         //=> pyroTokens minted = base_token_amount * 1/r
         minted = (changeInBalance * ONE) / _redeemRate;
         _mint(recipient, minted);
-    }
-
-    /**@notice reduce the gas impact of an additional transfer
-     * @param owner the current pyroToken holder
-     * @param amount the amount of pyroTokens to transfer
-     * @param recipient the recipient of the redeemed baseToken
-     */
-    function redeemFrom(
-        address owner,
-        address recipient,
-        uint256 amount
-    ) external returns (uint256) {
-        uint256 currentAllowance = _allowances[owner][msg.sender];
-        if (currentAllowance != type(uint256).max) {
-            if (amount > currentAllowance) {
-                revert AllowanceExceeded(currentAllowance, amount);
-            }
-            _approve(owner, msg.sender, currentAllowance - amount);
-        }
-        return _redeem(recipient, owner, amount);
     }
 
     /**@notice redeems base tokens for a given pyrotoken amount at the current redeem rate

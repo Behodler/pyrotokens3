@@ -339,53 +339,6 @@ describe("PyroTokens", async function () {
     expect(redeemRateAfter).to.equal(redeemRateBefore);
   });
 
-  it("t-5. redeem from adjusts approval and fails for not approved.", async function () {
-    //ASSUMPTIONS
-    const approvalBefore = await SET.PyroTokens.pyroRegular1.allowance(
-      secondPerson.address,
-      owner.address
-    );
-    expect(approvalBefore.toNumber()).to.equal(0);
-
-    //ARRANGE
-    await SET.BaseTokens.regularToken1
-      .connect(secondPerson)
-      .mint(CONSTANTS.HUNDRED);
-
-    await SET.BaseTokens.regularToken1
-      .connect(secondPerson)
-      .approve(SET.PyroTokens.pyroRegular1.address, CONSTANTS.MAX);
-
-    await SET.PyroTokens.pyroRegular1
-      .connect(secondPerson)
-      .mint(secondPerson.address, CONSTANTS.TEN.mul(4).add(CONSTANTS.ONE));
-
-    await SET.PyroTokens.pyroRegular1
-      .connect(secondPerson)
-      .approve(owner.address, CONSTANTS.TEN.mul(4));
-
-    const balanceOfSecond = await SET.PyroTokens.pyroRegular1.balanceOf(
-      secondPerson.address
-    );
-    expect(balanceOfSecond.toString()).to.not.equal("0");
-
-    //ACT
-    await SET.PyroTokens.pyroRegular1.redeemFrom(
-      secondPerson.address,
-      owner.address,
-      balanceOfSecond.sub(CONSTANTS.ONE)
-    );
-
-    //ASSERT
-    await expect(
-      SET.PyroTokens.pyroRegular1.redeemFrom(
-        secondPerson.address,
-        owner.address,
-        CONSTANTS.ONE
-      )
-    ).to.be.revertedWith("AllowanceExceeded(0, 1000000000000000000)");
-  });
-
   it("t-6. Redeem adjusts redeem rate", async function () {
     //ARRANGE
     await SET.BaseTokens.regularToken1.approve(

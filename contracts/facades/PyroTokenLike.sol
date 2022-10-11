@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity 0.8.16;
 import "../ERC20/IERC20.sol";
 
 abstract contract PyroTokenLike is IERC20 {
@@ -26,12 +26,6 @@ abstract contract PyroTokenLike is IERC20 {
         returns (uint256);
 
     function redeemRate() public view virtual returns (uint256);
-
-    function redeemFrom(
-        address owner,
-        address recipient,
-        uint256 amount
-    ) external virtual returns (uint256);
 
     function setLoanOfficer(address loanOfficer) external virtual;
 

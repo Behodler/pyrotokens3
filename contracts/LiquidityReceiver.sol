@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity 0.8.16;
 import "./PyroToken.sol";
 import "./facades/SnufferCap.sol";
 import "./facades/Ownable.sol";
@@ -194,17 +194,19 @@ contract LiquidityReceiver is Ownable {
     ) public onlyOwner {
         address expectedAddress = getPyroToken(baseToken);
 
-        //Although contracts can pretend to be EOAs, we're only concerned that EOAs don't spoof contract addresses.
+        //Don't be mislead by the name. The purpose of this is just to check if there is a contract deployed at the current address
         if (isContract(expectedAddress)) {
             revert AddressOccupied(expectedAddress);
         }
+        
+        //Behodler has rules for which tokens can be registered as a PyroToken: Valid and not burnable.
         (bool valid, bool burnable) = config.lachesis.cut(baseToken);
 
         if (!valid || burnable) {
             revert LachesisValidationFailed(baseToken, valid, burnable);
         }
 
-        //Using a salted address let's us predict where each PyroToken will be deployed.
+        //Using a salted address lets us predict where each PyroToken will be deployed.
         address p = Create2.deploy(
             keccak256(abi.encode(baseToken)),
             bigConstants.PYROTOKEN_BYTECODE()

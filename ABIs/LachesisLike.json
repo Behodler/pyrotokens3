@@ -1,0 +1,4 @@
+[
+  "function cut(address) view returns (bool, bool)",
+  "function measure(address,bool,bool)"
+]
