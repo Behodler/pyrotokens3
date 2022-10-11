@@ -27,12 +27,6 @@ abstract contract PyroTokenLike is IERC20 {
 
     function redeemRate() public view virtual returns (uint256);
 
-    function redeemFrom(
-        address owner,
-        address recipient,
-        uint256 amount
-    ) external virtual returns (uint256);
-
     function setLoanOfficer(address loanOfficer) external virtual;
 
     function togglePullPendingFeeRevenue(bool pullPendingFeeRevenue)

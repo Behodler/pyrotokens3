@@ -33,13 +33,18 @@ contract PyroWethProxy is Ownable, ReentrancyGuard {
     /**
      *@notice redeems PyroWeth for native token (Eth on mainnet)
      *@param pyroTokenAmount amount of pyrotokens to redeem from msg.sender.
+     *@dev Remember to exempt this contract of both transfer and redeem fees
      */
     function redeem(uint256 pyroTokenAmount)
         external
         nonReentrant
         returns (uint256)
     {
-        pyroWeth.redeemFrom(msg.sender, address(this), pyroTokenAmount);
+        uint balanceBefore = pyroWeth.balanceOf(address(this));
+        pyroWeth.transferFrom(msg.sender, address(this), pyroTokenAmount);
+        uint change = pyroWeth.balanceOf(address(this)) - balanceBefore;
+        require(change == pyroTokenAmount,"transfer fee not exempt");
+        pyroWeth.redeem(address(this),pyroTokenAmount);
         uint256 balanceOfWeth = IERC20(weth10).balanceOf(address(this));
         weth10.withdrawTo(payable(msg.sender), balanceOfWeth);
         return balanceOfWeth;

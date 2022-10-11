@@ -221,7 +221,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
 
         //fee on transfer token safe
         uint256 balanceBefore = baseToken.balanceOf(address(this));
-        config.baseToken.safeTransferFrom(msg.sender, address(this), amount);
+        baseToken.safeTransferFrom(msg.sender, address(this), amount);
         uint256 changeInBalance = baseToken.balanceOf(address(this)) -
             balanceBefore;
 
@@ -231,26 +231,6 @@ contract PyroToken is ERC20, ReentrancyGuard {
         //=> pyroTokens minted = base_token_amount * 1/r
         minted = (changeInBalance * ONE) / _redeemRate;
         _mint(recipient, minted);
-    }
-
-    /**@notice reduce the gas impact of an additional transfer
-     * @param owner the current pyroToken holder
-     * @param amount the amount of pyroTokens to transfer
-     * @param recipient the recipient of the redeemed baseToken
-     */
-    function redeemFrom(
-        address owner,
-        address recipient,
-        uint256 amount
-    ) external returns (uint256) {
-        uint256 currentAllowance = _allowances[owner][msg.sender];
-        if (currentAllowance != type(uint256).max) {
-            if (amount > currentAllowance) {
-                revert AllowanceExceeded(currentAllowance, amount);
-            }
-            _approve(owner, msg.sender, currentAllowance - amount);
-        }
-        return _redeem(recipient, owner, amount);
     }
 
     /**@notice redeems base tokens for a given pyrotoken amount at the current redeem rate

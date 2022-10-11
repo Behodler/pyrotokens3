@@ -16,11 +16,13 @@ import { deploy, executionResult, numberClose, queryChain } from "./helper";
 
 export interface TestSet {
   WETH: TypeChainTypes.WETH10;
+  EYE: TypeChainTypes.BaseToken
   PyroWETH: TypeChainTypes.PyroToken;
   PyroWethProxy: TypeChainTypes.PyroWethProxy;
   LiquidityReceiver: TypeChainTypes.LiquidityReceiver;
   lachesis: TypeChainTypes.Lachesis;
   CONSTANTS: ConstantSet;
+  SnufferCap: TypeChainTypes.BurnEYESnufferCap
 }
 
 describe("PyroWeth Proxy", async function () {
@@ -29,6 +31,16 @@ describe("PyroWeth Proxy", async function () {
   SET.CONSTANTS = CONSTANTS;
   beforeEach(async function () {
     [owner, secondPerson] = await ethers.getSigners();
+    var BaseToken = await ethers.getContractFactory("BaseToken");
+    SET.EYE = await deploy<TypeChainTypes.BaseToken>(
+      BaseToken,
+      "EYE",
+      "EYE",
+      0
+    );
+
+    await SET.EYE.mint(CONSTANTS.THOUSAND)
+
     const wethFactory = await ethers.getContractFactory("WETH10");
     SET.WETH = await deploy<TypeChainTypes.WETH10>(wethFactory);
 
@@ -48,6 +60,10 @@ describe("PyroWeth Proxy", async function () {
       SET.lachesis.address,
       bigConstants.address
     );
+
+    const BurnEYESnufferCapFactory = await ethers.getContractFactory("BurnEYESnufferCap")
+    SET.SnufferCap = await deploy<TypeChainTypes.BurnEYESnufferCap>(BurnEYESnufferCapFactory, SET.EYE.address, SET.LiquidityReceiver.address)
+    await SET.LiquidityReceiver.setSnufferCap(SET.SnufferCap.address)
 
     await SET.LiquidityReceiver.registerPyroToken(
       SET.WETH.address,
@@ -74,6 +90,9 @@ describe("PyroWeth Proxy", async function () {
 
   it("mint->redeem only reduces balance by 2%", async function () {
     const ethBalanceBeforeMint = await owner.getBalance();
+    await SET.EYE.approve(SET.SnufferCap.address, CONSTANTS.THOUSAND)
+    await SET.SnufferCap.snuff(SET.PyroWETH.address, SET.PyroWethProxy.address, 5)
+
     await SET.PyroWethProxy.mint(CONSTANTS.TEN, { value: CONSTANTS.TEN });
     expect(await SET.PyroWETH.balanceOf(owner.address)).to.equal(CONSTANTS.TEN);
 
@@ -94,13 +113,13 @@ describe("PyroWeth Proxy", async function () {
     const tooLow = CONSTANTS.TEN.sub(1);
 
     await expect(SET.PyroWethProxy.mint(CONSTANTS.TEN, { value: tooHigh }))
-    .to
-    .be
-    .revertedWith("EthForwardingFailed");
+      .to
+      .be
+      .revertedWith("EthForwardingFailed");
 
     await expect(SET.PyroWethProxy.mint(CONSTANTS.TEN, { value: tooLow }))
-    .to
-    .be
-    .revertedWith("EthForwardingFailed");
+      .to
+      .be
+      .revertedWith("EthForwardingFailed");
   });
 });
