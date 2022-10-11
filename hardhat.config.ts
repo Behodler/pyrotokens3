@@ -7,6 +7,7 @@ import "@typechain/hardhat";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
 // import "hardhat-typechain";
+import "hardhat-abi-exporter"
 
 dotenv.config();
 
@@ -36,6 +37,15 @@ const config = {
     enabled: process.env.REPORT_GAS !== undefined,
     currency: "USD",
   },
+  abiExporter: {
+    path: './ABIs',
+    runOnCompile: true,
+    clear: true,
+    flat: true,
+    spacing: 2,
+    pretty: true
+  },
+  
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
   },
