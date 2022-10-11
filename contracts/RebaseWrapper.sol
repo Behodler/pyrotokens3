@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity 0.8.16;
 import "./facades/Enums.sol";
 import "./ERC20/IERC20.sol";
 import "./ERC20/SafeERC20.sol";

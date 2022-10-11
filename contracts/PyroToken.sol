@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity 0.8.16;
 import "./facades/Enums.sol";
 import "./ERC20/ERC20.sol";
 import "./ERC20/SafeERC20.sol";
@@ -96,13 +96,6 @@ contract PyroToken is ERC20, ReentrancyGuard {
         _;
     }
 
-    modifier uninitialized() {
-        if (address(config.baseToken) != address(0)) {
-            revert FunctionNoLongerAvailable();
-        }
-        _;
-    }
-
     modifier onlyReceiver() {
         _onlyReceiver();
         _;
@@ -148,7 +141,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
         uint8 decimals,
         address bigConstantsAddress,
         address proxyHandler
-    ) external onlyReceiver uninitialized {
+    ) external onlyReceiver {
         config.baseToken = IERC20(baseToken);
         _name = name_;
         _symbol = symbol_;
