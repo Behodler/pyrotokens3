@@ -1,0 +1,3 @@
+[
+  "function currentProposalState() view returns (int256, uint256, address, uint256, address)"
+]

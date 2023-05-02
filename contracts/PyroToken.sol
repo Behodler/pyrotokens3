@@ -28,7 +28,7 @@ contract PyroToken is ERC20, ReentrancyGuard {
     /**
      *@param loanOfficer address of new loan officer contract
      */
-    event LoadOfficerAssigned(address indexed loanOfficer);
+    event LoanOfficerAssigned(address indexed loanOfficer);
 
     /**
      *@param borrower of base token

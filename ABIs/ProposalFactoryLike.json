@@ -1,0 +1,4 @@
+[
+  "function DAO() view returns (address)",
+  "function whitelistedProposalContracts(address) view returns (bool)"
+]
