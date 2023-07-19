@@ -40,7 +40,7 @@ Putting those 3 rules together gives a strong guarantee on the redeem rate: it c
 
 ### Caveats
 
-In the case where you wish to use the underlying base token for utility purposes such as Eth in transactions or an LP token for unwrapping, the gas costs of moving in and out of the corresponding PyroToken need to be accounted for. Furthermore, PyroTokens exact an exit fee on redemption that should be taken into account such that one should hold PyroTokens until the redeem rate appreciation has compensated for the exit fee. In addition, the usual risk of adopting an extra protocol reply: if you only hold Eth, your protocol risk is limited to the Ethereum platform risk wheras holding PyroWEth exposes you to Behodler protocol risk as well.
+In the case where you wish to use the underlying base token for utility purposes such as Eth in transactions or an LP token for unwrapping, the gas costs of moving in and out of the corresponding PyroToken need to be accounted for. Furthermore, PyroTokens exact an exit fee on redemption that should be taken into account such that one should hold PyroTokens until the redeem rate appreciation has compensated for the exit fee. In addition, the usual risk of adopting an extra protocol apply: if you only hold Eth, your protocol risk is limited to the Ethereum platform risk wheras holding PyroWEth exposes you to Behodler protocol risk as well.
 
 ## Mechanisms for independent movement
 
